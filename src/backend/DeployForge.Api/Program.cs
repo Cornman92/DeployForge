@@ -1,4 +1,5 @@
 using DeployForge.Api;
+using DeployForge.Api.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -86,6 +87,10 @@ try
             c.RoutePrefix = string.Empty; // Serve Swagger UI at root
         });
     }
+
+    // Custom middleware
+    app.UseErrorHandling();
+    app.UseRequestLogging();
 
     app.UseSerilogRequestLogging();
 

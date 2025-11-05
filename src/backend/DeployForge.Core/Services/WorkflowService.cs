@@ -591,6 +591,166 @@ public class WorkflowService : IWorkflowService
                         DependsOn = new List<string> { "conservative-debloat" }
                     }
                 }
+            },
+
+            ["privacy-focused"] = new WorkflowDefinition
+            {
+                Id = "privacy-focused",
+                Name = "Privacy-Focused Windows",
+                Description = "Maximum privacy settings with telemetry disabled and tracking removed",
+                Author = "DeployForge Team",
+                Tags = new List<string> { "privacy", "security", "debloat" },
+                Steps = new List<WorkflowStep>
+                {
+                    new()
+                    {
+                        Id = "aggressive-debloat",
+                        Name = "Remove Telemetry Apps",
+                        Description = "Apply aggressive debloat to remove telemetry and tracking",
+                        Type = WorkflowStepType.ApplyDebloat,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetId"] = "aggressive"
+                        }
+                    },
+                    new()
+                    {
+                        Id = "privacy-registry",
+                        Name = "Disable Telemetry",
+                        Description = "Apply privacy-focused registry tweaks",
+                        Type = WorkflowStepType.ApplyRegistryTweaks,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetName"] = "Disable Telemetry"
+                        },
+                        DependsOn = new List<string> { "aggressive-debloat" }
+                    },
+                    new()
+                    {
+                        Id = "cleanup",
+                        Name = "Final Cleanup",
+                        Description = "Remove superseded components",
+                        Type = WorkflowStepType.Cleanup,
+                        DependsOn = new List<string> { "privacy-registry" }
+                    }
+                }
+            },
+
+            ["developer-workstation"] = new WorkflowDefinition
+            {
+                Id = "developer-workstation",
+                Name = "Developer Workstation",
+                Description = "Optimized Windows for development with unnecessary features removed",
+                Author = "DeployForge Team",
+                Tags = new List<string> { "development", "performance", "productivity" },
+                Steps = new List<WorkflowStep>
+                {
+                    new()
+                    {
+                        Id = "moderate-debloat",
+                        Name = "Remove Consumer Apps",
+                        Description = "Remove consumer-focused bloatware",
+                        Type = WorkflowStepType.ApplyDebloat,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetId"] = "moderate"
+                        }
+                    },
+                    new()
+                    {
+                        Id = "cleanup",
+                        Name = "Optimize Image",
+                        Description = "Remove superseded components",
+                        Type = WorkflowStepType.Cleanup,
+                        DependsOn = new List<string> { "moderate-debloat" }
+                    }
+                }
+            },
+
+            ["kiosk-mode"] = new WorkflowDefinition
+            {
+                Id = "kiosk-mode",
+                Name = "Kiosk/Single-Purpose Device",
+                Description = "Minimal Windows installation for kiosk or single-purpose devices",
+                Author = "DeployForge Team",
+                Tags = new List<string> { "kiosk", "minimal", "embedded" },
+                Steps = new List<WorkflowStep>
+                {
+                    new()
+                    {
+                        Id = "ultra-debloat",
+                        Name = "Ultra Minimal Install",
+                        Description = "Remove everything except core components",
+                        Type = WorkflowStepType.ApplyDebloat,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetId"] = "aggressive"
+                        }
+                    },
+                    new()
+                    {
+                        Id = "security-tweaks",
+                        Name = "Security Hardening",
+                        Description = "Apply security-focused registry tweaks",
+                        Type = WorkflowStepType.ApplyRegistryTweaks,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetName"] = "Security Hardening"
+                        },
+                        DependsOn = new List<string> { "ultra-debloat" }
+                    },
+                    new()
+                    {
+                        Id = "cleanup",
+                        Name = "Final Cleanup",
+                        Description = "Remove all superseded components",
+                        Type = WorkflowStepType.Cleanup,
+                        DependsOn = new List<string> { "security-tweaks" }
+                    }
+                }
+            },
+
+            ["performance-max"] = new WorkflowDefinition
+            {
+                Id = "performance-max",
+                Name = "Maximum Performance",
+                Description = "Extreme performance optimization - removes visual effects and non-essential services",
+                Author = "DeployForge Team",
+                Tags = new List<string> { "performance", "optimization", "speed" },
+                Steps = new List<WorkflowStep>
+                {
+                    new()
+                    {
+                        Id = "aggressive-debloat",
+                        Name = "Remove Performance Drains",
+                        Description = "Remove all performance-impacting components",
+                        Type = WorkflowStepType.ApplyDebloat,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetId"] = "aggressive"
+                        }
+                    },
+                    new()
+                    {
+                        Id = "performance-tweaks",
+                        Name = "Performance Registry Tweaks",
+                        Description = "Optimize registry for maximum performance",
+                        Type = WorkflowStepType.ApplyRegistryTweaks,
+                        Configuration = new Dictionary<string, object>
+                        {
+                            ["presetName"] = "Gaming Performance"
+                        },
+                        DependsOn = new List<string> { "aggressive-debloat" }
+                    },
+                    new()
+                    {
+                        Id = "cleanup",
+                        Name = "Aggressive Cleanup",
+                        Description = "Remove all unnecessary files",
+                        Type = WorkflowStepType.Cleanup,
+                        DependsOn = new List<string> { "performance-tweaks" }
+                    }
+                }
             }
         };
     }
