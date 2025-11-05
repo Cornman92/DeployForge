@@ -41,7 +41,7 @@ public static class ServiceConfiguration
         services.AddSingleton<DismManager>();
 
         // Register application services
-        // services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
         services.AddScoped<IUpdateService, UpdateService>();
