@@ -1,3 +1,6 @@
+using DeployForge.Core.Interfaces;
+using DeployForge.Core.Services;
+using DeployForge.DismEngine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -34,10 +37,12 @@ public static class ServiceConfiguration
             services.AddDistributedMemoryCache(); // Fallback to in-memory cache
         }
 
+        // Register DISM manager as singleton (thread-safe)
+        services.AddSingleton<DismManager>();
+
         // Register application services
         // services.AddScoped<IImageService, ImageService>();
-        // services.AddScoped<IDismService, DismService>();
-        // services.AddScoped<IComponentService, ComponentService>();
+        services.AddScoped<IComponentService, ComponentService>();
         // services.AddScoped<IRegistryService, RegistryService>();
         // services.AddScoped<IWorkflowService, WorkflowService>();
 
