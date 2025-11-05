@@ -43,6 +43,7 @@ public static class ServiceConfiguration
         // Register application services
         // services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IComponentService, ComponentService>();
+        services.AddScoped<IDriverService, DriverService>();
         // services.AddScoped<IRegistryService, RegistryService>();
         // services.AddScoped<IWorkflowService, WorkflowService>();
 

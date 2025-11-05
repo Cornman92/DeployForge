@@ -534,6 +534,114 @@ public class DismManager : IDisposable
         }
     }
 
+    #region Driver Management
+
+    /// <summary>
+    /// Gets all drivers from a mounted image
+    /// </summary>
+    public OperationResult<DismDriverCollection> GetDrivers(string mountPath)
+    {
+        DismSession? session = null;
+        try
+        {
+            var sessionResult = OpenSession(mountPath);
+            if (!sessionResult.Success)
+                return OperationResult<DismDriverCollection>.FailureResult(sessionResult.ErrorMessage ?? "Failed to open session");
+
+            session = sessionResult.Data;
+            var drivers = DismApi.GetDrivers(session, allDrivers: true);
+            return OperationResult<DismDriverCollection>.SuccessResult(drivers);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<DismDriverCollection>.ExceptionResult(ex);
+        }
+        finally
+        {
+            session?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Gets detailed information about a specific driver
+    /// </summary>
+    public OperationResult<DismDriver> GetDriverInfo(string mountPath, string driverPath)
+    {
+        DismSession? session = null;
+        try
+        {
+            var sessionResult = OpenSession(mountPath);
+            if (!sessionResult.Success)
+                return OperationResult<DismDriver>.FailureResult(sessionResult.ErrorMessage ?? "Failed to open session");
+
+            session = sessionResult.Data;
+            var driver = DismApi.GetDriverInfo(session, driverPath);
+            return OperationResult<DismDriver>.SuccessResult(driver);
+        }
+        catch (Exception ex)
+        {
+            return OperationResult<DismDriver>.ExceptionResult(ex);
+        }
+        finally
+        {
+            session?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Adds a driver to a mounted image
+    /// </summary>
+    public OperationResult AddDriver(string mountPath, string driverPath, bool forceUnsigned = false)
+    {
+        DismSession? session = null;
+        try
+        {
+            var sessionResult = OpenSession(mountPath);
+            if (!sessionResult.Success)
+                return OperationResult.FailureResult(sessionResult.ErrorMessage ?? "Failed to open session");
+
+            session = sessionResult.Data;
+            DismApi.AddDriver(session, driverPath, forceUnsigned);
+            return OperationResult.SuccessResult();
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ExceptionResult(ex);
+        }
+        finally
+        {
+            session?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Removes a driver from a mounted image
+    /// </summary>
+    public OperationResult RemoveDriver(string mountPath, string driverPath)
+    {
+        DismSession? session = null;
+        try
+        {
+            var sessionResult = OpenSession(mountPath);
+            if (!sessionResult.Success)
+                return OperationResult.FailureResult(sessionResult.ErrorMessage ?? "Failed to open session");
+
+            session = sessionResult.Data;
+            DismApi.RemoveDriver(session, driverPath);
+            return OperationResult.SuccessResult();
+        }
+        catch (Exception ex)
+        {
+            return OperationResult.ExceptionResult(ex);
+        }
+        finally
+        {
+            session?.Dispose();
+        }
+    }
+
+    #endregion
+
     /// <summary>
     /// Cleans up DISM resources
     /// </summary>
