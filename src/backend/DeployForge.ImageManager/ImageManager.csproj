@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DeployForge.ImageManager</RootNamespace>
+    <AssemblyName>DeployForge.ImageManager</AssemblyName>
+    <Version>1.0.0-alpha</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeployForge.Common\DeployForge.Common.csproj" />
+    <ProjectReference Include="..\DeployForge.Core\DeployForge.Core.csproj" />
+    <ProjectReference Include="..\DeployForge.DismEngine\DeployForge.DismEngine.csproj" />
+  </ItemGroup>
+
+</Project>

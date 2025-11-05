@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DeployForge.Workflow</RootNamespace>
+    <AssemblyName>DeployForge.Workflow</AssemblyName>
+    <Version>1.0.0-alpha</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="15.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeployForge.Common\DeployForge.Common.csproj" />
+    <ProjectReference Include="..\DeployForge.Core\DeployForge.Core.csproj" />
+  </ItemGroup>
+
+</Project>

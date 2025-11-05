@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DeployForge.RegistryEditor</RootNamespace>
+    <AssemblyName>DeployForge.RegistryEditor</AssemblyName>
+    <Version>1.0.0-alpha</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DeployForge.Common\DeployForge.Common.csproj" />
+    <ProjectReference Include="..\DeployForge.Core\DeployForge.Core.csproj" />
+  </ItemGroup>
+
+</Project>
