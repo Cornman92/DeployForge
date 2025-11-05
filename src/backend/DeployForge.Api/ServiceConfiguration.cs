@@ -42,6 +42,7 @@ public static class ServiceConfiguration
 
         // Register application services
         services.AddScoped<IImageService, ImageService>();
+        services.AddScoped<IImageConversionService, ImageConversionService>();
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
         services.AddScoped<IUpdateService, UpdateService>();
