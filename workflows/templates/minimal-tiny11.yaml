@@ -1,0 +1,426 @@
+# Minimal/Tiny Windows 11 Workflow
+# Ultra-lightweight Windows for low-spec hardware or minimal installations
+
+name: "Minimal Windows 11 (Tiny11 Style)"
+version: "1.0.0"
+description: "Create ultra-lightweight Windows 11 for low-spec hardware"
+author: "DeployForge Team"
+category: "Minimal"
+target:
+  - "Windows 11 Pro"
+  - "Windows 11 Home"
+estimated_time: "30-35 minutes"
+estimated_size_reduction: "4-5 GB"
+
+parameters:
+  input_iso_path:
+    type: "path"
+    description: "Path to Windows 11 ISO file"
+    required: true
+    example: "C:\\ISOs\\Win11_24H2.iso"
+
+  output_wim_path:
+    type: "path"
+    description: "Output path for minimal WIM file"
+    required: true
+    example: "C:\\Output\\Tiny11.wim"
+
+  keep_defender:
+    type: "boolean"
+    description: "Keep Windows Defender (adds ~400MB)"
+    default: false
+
+  keep_edge:
+    type: "boolean"
+    description: "Keep Edge browser (adds ~350MB)"
+    default: false
+
+  aggressive_mode:
+    type: "boolean"
+    description: "Aggressive component removal (may break some features)"
+    default: false
+
+steps:
+  - id: "mount_image"
+    name: "Mount Windows 11 Image"
+    type: "image.mount"
+    params:
+      source: "{input_iso_path}"
+      edition: "Pro"
+    on_error: "abort"
+
+  - id: "remove_all_appx"
+    name: "Remove All AppX Packages (Except Critical)"
+    type: "component.remove_appx_bulk"
+    params:
+      keep_packages:
+        - "Microsoft.Windows.ShellExperienceHost"
+        - "Microsoft.Windows.StartMenuExperienceHost"
+        - "Microsoft.WindowsStore"
+        - "Microsoft.Windows.SecHealthUI"  # if keeping Defender
+        - "Microsoft.Windows.OOBENetworkCaptivePortal"
+        - "Microsoft.Windows.OOBENetworkConnectionFlow"
+        - "Microsoft.Windows.CallingShellApp"
+        - "Microsoft.UI.Xaml.*"  # Required dependencies
+        - "Microsoft.VCLibs.*"    # VC++ Runtime
+      remove_all_others: true
+    on_error: "continue"
+
+  - id: "remove_components"
+    name: "Remove Windows Components"
+    type: "component.remove_bulk"
+    params:
+      components:
+        # Browsers and Apps
+        - name: "Microsoft Edge"
+          conditional: "!{keep_edge}"
+        - name: "Microsoft Edge Update"
+          conditional: "!{keep_edge}"
+        - name: "Internet Explorer 11"
+
+        # Security (if not keeping)
+        - name: "Windows Defender"
+          conditional: "!{keep_defender}"
+        - name: "Windows Defender Application Guard"
+          conditional: "!{keep_defender}"
+
+        # OneDrive and Cloud
+        - name: "OneDrive"
+        - name: "OneDrive Sync Engine"
+
+        # Multimedia
+        - name: "Windows Media Player Legacy"
+        - name: "Windows Media Player"
+        - name: "Media Features"
+          conditional: "{aggressive_mode}"
+
+        # Cortana and Search
+        - name: "Cortana"
+        - name: "Web Search from Windows"
+
+        # Xbox
+        - name: "Xbox Console Companion"
+        - name: "Xbox Game Bar"
+        - name: "Xbox Identity Provider"
+        - name: "Xbox Speech To Text Overlay"
+        - name: "Xbox Live"
+        - name: "Game DVR"
+
+        # 3D and Mixed Reality
+        - name: "3D Viewer"
+        - name: "Paint 3D"
+        - name: "Mixed Reality Portal"
+        - name: "Print 3D"
+
+        # Tablet PC Components
+        - name: "Tablet PC Components"
+        - name: "Windows Ink Workspace"
+        - name: "Touch Keyboard and Handwriting Panel"
+
+        # Speech and Handwriting
+        - name: "Speech Recognition"
+        - name: "Handwriting Recognition"
+        - name: "Text-to-Speech"
+          conditional: "{aggressive_mode}"
+
+        # Accessibility (aggressive mode only)
+        - name: "Magnifier"
+          conditional: "{aggressive_mode}"
+        - name: "On-Screen Keyboard"
+          conditional: "{aggressive_mode}"
+        - name: "Narrator"  # Keep at least narrator
+          conditional: false
+
+        # Windows Hello
+        - name: "Windows Hello Face"
+        - name: "Windows Biometric Service"
+
+        # Backup and Recovery
+        - name: "Windows Backup"
+        - name: "File History"
+
+        # Help and Feedback
+        - name: "Getting Started"
+        - name: "Tips"
+        - name: "Feedback Hub"
+        - name: "Contact Support"
+
+        # Network Features
+        - name: "Internet Printing Client"
+        - name: "LPD Print Service"
+        - name: "RAS Connection Manager"
+        - name: "Remote Differential Compression"
+        - name: "SMB 1.0"
+        - name: "TFTP Client"
+        - name: "Work Folders Client"
+
+        # Windows Features
+        - name: "WordPad"
+        - name: "Steps Recorder"
+        - name: "Math Recognizer"
+        - name: "OpenSSH Client"
+          conditional: "{aggressive_mode}"
+        - name: "Windows PowerShell 2.0"
+        - name: "Windows PowerShell ISE"
+
+      safety_checks: true
+      resolve_dependencies: true
+    on_error: "continue"
+
+  - id: "remove_capabilities"
+    name: "Remove Optional Capabilities"
+    type: "capability.remove_bulk"
+    params:
+      capabilities:
+        - "Browser.InternetExplorer"
+        - "Hello.Face.*"
+        - "MathRecognizer"
+        - "Media.WindowsMediaPlayer"
+        - "Microsoft.Windows.MSPaint"
+        - "Microsoft.Windows.PowerShell.ISE"
+        - "Microsoft.Windows.WordPad"
+        - "OpenSSH.Client"
+        - "Print.Fax.Scan"
+        - "Print.Management.Console"
+        - "QuickAssist"
+    on_error: "continue"
+
+  - id: "disable_services"
+    name: "Disable Unnecessary Services"
+    type: "service.disable_bulk"
+    params:
+      services:
+        # Telemetry
+        - "DiagTrack"
+        - "dmwappushservice"
+        - "WerSvc"
+
+        # Search and Indexing
+        - "WSearch"
+
+        # Xbox
+        - "XblAuthManager"
+        - "XblGameSave"
+        - "XboxGipSvc"
+        - "XboxNetApiSvc"
+
+        # Others
+        - "SysMain"  # Superfetch
+        - "OneSyncSvc"
+        - "MessagingService"
+        - "PimIndexMaintenanceSvc"
+        - "UserDataSvc"
+        - "UnistoreSvc"
+        - "CDPUserSvc"
+        - "WpnService"  # Push notifications
+        - "TabletInputService"
+        - "RetailDemo"
+        - "wisvc"  # Windows Insider
+        - "MapsBroker"
+        - "lfsvc"  # Geolocation
+        - "BcastDVRUserService"
+
+      keep_essential: true
+    on_error: "continue"
+
+  - id: "minimal_registry"
+    name: "Apply Minimal System Registry Tweaks"
+    type: "registry.apply_preset"
+    params:
+      preset: "minimal_footprint"
+      custom_tweaks:
+        # Disable hibernation
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power"
+          name: "HibernateEnabled"
+          type: "dword"
+          value: 0
+
+        # Disable page file on install (user can re-enable)
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management"
+          name: "PagingFiles"
+          type: "multi_string"
+          value: ""
+
+        # Disable Windows Search
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"
+          name: "AllowCortana"
+          type: "dword"
+          value: 0
+
+        # Disable telemetry
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"
+          name: "AllowTelemetry"
+          type: "dword"
+          value: 0
+
+        # Disable tips and suggestions
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent"
+          name: "DisableSoftLanding"
+          type: "dword"
+          value: 1
+
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\CloudContent"
+          name: "DisableWindowsConsumerFeatures"
+          type: "dword"
+          value: 1
+
+        # Minimal visual effects
+        - path: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects"
+          name: "VisualFXSetting"
+          type: "dword"
+          value: 2
+
+        # Disable transparency
+        - path: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize"
+          name: "EnableTransparency"
+          type: "dword"
+          value: 0
+    on_error: "warn"
+
+  - id: "cleanup_winsxs_aggressive"
+    name: "Aggressive Component Store Cleanup"
+    type: "image.cleanup"
+    params:
+      component_store: true
+      superseded_components: true
+      reset_base: true
+      aggressive: true
+      remove_backup: true  # Cannot rollback updates
+    on_error: "warn"
+
+  - id: "remove_optional_folders"
+    name: "Remove Optional System Folders"
+    type: "filesystem.remove_bulk"
+    params:
+      paths:
+        - "\\Windows\\Branding"
+        - "\\Windows\\DiagTrack"
+        - "\\Windows\\Globalization\\MCT"  # If not using input methods
+        - "\\Windows\\Help"  # Remove help files
+        - "\\Windows\\OCR"  # OCR engines
+        - "\\Windows\\Resources\\Themes"  # Except basic theme
+        - "\\Windows\\SystemApps\\Microsoft.Windows.Cortana*"
+        - "\\Windows\\SystemApps\\Microsoft.Windows.SecHealthUI*"
+          conditional: "!{keep_defender}"
+        - "\\Windows\\SystemApps\\Microsoft.XboxGameCallableUI*"
+        - "\\Windows\\SystemApps\\Microsoft.XboxIdentityProvider*"
+        - "\\Windows\\Web\\Wallpaper"  # Except one default
+        - "\\Program Files\\Windows Defender"
+          conditional: "!{keep_defender}"
+        - "\\Program Files\\Windows Media Player"
+        - "\\Program Files\\WindowsApps"  # AppX storage
+        - "\\Program Files (x86)\\Windows Media Player"
+        - "\\Program Files (x86)\\Internet Explorer"
+        - "\\ProgramData\\Microsoft\\Windows Defender"
+          conditional: "!{keep_defender}"
+      keep_one_default: true
+      verify_safety: true
+    on_error: "continue"
+
+  - id: "optimize_compression"
+    name: "Maximum Compression Optimization"
+    type: "image.optimize"
+    params:
+      compression: "maximum"
+      deduplication: true
+      compact_os: true
+      algorithm: "LZX:maximum"
+    on_error: "warn"
+
+  - id: "validate_minimal"
+    name: "Validate Minimal Image"
+    type: "image.validate"
+    params:
+      check_bootable: true
+      verify_critical_components: true
+      ensure_functional: true
+    on_error: "abort"
+
+  - id: "size_report"
+    name: "Calculate Size Savings"
+    type: "report.size_analysis"
+    params:
+      compare_to_original: true
+      breakdown_by_component: true
+    on_error: "continue"
+
+  - id: "save_minimal_image"
+    name: "Save Minimal Image"
+    type: "image.save"
+    params:
+      output: "{output_wim_path}"
+      compression: "LZX:maximum"
+      verify: true
+    on_error: "abort"
+
+  - id: "create_autounattend"
+    name: "Generate Minimal Autounattend"
+    type: "deployment.autounattend"
+    params:
+      config:
+        skip_oobe: true
+        auto_login: true
+        minimal_install: true
+        skip_privacy_questions: true
+        disable_first_run_experience: true
+    on_error: "warn"
+
+  - id: "unmount"
+    name: "Unmount Image"
+    type: "image.unmount"
+    on_error: "warn"
+
+  - id: "final_report"
+    name: "Generate Minimal Build Report"
+    type: "report.generate"
+    params:
+      format: ["pdf", "html"]
+      include:
+        - "original_size"
+        - "final_size"
+        - "space_saved"
+        - "percentage_reduction"
+        - "removed_components_list"
+        - "disabled_services_list"
+        - "warnings_and_limitations"
+      output: "{output_path}\\Minimal_Build_Report"
+    on_error: "continue"
+
+post_execution:
+  - type: "notification"
+    message: "Minimal Windows 11 image created! Size reduced by ~40-50%"
+    level: "success"
+
+  - type: "summary"
+    include:
+      - "size_reduction_gb"
+      - "size_reduction_percentage"
+      - "components_removed_count"
+      - "estimated_ram_requirement"
+
+  - type: "warnings"
+    message: "Note: Some features may not work. Test thoroughly before deployment!"
+
+rollback:
+  enabled: true
+  triggers: ["validation_failed"]
+
+logging:
+  level: "verbose"
+  output_file: "{output_path}\\minimal_build.log"
+
+metadata:
+  created: "2025-11-05"
+  inspired_by: "NTDEV tiny11"
+  tested_on:
+    - "Windows 11 23H2"
+    - "Windows 11 24H2"
+  minimum_specs:
+    ram: "2 GB"
+    disk: "16 GB"
+  tags:
+    - "minimal"
+    - "lightweight"
+    - "tiny11"
+    - "low-spec"
+    - "debloat"

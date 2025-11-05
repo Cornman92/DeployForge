@@ -1,0 +1,396 @@
+# Gaming Optimized Windows 11 Workflow
+# Removes bloat and optimizes for gaming performance
+
+name: "Gaming Optimized Windows 11"
+version: "1.0.0"
+description: "Remove bloatware and optimize Windows 11 for gaming performance"
+author: "DeployForge Team"
+category: "Gaming"
+target:
+  - "Windows 11 Pro"
+  - "Windows 11 Home"
+estimated_time: "25-30 minutes"
+estimated_size_reduction: "2-3 GB"
+
+# Input parameters
+parameters:
+  input_iso_path:
+    type: "path"
+    description: "Path to Windows 11 ISO file"
+    required: true
+    example: "C:\\ISOs\\Win11_24H2.iso"
+
+  driver_path:
+    type: "path"
+    description: "Path to gaming drivers folder (GPU, chipset, etc.)"
+    required: false
+    example: "C:\\Drivers\\Gaming"
+
+  output_wim_path:
+    type: "path"
+    description: "Output path for customized WIM file"
+    required: true
+    example: "C:\\Output\\Gaming_Win11.wim"
+
+  usb_drive:
+    type: "drive"
+    description: "USB drive letter for bootable creation (optional)"
+    required: false
+    example: "E:"
+
+  keep_defender:
+    type: "boolean"
+    description: "Keep Windows Defender (recommended for online gaming)"
+    default: true
+
+# Workflow steps
+steps:
+  - id: "mount_image"
+    name: "Mount Windows Image"
+    type: "image.mount"
+    params:
+      source: "{input_iso_path}"
+      auto_select_edition: "Pro"
+    on_error: "abort"
+
+  - id: "backup_original"
+    name: "Create Backup Snapshot"
+    type: "image.snapshot"
+    params:
+      name: "original_state"
+    on_error: "warn"
+
+  - id: "remove_bloatware"
+    name: "Remove Gaming Bloatware"
+    type: "component.remove_bulk"
+    params:
+      components:
+        # Xbox (keep Game Bar for game overlay)
+        - name: "Xbox Console Companion"
+          keep_dependencies: ["Xbox Game Bar"]
+        - name: "Xbox Identity Provider"
+          conditional: "!{keep_game_bar}"
+        - name: "Xbox Speech To Text Overlay"
+        - name: "Xbox Live Auth Manager"
+          conditional: "!{keep_game_bar}"
+        - name: "Xbox Live In-Game Experience"
+          conditional: "!{keep_game_bar}"
+
+        # Microsoft bloat
+        - name: "OneDrive"
+        - name: "Cortana"
+        - name: "Microsoft Edge"
+          note: "Removes Edge browser, not WebView2"
+        - name: "Microsoft Edge Update"
+        - name: "Office Hub"
+        - name: "Get Started"
+        - name: "Tips"
+
+        # 3D and Media
+        - name: "3D Viewer"
+        - name: "Paint 3D"
+        - name: "Mixed Reality Portal"
+        - name: "Print 3D"
+
+        # Unnecessary apps
+        - name: "Bing News"
+        - name: "Bing Weather"
+        - name: "Microsoft To Do"
+        - name: "Microsoft Solitaire Collection"
+        - name: "Sticky Notes"
+        - name: "Skype"
+        - name: "Your Phone"
+        - name: "People"
+        - name: "Mail and Calendar"
+        - name: "Maps"
+        - name: "Voice Recorder"
+
+        # Optional (can be re-enabled)
+        - name: "Windows Defender"
+          conditional: "!{keep_defender}"
+          warning: "Removing Defender may impact security"
+
+      safety_checks: true
+      resolve_dependencies: true
+    on_error: "continue_with_log"
+
+  - id: "disable_telemetry_services"
+    name: "Disable Telemetry Services"
+    type: "service.disable_bulk"
+    params:
+      services:
+        - "DiagTrack"                    # Connected User Experiences and Telemetry
+        - "dmwappushservice"             # WAP Push Message Routing Service
+        - "WerSvc"                       # Windows Error Reporting
+        - "OneSyncSvc"                   # OneDrive sync (if removed)
+        - "MessagingService"             # Messaging service
+        - "PimIndexMaintenanceSvc"       # Contact Data
+        - "UserDataSvc"                  # User Data Access
+        - "UnistoreSvc"                  # User Data Storage
+        - "BcastDVRUserService"          # Game DVR and Broadcast
+        - "XblAuthManager"               # Xbox Live Auth (if Xbox removed)
+        - "XblGameSave"                  # Xbox Live Game Save
+        - "XboxGipSvc"                   # Xbox Accessory Management
+        - "XboxNetApiSvc"                # Xbox Live Networking
+      create_restore_point: true
+    on_error: "warn"
+
+  - id: "optimize_services"
+    name: "Optimize Background Services for Gaming"
+    type: "service.configure_bulk"
+    params:
+      services:
+        # Disable resource-heavy services
+        - name: "SysMain"                # Superfetch
+          action: "disable"
+          reason: "Reduce disk I/O for SSD systems"
+
+        - name: "WSearch"                # Windows Search
+          action: "manual"
+          reason: "Reduce CPU usage"
+
+        - name: "wisvc"                  # Windows Insider Service
+          action: "disable"
+
+        - name: "RetailDemo"
+          action: "disable"
+
+        # Keep gaming-essential services
+        - name: "AudioSrv"               # Windows Audio
+          action: "automatic"
+
+        - name: "Audiosrv"               # Windows Audio Endpoint Builder
+          action: "automatic"
+
+  - id: "apply_gaming_registry_tweaks"
+    name: "Apply Gaming Performance Registry Tweaks"
+    type: "registry.apply_preset"
+    params:
+      preset: "gaming_performance"
+      custom_tweaks:
+        # Disable Game DVR
+        - path: "HKLM\\SOFTWARE\\Microsoft\\PolicyManager\\default\\ApplicationManagement\\AllowGameDVR"
+          name: "value"
+          type: "dword"
+          value: 0
+
+        # Disable fullscreen optimizations globally
+        - path: "HKCU\\System\\GameConfigStore"
+          name: "GameDVR_FSEBehaviorMode"
+          type: "dword"
+          value: 2
+
+        # Enable Game Mode
+        - path: "HKCU\\Software\\Microsoft\\GameBar"
+          name: "AutoGameModeEnabled"
+          type: "dword"
+          value: 1
+
+        # Disable Cortana
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Windows Search"
+          name: "AllowCortana"
+          type: "dword"
+          value: 0
+
+        # Disable telemetry
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\DataCollection"
+          name: "AllowTelemetry"
+          type: "dword"
+          value: 0
+
+        # Disable Windows Update automatic restart
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU"
+          name: "NoAutoRebootWithLoggedOnUsers"
+          type: "dword"
+          value: 1
+
+        # Optimize visual effects for performance
+        - path: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects"
+          name: "VisualFXSetting"
+          type: "dword"
+          value: 2  # Adjust for best performance
+
+        # Disable hibernation to free up space
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power"
+          name: "HibernateEnabled"
+          type: "dword"
+          value: 0
+
+        # Set processor scheduling to Programs (not background services)
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\PriorityControl"
+          name: "Win32PrioritySeparation"
+          type: "dword"
+          value: 38
+
+        # Disable Windows Defender (if selected)
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows Defender"
+          name: "DisableAntiSpyware"
+          type: "dword"
+          value: 1
+          conditional: "!{keep_defender}"
+
+      backup_registry: true
+    on_error: "abort"
+
+  - id: "privacy_tweaks"
+    name: "Apply Privacy Optimizations"
+    type: "registry.apply_preset"
+    params:
+      preset: "privacy_optimized"
+    on_error: "continue"
+
+  - id: "integrate_drivers"
+    name: "Integrate Gaming Drivers"
+    type: "driver.inject"
+    params:
+      source: "{driver_path}"
+      recursive: true
+      force_unsigned: false
+    conditional: "{driver_path} != null"
+    on_error: "warn"
+
+  - id: "cleanup_winsxs"
+    name: "Cleanup Component Store"
+    type: "image.cleanup"
+    params:
+      component_store: true
+      superseded_components: true
+      aggressive: false
+    on_error: "warn"
+
+  - id: "optimize_image"
+    name: "Optimize and Compress Image"
+    type: "image.optimize"
+    params:
+      compression: "maximum"
+      deduplication: true
+    on_error: "warn"
+
+  - id: "create_autounattend"
+    name: "Generate Autounattend for Gaming Setup"
+    type: "deployment.autounattend"
+    params:
+      config:
+        skip_oobe: true
+        skip_privacy_questions: true
+        auto_login:
+          enabled: true
+          username: "Gamer"
+        regional_settings:
+          locale: "en-US"
+          timezone: "Pacific Standard Time"
+        partition_configuration:
+          disk_id: 0
+          partitions:
+            - type: "EFI"
+              size: 100
+            - type: "MSR"
+              size: 16
+            - type: "Primary"
+              size: "remaining"
+              letter: "C"
+        post_install_commands:
+          - "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c"  # High Performance
+          - "bcdedit /set useplatformclock true"  # Platform clock for stability
+        privacy_settings:
+          advertising_id: false
+          location: false
+          telemetry: "security"
+          feedback: false
+          diagnostic_data: "basic"
+      output: "{output_path}\\autounattend.xml"
+    on_error: "warn"
+
+  - id: "validate_image"
+    name: "Validate Image Integrity"
+    type: "image.validate"
+    params:
+      check_bootable: true
+      verify_components: true
+    on_error: "abort"
+
+  - id: "save_image"
+    name: "Save Customized Image"
+    type: "image.save"
+    params:
+      output: "{output_wim_path}"
+      compression: "LZX"
+      verify: true
+    on_error: "abort"
+
+  - id: "create_usb_installer"
+    name: "Create Bootable USB"
+    type: "deployment.usb_create"
+    params:
+      device: "{usb_drive}"
+      boot_mode: "UEFI+Legacy"
+      tool: "rufus"  # or "ventoy"
+      include_autounattend: true
+      verify_bootable: true
+    conditional: "{usb_drive} != null"
+    on_error: "warn"
+
+  - id: "unmount_image"
+    name: "Unmount and Cleanup"
+    type: "image.unmount"
+    params:
+      discard_changes: false
+    on_error: "warn"
+
+  - id: "generate_report"
+    name: "Generate Optimization Report"
+    type: "report.generate"
+    params:
+      format: ["pdf", "html"]
+      include:
+        - "removed_components"
+        - "applied_tweaks"
+        - "size_comparison"
+        - "estimated_performance_gain"
+      output: "{output_path}\\Gaming_Optimization_Report"
+    on_error: "continue"
+
+# Post-execution actions
+post_execution:
+  - type: "notification"
+    message: "Gaming-optimized Windows 11 image created successfully!"
+    level: "success"
+
+  - type: "summary"
+    include:
+      - "execution_time"
+      - "size_before"
+      - "size_after"
+      - "space_saved"
+      - "components_removed"
+      - "tweaks_applied"
+
+# Rollback configuration
+rollback:
+  enabled: true
+  triggers:
+    - "validation_failed"
+    - "user_requested"
+  restore_to: "original_state"
+
+# Logging
+logging:
+  level: "info"
+  output_file: "{output_path}\\gaming_workflow.log"
+  include_timestamps: true
+  include_warnings: true
+
+# Metadata
+metadata:
+  created: "2025-11-05"
+  updated: "2025-11-05"
+  tested_on:
+    - "Windows 11 23H2"
+    - "Windows 11 24H2"
+  tags:
+    - "gaming"
+    - "optimization"
+    - "debloat"
+    - "performance"
+  popularity: 0
+  rating: 0

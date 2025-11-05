@@ -1,0 +1,169 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  backend-build-test:
+    name: Backend Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore src/backend/DeployForge.sln
+
+      - name: Build
+        run: dotnet build src/backend/DeployForge.sln --configuration Release --no-restore
+
+      - name: Run unit tests
+        run: dotnet test tests/unit/**/*.csproj --configuration Release --no-build --verbosity normal --collect:"XPlat Code Coverage"
+
+      - name: Run integration tests
+        run: dotnet test tests/integration/**/*.csproj --configuration Release --no-build --verbosity normal
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: '**/coverage.cobertura.xml'
+          flags: backend
+
+  frontend-build-test:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: src/frontend
+        run: npm run lint
+
+      - name: Type check
+        working-directory: src/frontend
+        run: npm run type-check
+
+      - name: Run tests
+        working-directory: src/frontend
+        run: npm test -- --coverage --run
+
+      - name: Build
+        working-directory: src/frontend
+        run: npm run build
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: src/frontend/coverage/lcov.info
+          flags: frontend
+
+  powershell-test:
+    name: PowerShell Module Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck
+          Invoke-Pester -Path tests/powershell -OutputFormat NUnitXml -OutputFile TestResults.xml -CodeCoverage src/powershell/**/*.ps1
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
+        with:
+          files: TestResults.xml
+
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  security-scan:
+    name: Security Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  build-status:
+    name: Build Status Check
+    runs-on: ubuntu-latest
+    needs: [backend-build-test, frontend-build-test, powershell-test, code-quality]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          if [[ "${{ needs.backend-build-test.result }}" == "failure" ]] || \
+             [[ "${{ needs.frontend-build-test.result }}" == "failure" ]] || \
+             [[ "${{ needs.powershell-test.result }}" == "failure" ]]; then
+            echo "Build failed!"
+            exit 1
+          else
+            echo "All builds passed!"
+          fi

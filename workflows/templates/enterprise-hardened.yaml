@@ -1,0 +1,397 @@
+# Enterprise Security Hardened Windows 11 Workflow
+# CIS Benchmark Level 1 + STIG compliance
+
+name: "Enterprise Security Hardened"
+version: "1.0.0"
+description: "CIS Benchmark Level 1 + STIG compliance for Windows 11 Enterprise"
+author: "DeployForge Team"
+category: "Enterprise"
+target:
+  - "Windows 11 Enterprise"
+  - "Windows 11 Pro"
+estimated_time: "35-40 minutes"
+
+parameters:
+  input_wim_path:
+    type: "path"
+    description: "Path to Windows 11 Enterprise WIM file"
+    required: true
+    example: "C:\\Images\\Win11_Enterprise.wim"
+
+  updates_path:
+    type: "path"
+    description: "Path to Windows updates folder"
+    required: false
+    example: "C:\\Updates\\Enterprise"
+
+  output_wim_path:
+    type: "path"
+    description: "Output path for hardened image"
+    required: true
+    example: "C:\\Output\\Enterprise_Hardened.wim"
+
+  enable_bitlocker:
+    type: "boolean"
+    description: "Pre-configure BitLocker settings"
+    default: true
+
+  domain_join:
+    type: "boolean"
+    description: "Configure for domain join"
+    default: true
+
+steps:
+  - id: "mount_image"
+    name: "Mount Enterprise Image"
+    type: "image.mount"
+    params:
+      source: "{input_wim_path}"
+    on_error: "abort"
+
+  - id: "snapshot"
+    name: "Create Security Baseline Snapshot"
+    type: "image.snapshot"
+    params:
+      name: "pre_hardening"
+    on_error: "warn"
+
+  - id: "remove_consumer_features"
+    name: "Remove Consumer Features"
+    type: "component.remove_bulk"
+    params:
+      components:
+        - "Xbox Services"
+        - "OneDrive (Consumer)"
+        - "Consumer Apps"
+        - "Cortana"
+        - "Bing Search Integration"
+        - "Retail Demo Mode"
+        - "Windows Tips"
+        - "Get Started App"
+      safety_checks: true
+    on_error: "continue"
+
+  - id: "apply_cis_benchmark"
+    name: "Apply CIS Benchmark Level 1"
+    type: "security.apply_baseline"
+    params:
+      baseline: "CIS_Windows_11_Level1_v1.0.0"
+      categories:
+        - "Account Policies"
+        - "Local Policies"
+        - "Audit Policies"
+        - "User Rights Assignment"
+        - "Security Options"
+        - "Windows Firewall"
+        - "Advanced Audit Policy"
+      exclusions: []
+    on_error: "abort"
+
+  - id: "apply_stig"
+    name: "Apply DISA STIG Settings"
+    type: "security.apply_stig"
+    params:
+      version: "Windows_11_STIG_V1R5"
+      severity_filter: ["CAT I", "CAT II"]  # Critical and High
+      findings:
+        - "V-253270"  # Account lockout
+        - "V-253271"  # Password complexity
+        - "V-253272"  # Password history
+        - "V-253273"  # Minimum password length
+        - "V-253274"  # Password age
+        # ... (hundreds more STIG findings)
+      auto_remediate: true
+    on_error: "abort"
+
+  - id: "harden_registry"
+    name: "Apply Security Hardening Registry Settings"
+    type: "registry.apply_preset"
+    params:
+      preset: "enterprise_security"
+      custom_tweaks:
+        # Disable SMBv1
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Services\\LanmanServer\\Parameters"
+          name: "SMB1"
+          type: "dword"
+          value: 0
+
+        # Enable Credential Guard
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa"
+          name: "LsaCfgFlags"
+          type: "dword"
+          value: 1
+
+        # Disable LLMNR
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\DNSClient"
+          name: "EnableMulticast"
+          type: "dword"
+          value: 0
+
+        # Disable NetBIOS
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Services\\NetBT\\Parameters"
+          name: "NodeType"
+          type: "dword"
+          value: 2
+
+        # Enhanced audit logging
+        - path: "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System\\Audit"
+          name: "ProcessCreationIncludeCmdLine_Enabled"
+          type: "dword"
+          value: 1
+
+        # Disable PowerShell v2
+        - path: "HKLM\\SOFTWARE\\Microsoft\\PowerShell\\1\\PowerShellEngine"
+          name: "PowerShellVersion"
+          type: "string"
+          value: "2.0"
+          action: "delete_key"
+
+        # Restrict anonymous access
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa"
+          name: "RestrictAnonymous"
+          type: "dword"
+          value: 1
+
+        # Enable ASLR
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Memory Management"
+          name: "MoveImages"
+          type: "dword"
+          value: 1
+
+        # Configure BitLocker
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\FVE"
+          name: "UseAdvancedStartup"
+          type: "dword"
+          value: 1
+          conditional: "{enable_bitlocker}"
+
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\FVE"
+          name: "EnableBDEWithNoTPM"
+          type: "dword"
+          value: 0
+          conditional: "{enable_bitlocker}"
+
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\FVE"
+          name: "UseTPM"
+          type: "dword"
+          value: 2
+          conditional: "{enable_bitlocker}"
+    on_error: "abort"
+
+  - id: "configure_firewall"
+    name: "Configure Windows Firewall"
+    type: "firewall.configure"
+    params:
+      preset: "restrictive"
+      profiles:
+        domain:
+          enabled: true
+          default_inbound: "block"
+          default_outbound: "allow"
+        private:
+          enabled: true
+          default_inbound: "block"
+          default_outbound: "allow"
+        public:
+          enabled: true
+          default_inbound: "block"
+          default_outbound: "allow"
+      allowed_inbound:
+        - name: "Remote Desktop"
+          port: 3389
+          protocol: "TCP"
+          profiles: ["domain"]
+        - name: "File and Printer Sharing"
+          port: 445
+          protocol: "TCP"
+          profiles: ["domain"]
+    on_error: "warn"
+
+  - id: "disable_vulnerable_services"
+    name: "Disable Vulnerable/Unnecessary Services"
+    type: "service.disable_bulk"
+    params:
+      services:
+        - "RemoteRegistry"           # Remote Registry
+        - "Spooler"                  # Print Spooler (unless needed)
+        - "WMPNetworkSvc"            # Windows Media Player Network Sharing
+        - "RpcLocator"               # RPC Locator
+        - "simptcp"                  # Simple TCP/IP Services
+        - "SSDPSRV"                  # SSDP Discovery
+        - "upnphost"                 # UPnP Device Host
+        - "WerSvc"                   # Windows Error Reporting
+        - "Fax"                      # Fax Service
+        - "Browser"                  # Computer Browser
+        - "TapiSrv"                  # Telephony
+        - "SessionEnv"               # Remote Desktop Configuration
+        - "TermService"              # Remote Desktop Services (if not needed)
+    on_error: "continue"
+
+  - id: "configure_audit_policy"
+    name: "Configure Advanced Audit Policy"
+    type: "security.audit_policy"
+    params:
+      categories:
+        "Account Logon":
+          - "Credential Validation": "Success and Failure"
+        "Account Management":
+          - "Security Group Management": "Success and Failure"
+          - "User Account Management": "Success and Failure"
+          - "Computer Account Management": "Success"
+        "Logon/Logoff":
+          - "Logon": "Success and Failure"
+          - "Logoff": "Success"
+          - "Account Lockout": "Failure"
+          - "Special Logon": "Success"
+        "Object Access":
+          - "File Share": "Success and Failure"
+          - "Removable Storage": "Success and Failure"
+        "Policy Change":
+          - "Audit Policy Change": "Success and Failure"
+          - "Authentication Policy Change": "Success"
+        "Privilege Use":
+          - "Sensitive Privilege Use": "Success and Failure"
+        "System":
+          - "Security State Change": "Success and Failure"
+          - "Security System Extension": "Success and Failure"
+          - "System Integrity": "Success and Failure"
+    on_error: "warn"
+
+  - id: "integrate_updates"
+    name: "Integrate Security Updates"
+    type: "update.integrate"
+    params:
+      source: "{updates_path}"
+      types:
+        - "Security Updates"
+        - "Critical Updates"
+        - "Cumulative Updates"
+      cleanup: true
+    conditional: "{updates_path} != null"
+    on_error: "warn"
+
+  - id: "create_autounattend"
+    name: "Generate Hardened Autounattend"
+    type: "deployment.autounattend"
+    params:
+      config:
+        skip_oobe: false  # Don't skip for enterprise
+        domain_join:
+          enabled: "{domain_join}"
+          domain: "corp.contoso.com"
+          ou: "OU=Workstations,DC=corp,DC=contoso,DC=com"
+        bitlocker:
+          enabled: "{enable_bitlocker}"
+          recovery_password: true
+          recovery_key_path: "C:\\BitLocker"
+        local_accounts:
+          administrator:
+            enabled: false  # Disable for security
+        audit_logging:
+          enabled: true
+          max_log_size: 1024000  # 1 GB
+        regional_settings:
+          locale: "en-US"
+          timezone: "Eastern Standard Time"
+        security_settings:
+          uac: "always_notify"
+          smartscreen: "prompt"
+          firewall: "enabled_all_profiles"
+        post_install_commands:
+          - "powershell.exe -Command \"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V-All -NoRestart\""
+          - "powershell.exe -Command \"Set-MpPreference -DisableRealtimeMonitoring $false\""
+    on_error: "warn"
+
+  - id: "security_scan"
+    name: "Run Security Compliance Scan"
+    type: "security.scan"
+    params:
+      scan_types:
+        - "vulnerability"
+        - "compliance"
+        - "configuration"
+      benchmarks:
+        - "CIS_Level1"
+        - "STIG"
+      generate_report: true
+    on_error: "warn"
+
+  - id: "validate_hardening"
+    name: "Validate Security Hardening"
+    type: "security.validate"
+    params:
+      checks:
+        - "smb1_disabled"
+        - "powershell_v2_removed"
+        - "credential_guard_enabled"
+        - "firewall_enabled"
+        - "audit_policy_configured"
+        - "vulnerable_services_disabled"
+      fail_on_error: true
+    on_error: "abort"
+
+  - id: "save_image"
+    name: "Save Hardened Image"
+    type: "image.save"
+    params:
+      output: "{output_wim_path}"
+      compression: "maximum"
+      verify: true
+    on_error: "abort"
+
+  - id: "unmount"
+    name: "Unmount Image"
+    type: "image.unmount"
+    on_error: "warn"
+
+  - id: "generate_compliance_report"
+    name: "Generate Compliance Report"
+    type: "report.generate"
+    params:
+      format: ["pdf", "html", "json"]
+      include:
+        - "cis_compliance_score"
+        - "stig_findings_summary"
+        - "applied_controls"
+        - "hardening_checklist"
+        - "security_scan_results"
+      output: "{output_path}\\Enterprise_Compliance_Report"
+    on_error: "continue"
+
+post_execution:
+  - type: "notification"
+    message: "Enterprise hardened Windows 11 image created successfully!"
+    level: "success"
+
+  - type: "compliance_summary"
+    include:
+      - "cis_compliance_percentage"
+      - "stig_cat1_remediated"
+      - "stig_cat2_remediated"
+      - "total_controls_applied"
+
+rollback:
+  enabled: true
+  restore_to: "pre_hardening"
+
+logging:
+  level: "verbose"
+  output_file: "{output_path}\\enterprise_hardening.log"
+  security_events: true
+
+metadata:
+  created: "2025-11-05"
+  updated: "2025-11-05"
+  compliance_frameworks:
+    - "CIS Benchmark Windows 11 v1.0.0"
+    - "DISA STIG Windows 11 V1R5"
+    - "NIST 800-53"
+  tested_on:
+    - "Windows 11 Enterprise 24H2"
+  tags:
+    - "security"
+    - "compliance"
+    - "enterprise"
+    - "hardening"
+    - "cis"
+    - "stig"

@@ -1,0 +1,213 @@
+# Developer Workstation Windows 11 Workflow
+# Pre-configured for software development with essential tools
+
+name: "Developer Optimized Windows 11"
+version: "1.0.0"
+description: "Pre-configured Windows 11 for software development"
+author: "DeployForge Team"
+category: "Developer"
+target:
+  - "Windows 11 Pro"
+estimated_time: "30-35 minutes"
+
+parameters:
+  input_iso_path:
+    type: "path"
+    description: "Path to Windows 11 Pro ISO file"
+    required: true
+
+  driver_path:
+    type: "path"
+    description: "Path to additional drivers"
+    required: false
+
+  output_wim_path:
+    type: "path"
+    description: "Output path for developer image"
+    required: true
+
+  enable_wsl:
+    type: "boolean"
+    description: "Enable WSL2"
+    default: true
+
+  enable_hyperv:
+    type: "boolean"
+    description: "Enable Hyper-V"
+    default: true
+
+steps:
+  - id: "mount_image"
+    name: "Mount Windows 11 Pro Image"
+    type: "image.mount"
+    params:
+      source: "{input_iso_path}"
+    on_error: "abort"
+
+  - id: "remove_bloat"
+    name: "Remove Developer Bloatware"
+    type: "component.remove_bulk"
+    params:
+      components:
+        - "Xbox Services"
+        - "Mixed Reality Portal"
+        - "3D Viewer"
+        - "Paint 3D"
+        - "Mobile Plans"
+      safety_checks: true
+    on_error: "continue"
+
+  - id: "enable_dev_features"
+    name: "Enable Developer Features"
+    type: "feature.enable_bulk"
+    params:
+      features:
+        - name: "Microsoft-Hyper-V-All"
+          conditional: "{enable_hyperv}"
+        - name: "Microsoft-Windows-Subsystem-Linux"
+          conditional: "{enable_wsl}"
+        - name: "VirtualMachinePlatform"
+          conditional: "{enable_wsl}"
+        - name: "Microsoft-Windows-Subsystem-Linux-Optional"
+          conditional: "{enable_wsl}"
+        - name: "Containers"
+        - name: "Containers-DisposableClientVM"
+        - name: "Microsoft-Windows-Sandbox"
+        - name: "NetFx3"
+        - name: "IIS-WebServerRole"
+        - name: "IIS-WebServer"
+        - name: "IIS-ApplicationDevelopment"
+        - name: "IIS-ASPNET45"
+    on_error: "warn"
+
+  - id: "dev_registry_tweaks"
+    name: "Apply Developer Registry Tweaks"
+    type: "registry.apply_preset"
+    params:
+      preset: "developer_friendly"
+      custom_tweaks:
+        # Show file extensions
+        - path: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced"
+          name: "HideFileExt"
+          type: "dword"
+          value: 0
+
+        # Show hidden files
+        - path: "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced"
+          name: "Hidden"
+          type: "dword"
+          value: 1
+
+        # Disable sleep on AC power
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerSettings\\238C9FA8-0AAD-41ED-83F4-97BE242C8F20\\7bc4a2f9-d8fc-4469-b07b-33eb785aaca0"
+          name: "Attributes"
+          type: "dword"
+          value: 0
+
+        # Developer Mode
+        - path: "HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock"
+          name: "AllowDevelopmentWithoutDevLicense"
+          type: "dword"
+          value: 1
+
+        # Long path support
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\FileSystem"
+          name: "LongPathsEnabled"
+          type: "dword"
+          value: 1
+
+        # Disable Windows Update auto-restart
+        - path: "HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU"
+          name: "NoAutoRebootWithLoggedOnUsers"
+          type: "dword"
+          value: 1
+
+        # Performance power plan
+        - path: "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Power"
+          name: "CsEnabled"
+          type: "dword"
+          value: 0
+    on_error: "warn"
+
+  - id: "configure_wsl"
+    name: "Configure WSL2 Settings"
+    type: "wsl.configure"
+    params:
+      default_version: 2
+      kernel_update: true
+      gui_support: true
+    conditional: "{enable_wsl}"
+    on_error: "warn"
+
+  - id: "integrate_drivers"
+    name: "Integrate Hardware Drivers"
+    type: "driver.inject"
+    params:
+      source: "{driver_path}"
+      recursive: true
+    conditional: "{driver_path} != null"
+    on_error: "warn"
+
+  - id: "create_autounattend"
+    name: "Generate Developer Autounattend"
+    type: "deployment.autounattend"
+    params:
+      config:
+        skip_oobe: true
+        auto_login: true
+        username: "Developer"
+        enable_developer_mode: true
+        post_install_scripts:
+          - name: "install_chocolatey.ps1"
+            content: |
+              Set-ExecutionPolicy Bypass -Scope Process -Force
+              [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+              iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+          - name: "install_winget_apps.ps1"
+            content: |
+              winget install -e --id Git.Git
+              winget install -e --id Microsoft.VisualStudioCode
+              winget install -e --id Microsoft.WindowsTerminal
+              winget install -e --id Docker.DockerDesktop
+              winget install -e --id Microsoft.PowerShell
+
+          - name: "configure_git.ps1"
+            content: |
+              git config --global core.autocrlf true
+              git config --global core.longpaths true
+
+          - name: "enable_wsl2.ps1"
+            content: |
+              wsl --install --no-distribution
+              wsl --set-default-version 2
+    on_error: "warn"
+
+  - id: "save_image"
+    name: "Save Developer Image"
+    type: "image.save"
+    params:
+      output: "{output_wim_path}"
+      compression: "fast"
+    on_error: "abort"
+
+  - id: "unmount"
+    name: "Unmount Image"
+    type: "image.unmount"
+    on_error: "warn"
+
+post_execution:
+  - type: "notification"
+    message: "Developer-optimized Windows 11 image created!"
+
+logging:
+  level: "info"
+  output_file: "{output_path}\\developer_workflow.log"
+
+metadata:
+  created: "2025-11-05"
+  tags:
+    - "developer"
+    - "coding"
+    - "wsl"
+    - "hyper-v"

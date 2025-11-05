@@ -1,0 +1,111 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '20.x'
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Get version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Build Backend
+        run: |
+          dotnet publish src/backend/DeployForge.Api/DeployForge.Api.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:Version=${{ steps.get_version.outputs.VERSION }} `
+            -o dist/backend
+
+      - name: Build Frontend
+        working-directory: src/frontend
+        run: |
+          npm ci
+          npm run build
+          npm run build:electron
+
+      - name: Build PowerShell Module
+        shell: pwsh
+        run: |
+          $manifestPath = "src/powershell/DeployForge.psd1"
+          Update-ModuleManifest -Path $manifestPath -ModuleVersion ${{ steps.get_version.outputs.VERSION }}
+          Compress-Archive -Path src/powershell/* -DestinationPath dist/DeployForge-PowerShell-${{ steps.get_version.outputs.VERSION }}.zip
+
+      - name: Create Chocolatey Package
+        shell: pwsh
+        run: |
+          choco pack deployment/chocolatey/deployforge.nuspec --version ${{ steps.get_version.outputs.VERSION }}
+          Move-Item *.nupkg dist/
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          $notes = @"
+          # DeployForge ${{ steps.get_version.outputs.VERSION }}
+
+          ## What's New
+          - See CHANGELOG.md for details
+
+          ## Downloads
+          - **Windows Installer**: DeployForge-Setup-${{ steps.get_version.outputs.VERSION }}.exe
+          - **Portable**: DeployForge-Portable-${{ steps.get_version.outputs.VERSION }}.zip
+          - **PowerShell Module**: DeployForge-PowerShell-${{ steps.get_version.outputs.VERSION }}.zip
+          - **Chocolatey**: deployforge.${{ steps.get_version.outputs.VERSION }}.nupkg
+
+          ## Installation
+          ```powershell
+          # Chocolatey
+          choco install deployforge
+
+          # Winget (coming soon)
+          winget install DeployForge.DeployForge
+          ```
+          "@
+          $notes | Out-File -FilePath release_notes.md -Encoding UTF8
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/**/*.exe
+            dist/**/*.zip
+            dist/**/*.nupkg
+          body_path: release_notes.md
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.VERSION, 'alpha') || contains(steps.get_version.outputs.VERSION, 'beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to Chocolatey
+        if: ${{ !contains(steps.get_version.outputs.VERSION, 'alpha') }}
+        shell: pwsh
+        run: |
+          choco push dist/*.nupkg --source https://push.chocolatey.org/ --api-key ${{ secrets.CHOCOLATEY_API_KEY }}

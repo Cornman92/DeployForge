@@ -1,0 +1,119 @@
+# DeployForge .gitignore
+
+# Build outputs
+bin/
+obj/
+out/
+dist/
+build/
+*.dll
+*.exe
+*.pdb
+
+# Node modules and frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+package-lock.json
+yarn.lock
+
+# IDE and editor files
+.vscode/
+.vs/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test coverage
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+.nyc_output/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+*.pfx
+*.p12
+secrets/
+credentials/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Windows image files (large)
+*.iso
+*.wim
+*.esd
+*.vhdx
+*.vhd
+*.img
+mount/
+images/
+ISOs/
+
+# Package managers
+packages/
+.nuget/
+paket-files/
+
+# .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+**/Properties/launchSettings.json
+*.user
+*.suo
+*.cache
+*.vs/
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Electron
+electron-builder.yml
+dist_electron/
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Redis dump
+dump.rdb
+
+# Documentation build
+docs/_build/
+site/
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Keep folder structure
+!.gitkeep
