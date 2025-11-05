@@ -49,6 +49,7 @@ public static class ServiceConfiguration
         services.AddScoped<IDebloatService, DebloatService>();
         services.AddScoped<IWorkflowService, WorkflowService>();
         services.AddScoped<IDeploymentService, DeploymentService>();
+        services.AddScoped<ILanguageService, LanguageService>();
 
         // Register background services
         // services.AddHostedService<CleanupService>();
