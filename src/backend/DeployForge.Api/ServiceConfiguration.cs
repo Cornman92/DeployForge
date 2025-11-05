@@ -45,7 +45,7 @@ public static class ServiceConfiguration
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
         services.AddScoped<IUpdateService, UpdateService>();
-        // services.AddScoped<IRegistryService, RegistryService>();
+        services.AddScoped<IRegistryService, RegistryService>();
         // services.AddScoped<IWorkflowService, WorkflowService>();
 
         // Register background services
