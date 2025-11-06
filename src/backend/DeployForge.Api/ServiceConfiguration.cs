@@ -50,6 +50,7 @@ public static class ServiceConfiguration
         services.AddScoped<IImageTemplateService, ImageTemplateService>();
         services.AddScoped<IConfigurationProfileService, ConfigurationProfileService>();
         services.AddScoped<IValidationService, ValidationService>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IBackupService, BackupService>();
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
