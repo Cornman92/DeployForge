@@ -49,6 +49,7 @@ public static class ServiceConfiguration
         services.AddScoped<IImageConversionService, ImageConversionService>();
         services.AddScoped<IImageTemplateService, ImageTemplateService>();
         services.AddScoped<IConfigurationProfileService, ConfigurationProfileService>();
+        services.AddScoped<IValidationService, ValidationService>();
         services.AddScoped<IBackupService, BackupService>();
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
