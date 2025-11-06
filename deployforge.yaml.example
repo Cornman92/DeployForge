@@ -1,0 +1,28 @@
+# DeployForge Configuration Example
+# Copy this file to deployforge.yaml and customize as needed
+
+mount:
+  # Default directory for mounting images (null = use temp dir)
+  default_dir: null
+  # Automatically cleanup mount points after unmounting
+  auto_cleanup: true
+
+logging:
+  # Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: INFO
+  # Log file path (null = console only)
+  file: null
+
+wim:
+  # Default image index for WIM/ESD files
+  default_index: 1
+  # Compression type: none, fast, maximum, lzx, xpress
+  compression: maximum
+
+iso:
+  # Preserve file permissions when extracting
+  preserve_permissions: true
+
+ppkg:
+  # Validate XML files when reading PPKG
+  validate_xml: true
