@@ -51,6 +51,7 @@ public static class ServiceConfiguration
         services.AddScoped<IConfigurationProfileService, ConfigurationProfileService>();
         services.AddScoped<IValidationService, ValidationService>();
         services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IBatchOperationService, BatchOperationService>();
         services.AddScoped<IBackupService, BackupService>();
         services.AddScoped<IComponentService, ComponentService>();
         services.AddScoped<IDriverService, DriverService>();
