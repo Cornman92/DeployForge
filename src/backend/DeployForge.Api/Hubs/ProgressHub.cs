@@ -7,6 +7,13 @@ namespace DeployForge.Api;
 /// </summary>
 public class ProgressHub : Hub
 {
+    private readonly ILogger<ProgressHub> _logger;
+
+    public ProgressHub(ILogger<ProgressHub> logger)
+    {
+        _logger = logger;
+    }
+
     /// <summary>
     /// Send progress update to all connected clients
     /// </summary>
@@ -24,11 +31,55 @@ public class ProgressHub : Hub
     }
 
     /// <summary>
+    /// Send progress update to operation group
+    /// </summary>
+    public async Task SendProgressToGroup(string operationId, int percentage, string message, string? stage = null)
+    {
+        await Clients.Group(operationId).SendAsync("ReceiveProgress", new
+        {
+            OperationId = operationId,
+            Percentage = percentage,
+            Message = message,
+            Stage = stage,
+            Timestamp = DateTime.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Send operation completed notification
+    /// </summary>
+    public async Task SendOperationCompleted(string operationId, bool success, string message)
+    {
+        await Clients.Group(operationId).SendAsync("OperationCompleted", new
+        {
+            OperationId = operationId,
+            Success = success,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Send operation error notification
+    /// </summary>
+    public async Task SendOperationError(string operationId, string errorMessage)
+    {
+        await Clients.Group(operationId).SendAsync("OperationError", new
+        {
+            OperationId = operationId,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTime.UtcNow
+        });
+    }
+
+    /// <summary>
     /// Join a progress group for specific operation
     /// </summary>
     public async Task JoinOperationGroup(string operationId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, operationId);
+        _logger.LogInformation("Client {ConnectionId} joined operation group {OperationId}",
+            Context.ConnectionId, operationId);
     }
 
     /// <summary>
@@ -37,17 +88,27 @@ public class ProgressHub : Hub
     public async Task LeaveOperationGroup(string operationId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, operationId);
+        _logger.LogInformation("Client {ConnectionId} left operation group {OperationId}",
+            Context.ConnectionId, operationId);
     }
 
     public override async Task OnConnectedAsync()
     {
         await base.OnConnectedAsync();
-        Console.WriteLine($"Client connected: {Context.ConnectionId}");
+        _logger.LogInformation("SignalR client connected: {ConnectionId}", Context.ConnectionId);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         await base.OnDisconnectedAsync(exception);
-        Console.WriteLine($"Client disconnected: {Context.ConnectionId}");
+        if (exception != null)
+        {
+            _logger.LogWarning(exception, "SignalR client disconnected with error: {ConnectionId}",
+                Context.ConnectionId);
+        }
+        else
+        {
+            _logger.LogInformation("SignalR client disconnected: {ConnectionId}", Context.ConnectionId);
+        }
     }
 }

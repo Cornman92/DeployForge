@@ -1,3 +1,4 @@
+using DeployForge.Api.Services;
 using DeployForge.Core.Interfaces;
 using DeployForge.Core.Services;
 using DeployForge.DismEngine;
@@ -39,6 +40,9 @@ public static class ServiceConfiguration
 
         // Register DISM manager as singleton (thread-safe)
         services.AddSingleton<DismManager>();
+
+        // Register progress service as singleton (for SignalR)
+        services.AddSingleton<IProgressService, ProgressService>();
 
         // Register application services
         services.AddScoped<IImageService, ImageService>();
