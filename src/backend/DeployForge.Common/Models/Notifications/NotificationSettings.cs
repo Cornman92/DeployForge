@@ -178,6 +178,26 @@ public class WebhookEndpoint
     /// Secret for signature verification
     /// </summary>
     public string? Secret { get; set; }
+
+    /// <summary>
+    /// Previous secret (for rotation grace period)
+    /// </summary>
+    public string? PreviousSecret { get; set; }
+
+    /// <summary>
+    /// When the secret was created (UTC)
+    /// </summary>
+    public DateTime? SecretCreatedAt { get; set; }
+
+    /// <summary>
+    /// When the secret was last rotated (UTC)
+    /// </summary>
+    public DateTime? SecretRotatedAt { get; set; }
+
+    /// <summary>
+    /// Secret rotation interval in days (0 = no auto-rotation)
+    /// </summary>
+    public int SecretRotationDays { get; set; } = 90;
 }
 
 /// <summary>

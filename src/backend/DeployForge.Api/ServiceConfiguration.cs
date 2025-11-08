@@ -1,6 +1,7 @@
 using DeployForge.Api.Services;
 using DeployForge.Core.Interfaces;
 using DeployForge.Core.Services;
+using DeployForge.Core.Services.Webhooks;
 using DeployForge.DismEngine;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -49,6 +50,9 @@ public static class ServiceConfiguration
 
         // Register report service as scoped
         services.AddScoped<IReportService, ReportService>();
+
+        // Register webhook signature service as singleton
+        services.AddSingleton<IWebhookSignatureService, WebhookSignatureService>();
 
         // Register notification service as singleton
         services.AddSingleton<INotificationService, NotificationService>();

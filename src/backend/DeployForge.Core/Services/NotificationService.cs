@@ -4,6 +4,7 @@ using System.Text.Json;
 using DeployForge.Common.Models;
 using DeployForge.Common.Models.Notifications;
 using DeployForge.Core.Interfaces;
+using DeployForge.Core.Services.Webhooks;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Logging;
@@ -18,16 +19,19 @@ public class NotificationService : INotificationService
 {
     private readonly ILogger<NotificationService> _logger;
     private readonly HttpClient _httpClient;
+    private readonly IWebhookSignatureService _webhookSignatureService;
     private readonly string _settingsPath;
     private readonly List<NotificationHistory> _history = new();
     private NotificationSettings _settings = new();
 
     public NotificationService(
         ILogger<NotificationService> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        IWebhookSignatureService webhookSignatureService)
     {
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient();
+        _webhookSignatureService = webhookSignatureService;
 
         // Set settings path
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
@@ -234,9 +238,9 @@ public class NotificationService : INotificationService
             // Add signature if secret is configured
             if (!string.IsNullOrEmpty(webhook.Secret))
             {
-                var payloadJson = JsonSerializer.Serialize(payload);
-                var signature = ComputeSignature(payloadJson, webhook.Secret);
-                request.Headers.Add("X-DeployForge-Signature", signature);
+                var signature = _webhookSignatureService.GenerateSignature(payload, webhook.Secret);
+                request.Headers.Add("X-DeployForge-Signature", signature.FullSignature);
+                request.Headers.Add("X-DeployForge-Timestamp", signature.Timestamp.ToString());
             }
 
             request.Content = JsonContent.Create(payload);
@@ -626,12 +630,6 @@ public class NotificationService : INotificationService
         return html.ToString();
     }
 
-    private string ComputeSignature(string payload, string secret)
-    {
-        using var hmac = new System.Security.Cryptography.HMACSHA256(Encoding.UTF8.GetBytes(secret));
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-        return Convert.ToBase64String(hash);
-    }
 
     private void LoadSettings()
     {
