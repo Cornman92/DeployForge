@@ -2,8 +2,283 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
-    <Grid>
-        <TextBlock Text="Settings View" Style="{StaticResource MaterialDesignHeadline4TextBlock}"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Settings" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                    <TextBlock Text="Configure application preferences"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                           Command="{Binding ResetSettingsCommand}"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Restore" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Reset to Defaults"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding SaveSettingsCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ContentSave" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Save Settings"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Settings Content -->
+            <StackPanel Grid.Row="1">
+                <!-- API Connection Settings -->
+                <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <materialDesign:PackIcon Kind="Api" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="API Connection" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                        </StackPanel>
+
+                        <TextBox Text="{Binding ApiBaseUrl, UpdateSourceTrigger=PropertyChanged}"
+                                materialDesign:HintAssist.Hint="API Base URL"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0"
+                                    Text="{Binding ApiTimeout, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Timeout (seconds)"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    Margin="0,0,10,0"/>
+
+                            <CheckBox Grid.Column="1"
+                                     IsChecked="{Binding UseHttps}"
+                                     Content="Use HTTPS"
+                                     VerticalAlignment="Center"/>
+                        </Grid>
+
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                               Command="{Binding TestConnectionCommand}"
+                               HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Connection" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Test Connection"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Application Settings -->
+                <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <materialDesign:PackIcon Kind="Application" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Application" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                        </StackPanel>
+
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <ComboBox Grid.Row="0" Grid.Column="0"
+                                     ItemsSource="{Binding Themes}"
+                                     SelectedItem="{Binding Theme}"
+                                     materialDesign:HintAssist.Hint="Theme"
+                                     Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                     Margin="0,0,10,10"/>
+
+                            <ComboBox Grid.Row="0" Grid.Column="1"
+                                     ItemsSource="{Binding Languages}"
+                                     SelectedItem="{Binding Language}"
+                                     materialDesign:HintAssist.Hint="Language"
+                                     Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                     Margin="0,0,0,10"/>
+
+                            <CheckBox Grid.Row="1" Grid.Column="0"
+                                     IsChecked="{Binding CheckForUpdates}"
+                                     Content="Check for updates automatically"
+                                     Margin="0,0,10,5"/>
+
+                            <CheckBox Grid.Row="1" Grid.Column="1"
+                                     IsChecked="{Binding StartWithWindows}"
+                                     Content="Start with Windows"
+                                     Margin="0,0,0,5"/>
+                        </Grid>
+
+                        <CheckBox IsChecked="{Binding MinimizeToTray}"
+                                 Content="Minimize to system tray"
+                                 Margin="0,5,0,10"/>
+
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                               Command="{Binding CheckForUpdatesCommand}"
+                               HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Update" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Check for Updates Now"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Notification Settings -->
+                <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <materialDesign:PackIcon Kind="Bell" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Notifications" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                        </StackPanel>
+
+                        <CheckBox IsChecked="{Binding ShowNotifications}"
+                                 Content="Enable notifications"
+                                 Margin="0,0,0,10"/>
+
+                        <CheckBox IsChecked="{Binding PlaySound}"
+                                 Content="Play notification sound"
+                                 Margin="0,0,0,10"/>
+
+                        <CheckBox IsChecked="{Binding ShowDesktopNotifications}"
+                                 Content="Show desktop notifications"
+                                 Margin="0,0,0,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Performance Settings -->
+                <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <materialDesign:PackIcon Kind="Speedometer" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Performance" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                        </StackPanel>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                <TextBlock Text="Maximum Concurrent Operations" Margin="0,0,0,5"/>
+                                <Slider Value="{Binding MaxConcurrentOperations}"
+                                       Minimum="1"
+                                       Maximum="8"
+                                       TickFrequency="1"
+                                       IsSnapToTickEnabled="True"
+                                       Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding MaxConcurrentOperations, StringFormat='{}{0} operations'}"
+                                          Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Cache Size (MB)" Margin="0,0,0,5"/>
+                                <Slider Value="{Binding CacheSize}"
+                                       Minimum="100"
+                                       Maximum="2000"
+                                       TickFrequency="100"
+                                       IsSnapToTickEnabled="True"
+                                       Margin="0,0,0,5"/>
+                                <TextBlock Text="{Binding CacheSize, StringFormat='{}{0} MB'}"
+                                          Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            </StackPanel>
+                        </Grid>
+
+                        <CheckBox IsChecked="{Binding EnableHardwareAcceleration}"
+                                 Content="Enable hardware acceleration"
+                                 Margin="0,10,0,10"/>
+
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                               Command="{Binding ClearCacheCommand}"
+                               HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="Broom" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Clear Cache"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Logging Settings -->
+                <materialDesign:Card Padding="15">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <materialDesign:PackIcon Kind="FileDocument" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Logging" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+                        </StackPanel>
+
+                        <ComboBox ItemsSource="{Binding LogLevels}"
+                                 SelectedItem="{Binding LogLevel}"
+                                 materialDesign:HintAssist.Hint="Log Level"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,0,0,10"/>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Text="{Binding LogDirectory, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Log Directory"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <Button Grid.Column="1"
+                                   Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding BrowseLogDirectoryCommand}"
+                                   Margin="5,0,0,0">
+                                <materialDesign:PackIcon Kind="FolderOpen"/>
+                            </Button>
+                        </Grid>
+
+                        <CheckBox IsChecked="{Binding EnableFileLogging}"
+                                 Content="Enable file logging"
+                                 Margin="0,0,0,10"/>
+
+                        <CheckBox IsChecked="{Binding EnableDebugLogging}"
+                                 Content="Enable debug logging (verbose)"
+                                 Margin="0,0,0,10"/>
+
+                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                               Command="{Binding OpenLogDirectoryCommand}"
+                               HorizontalAlignment="Left">
+                            <StackPanel Orientation="Horizontal">
+                                <materialDesign:PackIcon Kind="FolderOpen" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Open Log Directory"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+            </StackPanel>
+
+            <!-- Status Bar -->
+            <materialDesign:Card Grid.Row="2" Padding="10" Margin="0,10,0,0">
+                <TextBlock Text="{Binding StatusMessage}"
+                          Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                          HorizontalAlignment="Center"/>
+            </materialDesign:Card>
+        </Grid>
+    </ScrollViewer>
 </UserControl>
