@@ -4,7 +4,7 @@ Complete automation solution with UEFI/GPT partitioning, WinPE customization,
 answer files, and multi-language support.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __author__ = "DeployForge Team"
 __description__ = "Enterprise Windows Deployment Suite for complete image automation"
 
