@@ -1,0 +1,372 @@
+<UserControl x:Class="DeployForge.Desktop.Views.TemplateManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Template Manager" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                <TextBlock Text="Create, manage, and apply image templates"
+                          Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                          Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding CreateTemplateCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Create"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding ImportTemplateCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Import" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Import"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel - Template List -->
+            <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Search Box -->
+                    <TextBox Grid.Row="0"
+                            Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                            materialDesign:HintAssist.Hint="Search templates"
+                            Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                            Margin="0,0,0,10">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Escape" Command="{Binding ClearSearchCommand}"/>
+                        </TextBox.InputBindings>
+                    </TextBox>
+
+                    <!-- Filter Options -->
+                    <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                        <ComboBox ItemsSource="{Binding AvailableTags}"
+                                 SelectedItem="{Binding SelectedTag}"
+                                 materialDesign:HintAssist.Hint="Filter by Tag"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,0,0,5"/>
+
+                        <CheckBox IsChecked="{Binding ShowPredefinedOnly}"
+                                 Content="Show Predefined Only"
+                                 Margin="0,5,0,0"/>
+                    </StackPanel>
+
+                    <!-- Template Count -->
+                    <TextBlock Grid.Row="2"
+                              Text="{Binding FilteredTemplates.Count, StringFormat='{}{0} templates'}"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              Margin="0,0,0,10"/>
+
+                    <!-- Template List -->
+                    <ListBox Grid.Row="3"
+                            ItemsSource="{Binding FilteredTemplates}"
+                            SelectedItem="{Binding SelectedTemplate, Mode=TwoWay}"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+                                    <TextBlock Grid.Row="1" Text="{Binding Description}"
+                                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                              TextWrapping="Wrap"
+                                              Margin="0,2,0,0"/>
+                                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,5,0,0">
+                                        <TextBlock Text="{Binding Version}"
+                                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                  Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding Author, StringFormat='by {0}'}"
+                                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                  Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </materialDesign:Card>
+
+            <!-- Right Panel - Template Details -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Template Details Card -->
+                    <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Template Details" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding EditTemplateCommand}"
+                                           ToolTip="Edit Template"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="Pencil"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding DeleteTemplateCommand}"
+                                           ToolTip="Delete Template"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="Delete"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding ExportTemplateCommand}"
+                                           ToolTip="Export Template">
+                                        <materialDesign:PackIcon Kind="Export"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Details -->
+                            <StackPanel Grid.Row="1"
+                                       Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedTemplate.Name}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Description:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedTemplate.Description}" TextWrapping="Wrap" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Author:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedTemplate.Author}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedTemplate.Version}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Created:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedTemplate.CreatedDate, StringFormat='g'}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Modified:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedTemplate.ModifiedDate, StringFormat='g'}" Margin="0,0,0,5"/>
+                                </Grid>
+
+                                <!-- Tags -->
+                                <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                       BorderThickness="0,1,0,0"
+                                       Padding="0,10,0,0"
+                                       Margin="0,10,0,0">
+                                    <StackPanel>
+                                        <TextBlock Text="Tags" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                        <ItemsControl ItemsSource="{Binding SelectedTemplate.Tags}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{DynamicResource PrimaryHueMidBrush}"
+                                                           CornerRadius="3"
+                                                           Padding="8,4"
+                                                           Margin="0,0,5,5">
+                                                        <TextBlock Text="{Binding}" Foreground="White" FontSize="12"/>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+
+                                <!-- Target Versions -->
+                                <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                       BorderThickness="0,1,0,0"
+                                       Padding="0,10,0,0"
+                                       Margin="0,10,0,0"
+                                       Visibility="{Binding SelectedTemplate.TargetVersions.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                                    <StackPanel>
+                                        <TextBlock Text="Target Versions" FontWeight="SemiBold" Margin="0,0,0,10"/>
+                                        <ItemsControl ItemsSource="{Binding SelectedTemplate.TargetVersions}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding, StringFormat='• {0}'}" Margin="0,0,0,5"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- No Selection Message -->
+                            <TextBlock Grid.Row="1"
+                                      Text="Select a template to view details"
+                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0,40,0,40"
+                                      Visibility="{Binding SelectedTemplate, Converter={StaticResource InvertedNullToVisibilityConverter}}"/>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Configuration Summary Card -->
+                    <materialDesign:Card Padding="15" Margin="0,0,0,10"
+                                        Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Configuration Summary" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                            <!-- Debloat Config -->
+                            <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                   BorderThickness="0,0,0,1"
+                                   Padding="0,0,0,10"
+                                   Margin="0,0,0,10"
+                                   Visibility="{Binding SelectedTemplate.Debloat, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Debloat Configuration" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SelectedTemplate.Debloat.PresetId, StringFormat='Preset: {0}'}"
+                                              Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                              Margin="24,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Components Config -->
+                            <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                   BorderThickness="0,0,0,1"
+                                   Padding="0,0,0,10"
+                                   Margin="0,0,0,10"
+                                   Visibility="{Binding SelectedTemplate.Components, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <materialDesign:PackIcon Kind="Package" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Component Configuration" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SelectedTemplate.Components.ComponentsToRemove.Count, StringFormat='{}{0} components to remove'}"
+                                              Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                              Margin="24,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Updates Config -->
+                            <Border Padding="0,0,0,10"
+                                   Visibility="{Binding SelectedTemplate.Updates, Converter={StaticResource NullToVisibilityConverter}}">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
+                                        <materialDesign:PackIcon Kind="Update" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Update Configuration" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding SelectedTemplate.Updates.UpdatePaths.Count, StringFormat='{}{0} updates to install'}"
+                                              Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                              Margin="24,0,0,0"/>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Actions Card -->
+                    <materialDesign:Card Padding="15"
+                                        Visibility="{Binding SelectedTemplate, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Actions" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                            <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                                   Command="{Binding ApplyTemplateCommand}"
+                                   HorizontalAlignment="Stretch"
+                                   Height="40"
+                                   Margin="0,0,0,10">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="PlayCircle" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <TextBlock Text="Apply Template to Image" FontSize="14"/>
+                                </StackPanel>
+                            </Button>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Button Grid.Column="0"
+                                       Style="{StaticResource MaterialDesignOutlinedButton}"
+                                       Command="{Binding EditTemplateCommand}"
+                                       Margin="0,0,5,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Pencil" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Edit"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <Button Grid.Column="1"
+                                       Style="{StaticResource MaterialDesignOutlinedButton}"
+                                       Command="{Binding DeleteTemplateCommand}"
+                                       Margin="5,0,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                        <TextBlock Text="Delete"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>

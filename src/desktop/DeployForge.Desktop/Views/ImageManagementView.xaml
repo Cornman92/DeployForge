@@ -2,8 +2,250 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
-    <Grid>
-        <TextBlock Text="ImageManagement View" Style="{StaticResource MaterialDesignHeadline4TextBlock}"
-                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-    </Grid>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Image Management" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                    <TextBlock Text="Mount, unmount, and manage Windows images"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                </StackPanel>
+
+                <Button Grid.Column="1" Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <!-- Image Selection and Mount Options -->
+            <Grid Grid.Row="1" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Image Selection Card -->
+                <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Image Selection" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                        <!-- Browse Image -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Text="{Binding SelectedImagePath, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Image Path"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                    IsReadOnly="True"/>
+
+                            <Button Grid.Column="1" Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding BrowseImageCommand}"
+                                   Margin="5,0,0,0"
+                                   ToolTip="Browse for image file">
+                                <materialDesign:PackIcon Kind="FolderOpen"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Image Info Section -->
+                        <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                               BorderThickness="0,1,0,0"
+                               Padding="0,10,0,0"
+                               Margin="0,10,0,0"
+                               Visibility="{Binding SelectedImage, Converter={StaticResource NullToVisibilityConverter}}">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Image Information" FontWeight="SemiBold" Margin="0,0,0,10"/>
+
+                                <Grid Grid.Row="1" Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Name:" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedImage.ImageName}" TextWrapping="Wrap"/>
+                                </Grid>
+
+                                <Grid Grid.Row="2" Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Format:" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedImage.Format}"/>
+                                </Grid>
+
+                                <Grid Grid.Row="3" Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Size:" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedImage.SizeFormatted}"/>
+                                </Grid>
+
+                                <Grid Grid.Row="4" Margin="0,0,0,5">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Version:" FontWeight="SemiBold" Margin="0,0,10,0"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SelectedImage.Version}"/>
+                                </Grid>
+
+                                <Grid Grid.Row="5" Margin="0,10,0,0">
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                           Command="{Binding ValidateImageCommand}"
+                                           HorizontalAlignment="Left">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon Kind="CheckCircle" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                            <TextBlock Text="Validate Image"/>
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Image Indices -->
+                        <ComboBox ItemsSource="{Binding ImageIndices}"
+                                 SelectedIndex="0"
+                                 materialDesign:HintAssist.Hint="Image Index"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,10,0,0"
+                                 Visibility="{Binding ImageIndices.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding Description}"
+                                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Mount Options Card -->
+                <materialDesign:Card Grid.Column="1" Padding="15">
+                    <StackPanel>
+                        <TextBlock Text="Mount Options" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                        <!-- Mount Path -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Text="{Binding MountPath, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Mount Path"
+                                    Style="{StaticResource MaterialDesignOutlinedTextBox}"/>
+
+                            <Button Grid.Column="1" Style="{StaticResource MaterialDesignIconButton}"
+                                   Command="{Binding BrowseMountPathCommand}"
+                                   Margin="5,0,0,0"
+                                   ToolTip="Browse for mount directory">
+                                <materialDesign:PackIcon Kind="FolderOpen"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- Image Index -->
+                        <TextBox Text="{Binding SelectedImageIndex, UpdateSourceTrigger=PropertyChanged}"
+                                materialDesign:HintAssist.Hint="Image Index"
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                Margin="0,0,0,10"/>
+
+                        <!-- Mount Read-Only -->
+                        <CheckBox IsChecked="{Binding MountReadOnly}"
+                                 Content="Mount as Read-Only"
+                                 Margin="0,0,0,15"/>
+
+                        <!-- Mount Button -->
+                        <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                               Command="{Binding MountImageCommand}"
+                               HorizontalAlignment="Stretch"
+                               Height="40">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <materialDesign:PackIcon Kind="ImagePlus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                <TextBlock Text="Mount Image" FontSize="14"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </materialDesign:Card>
+            </Grid>
+
+            <!-- Mounted Images List -->
+            <materialDesign:Card Grid.Row="2" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Mounted Images" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                    <DataGrid ItemsSource="{Binding MountedImages}"
+                             SelectedItem="{Binding SelectedMountedImage, Mode=TwoWay}"
+                             AutoGenerateColumns="False"
+                             CanUserAddRows="False"
+                             CanUserDeleteRows="False"
+                             IsReadOnly="True"
+                             SelectionMode="Single"
+                             materialDesign:DataGridAssist.CellPadding="8"
+                             materialDesign:DataGridAssist.ColumnHeaderPadding="8"
+                             Height="300">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Image Path" Binding="{Binding ImagePath}" Width="2*"/>
+                            <DataGridTextColumn Header="Mount Path" Binding="{Binding MountPath}" Width="*"/>
+                            <DataGridTextColumn Header="Index" Binding="{Binding Index}" Width="Auto"/>
+                            <DataGridCheckBoxColumn Header="Read-Only" Binding="{Binding ReadOnly}" Width="Auto"/>
+                            <DataGridTemplateColumn Header="Actions" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                               Command="{Binding DataContext.UnmountCommand,
+                                                       RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                               ToolTip="Unmount this image">
+                                            <StackPanel Orientation="Horizontal">
+                                                <materialDesign:PackIcon Kind="Eject" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                <TextBlock Text="Unmount"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No mounted images"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              HorizontalAlignment="Center"
+                              Margin="0,20,0,0"
+                              Visibility="{Binding MountedImages.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
+    </ScrollViewer>
 </UserControl>
