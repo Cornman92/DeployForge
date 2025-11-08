@@ -1,0 +1,102 @@
+name: Build Gaming Image
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Gaming profile to use'
+        required: false
+        default: 'gamer'
+        type: choice
+        options:
+          - gamer
+          - developer
+          - enterprise
+          - student
+          - creator
+
+jobs:
+  build-gaming-image:
+    name: Build Gaming Windows Image
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows ISO
+        run: |
+          # Download Windows 11 ISO (placeholder - replace with actual source)
+          # For demo, assume image is in repository
+          echo "Using pre-downloaded Windows image"
+
+      - name: Extract Install.wim
+        run: |
+          # Extract install.wim from ISO if needed
+          # For demo, assume install.wim exists
+          echo "Install.wim ready"
+
+      - name: Build Gaming Image with DeployForge
+        uses: ./.github/actions/build-image
+        with:
+          image-path: './images/install.wim'
+          profile: ${{ github.event.inputs.profile || 'gamer' }}
+          output-path: './output/gaming.wim'
+          validate: true
+          generate-report: true
+          report-format: 'html'
+
+      - name: Upload Gaming Image
+        uses: actions/upload-artifact@v3
+        with:
+          name: gaming-windows-image
+          path: ./output/gaming.wim
+          retention-days: 7
+
+      - name: Upload Analysis Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: image-analysis-report
+          path: deployforge-report.html
+          retention-days: 30
+
+      - name: Create Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.run_number }}
+          name: Gaming Image v${{ github.run_number }}
+          body: |
+            ## Gaming Windows Image
+
+            Customized Windows 11 image with gaming optimizations:
+            - Gaming performance tweaks
+            - Network latency optimizations
+            - Bloatware removed
+            - Gaming launchers pre-installed
+            - Dark theme
+
+            ### Profile
+            Profile: ${{ github.event.inputs.profile || 'gamer' }}
+
+            ### Downloads
+            - gaming.wim: Main customized image
+            - deployforge-report.html: Analysis report
+          files: |
+            ./output/gaming.wim
+            deployforge-report.html
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup
+        if: always()
+        run: |
+          Remove-Item -Recurse -Force ./output -ErrorAction SilentlyContinue

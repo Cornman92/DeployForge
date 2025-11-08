@@ -1,0 +1,146 @@
+name: Validate Image
+
+on:
+  pull_request:
+    paths:
+      - 'images/**'
+      - 'src/deployforge/**'
+  workflow_dispatch:
+    inputs:
+      image-path:
+        description: 'Path to image to validate'
+        required: true
+        default: './images/install.wim'
+
+jobs:
+  validate:
+    name: Validate Windows Image
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install DeployForge
+        run: |
+          python -m pip install --upgrade pip
+          pip install deployforge
+
+      - name: Validate Image Integrity
+        id: validate
+        run: |
+          $imagePath = "${{ github.event.inputs.image-path || './images/install.wim' }}"
+          echo "Validating image: $imagePath"
+
+          python -m deployforge.cli validate $imagePath
+          if ($LASTEXITCODE -eq 0) {
+            echo "result=passed" >> $env:GITHUB_OUTPUT
+            echo "✅ Validation passed!"
+          } else {
+            echo "result=failed" >> $env:GITHUB_OUTPUT
+            echo "❌ Validation failed!"
+            exit 1
+          }
+
+      - name: Analyze Image
+        run: |
+          $imagePath = "${{ github.event.inputs.image-path || './images/install.wim' }}"
+          echo "Analyzing image..."
+
+          python -m deployforge.cli analyze $imagePath --format html --output analysis-report.html
+          python -m deployforge.cli analyze $imagePath --format json --output analysis-report.json
+
+      - name: Upload Analysis Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: validation-reports
+          path: |
+            analysis-report.html
+            analysis-report.json
+
+      - name: Comment PR with Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('analysis-report.json', 'utf8'));
+
+            const comment = `## 🔍 Image Validation Results
+
+            **Status**: ${{ steps.validate.outputs.result == 'passed' && '✅ Passed' || '❌ Failed' }}
+
+            ### Image Information
+            - **Name**: ${report.image_info.name}
+            - **Edition**: ${report.image_info.edition}
+            - **Version**: ${report.image_info.version}
+            - **Size**: ${report.image_info.size_mb} MB
+
+            ### Statistics
+            - **Features**: ${report.features.length}
+            - **Applications**: ${report.applications.length}
+            - **Drivers**: ${report.drivers.length}
+            - **Updates**: ${report.updates.length}
+
+            ### Report
+            Full HTML report available in artifacts.
+
+            ---
+            Validated with DeployForge v0.6.0`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if Validation Failed
+        if: steps.validate.outputs.result == 'failed'
+        run: |
+          echo "❌ Image validation failed"
+          exit 1
+
+  compare:
+    name: Compare with Base Image
+    runs-on: windows-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install DeployForge
+        run: |
+          python -m pip install --upgrade pip
+          pip install deployforge
+
+      - name: Compare Images
+        run: |
+          # Compare current image with base
+          if (Test-Path './images/base.wim') {
+            echo "Comparing with base image..."
+            python -m deployforge.cli diff ./images/base.wim ./images/install.wim > comparison.txt
+            cat comparison.txt
+          } else {
+            echo "No base image found for comparison"
+          }
+
+      - name: Upload Comparison
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: image-comparison
+          path: comparison.txt
