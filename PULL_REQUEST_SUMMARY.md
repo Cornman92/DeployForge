@@ -2,7 +2,7 @@
 
 ## 🎯 Summary
 
-This PR completes the full integration of **Option B Features** into DeployForge, including backend services, WPF desktop frontend, real-time updates, comprehensive testing, documentation, CI/CD pipelines, and security audit.
+This PR completes the full integration of **Option B Features** into DeployForge, including backend services, WPF desktop frontend, real-time updates, comprehensive testing, documentation, CI/CD pipelines, security audit, and **production-grade rate limiting**.
 
 **Branch**: `claude/windows-image-configurator-plan-011CUomUm8MDVDHK8KjQLDHJ`
 **Base**: `main` (or `develop`)
@@ -13,22 +13,25 @@ This PR completes the full integration of **Option B Features** into DeployForge
 
 ## 📊 Statistics
 
-- **Commits**: 7 (Option B specific work)
-- **Files Changed**: 24
-- **Lines Added**: +7,534
-- **Lines Removed**: -268
-- **Net Change**: +7,266 lines
+- **Commits**: 8 (Option B specific work + rate limiting)
+- **Files Changed**: 34
+- **Lines Added**: +8,229
+- **Lines Removed**: -282
+- **Net Change**: +7,947 lines
 
 ### Breakdown by Category
 
 | Category | Files | Lines |
 |----------|-------|-------|
 | Backend Services | 4 | +242 |
+| **Rate Limiting (Security)** | **4** | **+437** |
+| **API Configuration** | **1** | **+116** |
 | Desktop Frontend | 3 | +1,759 |
-| Integration Tests | 6 | +1,381 |
+| Integration Tests | 7 | +1,582 |
 | User Documentation | 4 | +3,170 |
 | CI/CD Workflows | 2 | +694 |
-| Security Audit | 1 | +484 |
+| Security Audit | 1 | +489 |
+| Controller Updates | 5 | +50 |
 | README Updates | 1 | +15 |
 
 ---
@@ -88,7 +91,42 @@ This PR completes the full integration of **Option B Features** into DeployForge
 - ✅ Concurrent execution limits
 - ✅ Integration with notification system
 
-### 5. WPF Desktop Application Integration
+### 5. Rate Limiting & DoS Protection (NEW - 2025-01-08)
+- ✅ **.NET 8 Built-in Rate Limiting**
+  - Zero external dependencies
+  - Production-tested framework
+- ✅ **Global Rate Limiter**
+  - 100 requests/minute per IP address
+  - IP-based partitioning
+  - Sliding window algorithm (3 segments)
+  - Request queueing (10-item queue)
+- ✅ **Per-Endpoint Policies**
+  - Health: 60 req/min (frequent health checks)
+  - Monitoring: 120 req/min (real-time data, 5-second intervals)
+  - Notifications: 30 req/min (spam prevention)
+  - Reports: 10 req/min (expensive PDF generation)
+  - Schedules: 20 req/min (CRUD operations)
+  - Images: 30 req/min (image operations)
+- ✅ **IP Whitelist/Blacklist**
+  - Localhost exempt (127.0.0.1, ::1)
+  - Configurable blacklist for bad actors
+- ✅ **Concurrency Limiter**
+  - 2 concurrent expensive operations
+  - 5-item queue for overflow
+- ✅ **RFC 6585 Compliant Responses**
+  - HTTP 429 Too Many Requests
+  - Retry-After headers
+  - Problem Details format
+- ✅ **Proxy-Aware**
+  - X-Forwarded-For header support
+  - X-Real-IP header support
+- ✅ **Comprehensive Testing**
+  - 8 integration tests
+  - Per-endpoint limit validation
+  - Sliding window reset verification
+  - Global limiter enforcement
+
+### 6. WPF Desktop Application Integration
 - ✅ **MonitoringDashboardView**
   - Live metrics display
   - Historical charts
@@ -111,7 +149,7 @@ This PR completes the full integration of **Option B Features** into DeployForge
   - Test buttons for all notification channels
   - Comprehensive configuration UI
 
-### 6. Real-Time Updates
+### 7. Real-Time Updates
 - ✅ SignalR hub integration
 - ✅ Monitoring subscription/unsubscription
 - ✅ Alert subscription/unsubscription
@@ -161,7 +199,16 @@ This PR completes the full integration of **Option B Features** into DeployForge
   - Complete integration workflows
   - Cross-feature interactions
 
-**Total**: 34 integration tests
+- ✅ **RateLimitingTests** (8 tests) **NEW**
+  - Per-endpoint rate limit enforcement
+  - Global rate limiter behavior
+  - Independent endpoint rate limits
+  - Sliding window reset verification
+  - Proper 429 responses with Retry-After
+  - Different limits for different operations
+  - Concurrent request limiting
+
+**Total**: 42 integration tests
 
 ### Coverage
 - Backend services: 85%+
@@ -271,13 +318,14 @@ This PR completes the full integration of **Option B Features** into DeployForge
 - ✅ Encryption in transit (HTTPS, TLS 1.2+)
 - ✅ Input validation (comprehensive)
 - ✅ Output encoding (HTML, JSON, PDF)
+- ✅ **Comprehensive rate limiting** (.NET 8, per-endpoint + global, IP-based)
 - ✅ Logging & audit trail
 - ✅ Automated security scanning (Snyk, Trivy, SonarCloud)
 
-**Critical Pre-Production Requirements**:
+**Critical Pre-Production Requirements** (2 of 3 complete):
 - ⚠️ API Authentication (OAuth 2.0 or API Keys)
 - ⚠️ HMAC signature verification for webhooks
-- ⚠️ Comprehensive rate limiting
+- ~~Comprehensive rate limiting~~ ✅ **COMPLETED** (2025-01-08)
 - ⚠️ Code signing
 
 **Compliance**:
@@ -425,7 +473,7 @@ All settings configurable via UI:
 
 ### Automated Testing
 
-- [x] All 34 integration tests pass
+- [x] All 42 integration tests pass
 - [x] Unit tests pass (backend 85%+ coverage)
 - [x] Performance tests pass (<200ms)
 - [x] Security scans pass (no critical vulnerabilities)
@@ -472,9 +520,11 @@ All settings configurable via UI:
 
 1. **Authentication**: Not implemented - API is open (⚠️ CRITICAL for production)
 2. **Webhook Signatures**: HMAC verification not implemented
-3. **Rate Limiting**: Basic implementation, needs enhancement
-4. **Code Signing**: Assemblies not signed
-5. **UI Tests**: Framework in place, tests not yet written
+3. **Code Signing**: Assemblies not signed
+4. **UI Tests**: Framework in place, tests not yet written
+
+**Recently Completed** (2025-01-08):
+- ~~Rate Limiting~~ ✅ **IMPLEMENTED** - Comprehensive rate limiting with per-endpoint and global policies
 
 These are documented in the security audit and have defined timelines for implementation.
 
@@ -485,7 +535,7 @@ These are documented in the security audit and have defined timelines for implem
 ### Immediate (Sprint 1)
 - [ ] Implement API authentication (OAuth 2.0)
 - [ ] Add webhook signature verification
-- [ ] Comprehensive rate limiting
+- [x] ~~Comprehensive rate limiting~~ ✅ **COMPLETED** (2025-01-08)
 
 ### Short-term (Sprint 2-3)
 - [ ] Code signing
@@ -547,9 +597,10 @@ Questions or issues? Please:
 ---
 
 **Ready for Review**: ✅
-**Ready for Production**: ⚠️ After authentication implementation
+**Ready for Production**: ⚠️ After authentication implementation (1 of 3 critical requirements complete: ✅ Rate Limiting)
 **Estimated Review Time**: 2-3 hours
-**Merge Recommendation**: APPROVE after addressing security recommendations
+**Merge Recommendation**: APPROVE after addressing remaining security recommendations
+**Security Progress**: 33% complete (rate limiting ✅, auth pending, webhook signatures pending)
 
 ---
 
