@@ -47,6 +47,9 @@ public static class ServiceConfiguration
         // Register monitoring service as singleton (for metrics tracking)
         services.AddSingleton<IMonitoringService, MonitoringService>();
 
+        // Register report service as scoped
+        services.AddScoped<IReportService, ReportService>();
+
         // Register application services
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IImageConversionService, ImageConversionService>();
