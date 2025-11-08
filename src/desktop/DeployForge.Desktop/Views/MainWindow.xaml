@@ -49,6 +49,19 @@
         <DataTemplate DataType="{x:Type vm:TemplateManagerViewModel}">
             <views:TemplateManagerView />
         </DataTemplate>
+        <!-- Option B Feature DataTemplates -->
+        <DataTemplate DataType="{x:Type vm:MonitoringDashboardViewModel}">
+            <views:MonitoringDashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReportsDashboardViewModel}">
+            <views:ReportsDashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:NotificationsCenterViewModel}">
+            <views:NotificationsCenterView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SchedulesManagerViewModel}">
+            <views:SchedulesManagerView />
+        </DataTemplate>
     </Window.Resources>
 
     <materialDesign:DialogHost Identifier="RootDialog">

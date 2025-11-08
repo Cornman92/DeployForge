@@ -1,0 +1,196 @@
+<UserControl x:Class="DeployForge.Desktop.Views.ReportsDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <ColumnDefinition Width="3*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Left Panel: Report Generation -->
+        <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="20">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Generate Report" Style="{StaticResource MaterialDesignHeadline5TextBlock}" Margin="0,0,0,20"/>
+
+                    <!-- Report Type -->
+                    <TextBlock Text="Report Type" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding ReportTypes}"
+                             SelectedItem="{Binding SelectedReportType}"
+                             materialDesign:HintAssist.Hint="Select report type"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Format -->
+                    <TextBlock Text="Format" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding ReportFormats}"
+                             SelectedItem="{Binding SelectedFormat}"
+                             materialDesign:HintAssist.Hint="Select format"
+                             Margin="0,0,0,15"/>
+
+                    <!-- Date Range (for Audit/Statistics reports) -->
+                    <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                           BorderThickness="1"
+                           Padding="10"
+                           Margin="0,0,0,15"
+                           Visibility="{Binding SelectedReportType, Converter={StaticResource NullToVisibility}}">
+                        <StackPanel>
+                            <TextBlock Text="Date Range" Style="{StaticResource MaterialDesignSubtitle2TextBlock}" Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Start Date" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,0,0,5"/>
+                            <DatePicker SelectedDate="{Binding StartDate}"
+                                       materialDesign:HintAssist.Hint="Start date"
+                                       Margin="0,0,0,10"/>
+
+                            <TextBlock Text="End Date" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,0,0,5"/>
+                            <DatePicker SelectedDate="{Binding EndDate}"
+                                       materialDesign:HintAssist.Hint="End date"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Batch Operation ID (for BatchOperation reports) -->
+                    <StackPanel Visibility="{Binding SelectedReportType, Converter={StaticResource NullToVisibility}}"
+                               Margin="0,0,0,15">
+                        <TextBlock Text="Batch Operation ID" Style="{StaticResource MaterialDesignCaptionTextBlock}" Margin="0,0,0,5"/>
+                        <TextBox Text="{Binding BatchOperationId, UpdateSourceTrigger=PropertyChanged}"
+                                materialDesign:HintAssist.Hint="Enter batch operation ID"/>
+                    </StackPanel>
+
+                    <!-- Generate Button -->
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding GenerateReportCommand}"
+                           HorizontalAlignment="Stretch"
+                           Height="40">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FileDocument" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Generate Report" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Separator Margin="0,20"/>
+
+                    <!-- Quick Stats -->
+                    <TextBlock Text="Statistics" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,20,0,15"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="Total Reports" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="{Binding Reports.Count}"
+                                      Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="Today" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="0"
+                                      Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
+        </materialDesign:Card>
+
+        <!-- Right Panel: Reports List -->
+        <materialDesign:Card Grid.Column="1" Padding="20">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Grid Grid.Row="0" Margin="0,0,0,15">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="Generated Reports" Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+
+                    <Button Grid.Column="1"
+                           Style="{StaticResource MaterialDesignIconButton}"
+                           Command="{Binding RefreshCommand}"
+                           ToolTip="Refresh">
+                        <materialDesign:PackIcon Kind="Refresh"/>
+                    </Button>
+                </Grid>
+
+                <!-- Search -->
+                <TextBox Grid.Row="1"
+                        Text="{Binding ReportFilter, UpdateSourceTrigger=PropertyChanged}"
+                        materialDesign:HintAssist.Hint="Search reports..."
+                        materialDesign:TextFieldAssist.HasClearButton="True"
+                        Margin="0,0,0,15">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+                            <Setter Property="materialDesign:TextFieldAssist.PrefixText">
+                                <Setter.Value>
+                                    <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+
+                <!-- Reports DataGrid -->
+                <DataGrid Grid.Row="2"
+                         ItemsSource="{Binding FilteredReports}"
+                         SelectedItem="{Binding SelectedReport}"
+                         AutoGenerateColumns="False"
+                         CanUserAddRows="False"
+                         CanUserDeleteRows="False"
+                         IsReadOnly="True"
+                         SelectionMode="Single"
+                         materialDesign:DataGridAssist.CellPadding="8"
+                         materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Title" Binding="{Binding Title}" Width="*"/>
+                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="Auto"/>
+                        <DataGridTextColumn Header="Format" Binding="{Binding Format}" Width="Auto"/>
+                        <DataGridTextColumn Header="Size" Binding="{Binding FileSizeDisplay}" Width="Auto"/>
+                        <DataGridTextColumn Header="Generated" Binding="{Binding GeneratedAt, StringFormat='g'}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding ViewReportCommand}"
+                           IsEnabled="{Binding SelectedReport, Converter={StaticResource NullToVisibility}}"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Eye" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="View"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding ExportReportCommand}"
+                           IsEnabled="{Binding SelectedReport, Converter={StaticResource NullToVisibility}}"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Export" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Export"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding DeleteReportCommand}"
+                           IsEnabled="{Binding SelectedReport, Converter={StaticResource NullToVisibility}}"
+                           Background="{DynamicResource MaterialDesignValidationErrorBrush}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Delete" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Delete"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

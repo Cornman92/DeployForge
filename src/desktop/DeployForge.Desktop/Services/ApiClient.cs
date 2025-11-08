@@ -88,6 +88,33 @@ public class ApiClient : IApiClient
         }
     }
 
+    public async Task<TResponse?> PutAsync<TRequest, TResponse>(
+        string endpoint,
+        TRequest data,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogDebug("PUT {Endpoint}", endpoint);
+
+            var response = await _httpClient.PutAsJsonAsync(endpoint, data, _jsonOptions, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<TResponse>(_jsonOptions, cancellationToken);
+            return result;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error during PUT {Endpoint}", endpoint);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during PUT {Endpoint}", endpoint);
+            throw;
+        }
+    }
+
     public async Task<bool> DeleteAsync(string endpoint, CancellationToken cancellationToken = default)
     {
         try

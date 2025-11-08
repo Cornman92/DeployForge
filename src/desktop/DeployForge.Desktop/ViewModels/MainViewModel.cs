@@ -171,6 +171,35 @@ public partial class MainViewModel : ViewModelBase
             ViewModelType = typeof(AuditLogViewerViewModel)
         });
 
+        // Option B Features
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "System Monitoring",
+            Icon = "MonitorDashboard",
+            ViewModelType = typeof(MonitoringDashboardViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Reports",
+            Icon = "FileChart",
+            ViewModelType = typeof(ReportsDashboardViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Notifications",
+            Icon = "Bell",
+            ViewModelType = typeof(NotificationsCenterViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Schedules",
+            Icon = "CalendarClock",
+            ViewModelType = typeof(SchedulesManagerViewModel)
+        });
+
         NavigationItems.Add(new NavigationItem
         {
             Title = "Settings",

@@ -45,6 +45,12 @@ public partial class App : Application
                 services.AddTransient<BatchOperationsViewModel>();
                 services.AddTransient<TemplateManagerViewModel>();
 
+                // Option B Feature ViewModels
+                services.AddTransient<MonitoringDashboardViewModel>();
+                services.AddTransient<ReportsDashboardViewModel>();
+                services.AddTransient<NotificationsCenterViewModel>();
+                services.AddTransient<SchedulesManagerViewModel>();
+
                 // Register Views
                 services.AddTransient<MainWindow>();
                 services.AddTransient<DashboardView>();
@@ -58,6 +64,12 @@ public partial class App : Application
                 services.AddTransient<AuditLogViewerView>();
                 services.AddTransient<BatchOperationsView>();
                 services.AddTransient<TemplateManagerView>();
+
+                // Option B Feature Views
+                services.AddTransient<MonitoringDashboardView>();
+                services.AddTransient<ReportsDashboardView>();
+                services.AddTransient<NotificationsCenterView>();
+                services.AddTransient<SchedulesManagerView>();
             })
             .Build();
     }

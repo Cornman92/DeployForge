@@ -1,0 +1,236 @@
+<UserControl x:Class="DeployForge.Desktop.Views.MonitoringDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="System Monitoring" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Circle"
+                                               Foreground="{Binding IsMonitoring, Converter={StaticResource BoolToColor}}"
+                                               VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="{Binding LastUpdate, StringFormat='Last update: {0:T}'}"
+                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                  Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                        <TextBlock Text="{Binding UptimeDisplay, StringFormat=' • Uptime: {0}'}"
+                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                  Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding ConfigureAlertsCommand}"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Bell" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Configure Alerts"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding ViewMetricsHistoryCommand}"
+                           Margin="0,0,10,0">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="ChartLine" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="View History"/>
+                        </StackPanel>
+                    </Button>
+                    <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding RefreshCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Refresh"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- Current Metrics Cards -->
+            <Grid Grid.Row="1" Margin="0,0,0,20">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- CPU Usage Card -->
+                <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Cpu64Bit" Width="32" Height="32"
+                                               Foreground="{DynamicResource PrimaryHueMidBrush}"/>
+                        <TextBlock Text="{Binding CpuUsage, StringFormat='{}{0:F1}%'}"
+                                  Style="{StaticResource MaterialDesignHeadline3TextBlock}"
+                                  Margin="0,10,0,0"/>
+                        <TextBlock Text="CPU Usage" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                        <ProgressBar Value="{Binding CpuUsage}" Maximum="100" Height="4" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Memory Usage Card -->
+                <materialDesign:Card Grid.Column="1" Margin="0,0,10,0" Padding="15">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Memory" Width="32" Height="32"
+                                               Foreground="{DynamicResource SecondaryHueMidBrush}"/>
+                        <TextBlock Text="{Binding MemoryUsage, StringFormat='{}{0:F1}%'}"
+                                  Style="{StaticResource MaterialDesignHeadline3TextBlock}"
+                                  Margin="0,10,0,0"/>
+                        <TextBlock Text="Memory Usage" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                        <ProgressBar Value="{Binding MemoryUsage}" Maximum="100" Height="4" Margin="0,10,0,0"/>
+                        <TextBlock Text="{Binding AvailableMemoryDisplay, StringFormat='Available: {0}'}"
+                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                  Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                  Margin="0,5,0,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Disk Usage Card -->
+                <materialDesign:Card Grid.Column="2" Margin="0,0,10,0" Padding="15">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="HarddiskPlus" Width="32" Height="32"
+                                               Foreground="#FF9800"/>
+                        <TextBlock Text="{Binding DiskUsage, StringFormat='{}{0:F1}%'}"
+                                  Style="{StaticResource MaterialDesignHeadline3TextBlock}"
+                                  Margin="0,10,0,0"/>
+                        <TextBlock Text="Disk Usage" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                        <ProgressBar Value="{Binding DiskUsage}" Maximum="100" Height="4" Margin="0,10,0,0"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Active Operations Card -->
+                <materialDesign:Card Grid.Column="3" Padding="15">
+                    <StackPanel>
+                        <materialDesign:PackIcon Kind="Cog" Width="32" Height="32"
+                                               Foreground="#4CAF50"/>
+                        <TextBlock Text="{Binding ActiveOperations}"
+                                  Style="{StaticResource MaterialDesignHeadline3TextBlock}"
+                                  Margin="0,10,0,0"/>
+                        <TextBlock Text="Active Operations" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                    </StackPanel>
+                </materialDesign:Card>
+            </Grid>
+
+            <!-- Performance Statistics -->
+            <materialDesign:Card Grid.Row="2" Padding="15" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Performance Statistics" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="Avg CPU" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="{Binding AvgCpuUsage, StringFormat='{}{0:F1}%'}"
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                            <TextBlock Text="Max CPU" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="{Binding MaxCpuUsage, StringFormat='{}{0:F1}%'}"
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                            <TextBlock Text="Avg Memory" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="{Binding AvgMemoryUsage, StringFormat='{}{0:F1}%'}"
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Max Memory" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBlock Text="{Binding MaxMemoryUsage, StringFormat='{}{0:F1}%'}"
+                                      Style="{StaticResource MaterialDesignHeadline5TextBlock}"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Alert Configuration -->
+            <materialDesign:Card Grid.Row="3" Padding="15" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Alert Thresholds" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="CPU Threshold (%)" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBox Text="{Binding CpuThreshold, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="CPU threshold"
+                                    Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                            <TextBlock Text="Memory Threshold (%)" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBox Text="{Binding MemoryThreshold, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Memory threshold"
+                                    Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Disk Threshold (%)" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                            <TextBox Text="{Binding DiskThreshold, UpdateSourceTrigger=PropertyChanged}"
+                                    materialDesign:HintAssist.Hint="Disk threshold"
+                                    Margin="0,5,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </materialDesign:Card>
+
+            <!-- Recent Alerts -->
+            <materialDesign:Card Grid.Row="4" Padding="15">
+                <StackPanel>
+                    <TextBlock Text="Recent Alerts" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                    <DataGrid ItemsSource="{Binding RecentAlerts}"
+                             AutoGenerateColumns="False"
+                             CanUserAddRows="False"
+                             CanUserDeleteRows="False"
+                             IsReadOnly="True"
+                             SelectionMode="Single"
+                             materialDesign:DataGridAssist.CellPadding="8"
+                             materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat='g'}" Width="Auto"/>
+                            <DataGridTextColumn Header="Metric" Binding="{Binding MetricType}" Width="Auto"/>
+                            <DataGridTextColumn Header="Value" Binding="{Binding Value, StringFormat='{}{0:F1}%'}" Width="Auto"/>
+                            <DataGridTextColumn Header="Threshold" Binding="{Binding Threshold, StringFormat='{}{0:F1}%'}" Width="Auto"/>
+                            <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="No alerts"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              HorizontalAlignment="Center"
+                              Margin="0,20,0,0"
+                              Visibility="{Binding RecentAlerts.Count, Converter={StaticResource CountToVisibility}, ConverterParameter=Inverted}"/>
+                </StackPanel>
+            </materialDesign:Card>
+        </Grid>
+    </ScrollViewer>
+</UserControl>

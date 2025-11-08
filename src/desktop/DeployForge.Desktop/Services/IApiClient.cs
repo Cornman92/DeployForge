@@ -21,6 +21,11 @@ public interface IApiClient
     Task<TResponse?> PostAsync<TRequest, TResponse>(string endpoint, TRequest data, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// PUT request
+    /// </summary>
+    Task<TResponse?> PutAsync<TRequest, TResponse>(string endpoint, TRequest data, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// DELETE request
     /// </summary>
     Task<bool> DeleteAsync(string endpoint, CancellationToken cancellationToken = default);
