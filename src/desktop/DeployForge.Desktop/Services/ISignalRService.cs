@@ -41,6 +41,36 @@ public interface ISignalRService
     void OnOperationError(Action<OperationError> handler);
 
     /// <summary>
+    /// Subscribe to monitoring metrics updates
+    /// </summary>
+    Task SubscribeToMonitoringAsync();
+
+    /// <summary>
+    /// Unsubscribe from monitoring metrics updates
+    /// </summary>
+    Task UnsubscribeFromMonitoringAsync();
+
+    /// <summary>
+    /// Subscribe to alert notifications
+    /// </summary>
+    Task SubscribeToAlertsAsync();
+
+    /// <summary>
+    /// Unsubscribe from alert notifications
+    /// </summary>
+    Task UnsubscribeFromAlertsAsync();
+
+    /// <summary>
+    /// Subscribe to monitoring metrics events
+    /// </summary>
+    void OnMetricsUpdate(Action<MetricsUpdate> handler);
+
+    /// <summary>
+    /// Subscribe to alert events
+    /// </summary>
+    void OnAlertReceived(Action<AlertReceived> handler);
+
+    /// <summary>
     /// Is connected
     /// </summary>
     bool IsConnected { get; }
@@ -68,4 +98,26 @@ public class OperationError
     public string OperationId { get; set; } = string.Empty;
     public string ErrorMessage { get; set; } = string.Empty;
     public DateTime Timestamp { get; set; }
+}
+
+public class MetricsUpdate
+{
+    public DateTime Timestamp { get; set; }
+    public double CpuUsage { get; set; }
+    public double MemoryUsage { get; set; }
+    public long TotalMemoryBytes { get; set; }
+    public long AvailableMemoryBytes { get; set; }
+    public double DiskUsage { get; set; }
+    public long TotalDiskSpaceBytes { get; set; }
+    public int ActiveOperations { get; set; }
+    public TimeSpan Uptime { get; set; }
+}
+
+public class AlertReceived
+{
+    public DateTime Timestamp { get; set; }
+    public string MetricType { get; set; } = string.Empty;
+    public double Value { get; set; }
+    public double Threshold { get; set; }
+    public string Message { get; set; } = string.Empty;
 }

@@ -78,7 +78,7 @@ public static class ServiceConfiguration
         services.AddScoped<ILanguageService, LanguageService>();
 
         // Register background services
-        // services.AddHostedService<CleanupService>();
+        services.AddHostedService<MonitoringBroadcastService>();
 
         // Add memory cache
         services.AddMemoryCache();

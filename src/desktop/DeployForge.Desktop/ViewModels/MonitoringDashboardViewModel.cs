@@ -11,6 +11,7 @@ namespace DeployForge.Desktop.ViewModels;
 public partial class MonitoringDashboardViewModel : ViewModelBase
 {
     private readonly IApiClient _apiClient;
+    private readonly ISignalRService _signalRService;
     private readonly ILogger<MonitoringDashboardViewModel> _logger;
     private System.Threading.Timer? _refreshTimer;
 
@@ -141,25 +142,56 @@ public partial class MonitoringDashboardViewModel : ViewModelBase
 
     public MonitoringDashboardViewModel(
         IApiClient apiClient,
+        ISignalRService signalRService,
         ILogger<MonitoringDashboardViewModel> logger)
     {
         _apiClient = apiClient;
+        _signalRService = signalRService;
         _logger = logger;
+
+        // Subscribe to real-time updates
+        _signalRService.OnMetricsUpdate(HandleMetricsUpdate);
+        _signalRService.OnAlertReceived(HandleAlertReceived);
     }
 
     public override async Task InitializeAsync()
     {
         await base.InitializeAsync();
+
+        // Subscribe to monitoring and alerts via SignalR
+        try
+        {
+            await _signalRService.SubscribeToMonitoringAsync();
+            await _signalRService.SubscribeToAlertsAsync();
+            _logger.LogInformation("Subscribed to real-time monitoring updates");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to subscribe to real-time updates, falling back to polling");
+            // Fall back to polling if SignalR fails
+            StartAutoRefresh();
+        }
+
         await LoadMonitoringDataAsync();
         await LoadPerformanceMetricsAsync();
         await LoadAlertHistoryAsync();
         await LoadAlertThresholdsAsync();
-        StartAutoRefresh();
     }
 
     public override async Task CleanupAsync()
     {
         StopAutoRefresh();
+
+        try
+        {
+            await _signalRService.UnsubscribeFromMonitoringAsync();
+            await _signalRService.UnsubscribeFromAlertsAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error unsubscribing from real-time updates");
+        }
+
         await base.CleanupAsync();
     }
 
@@ -350,6 +382,75 @@ public partial class MonitoringDashboardViewModel : ViewModelBase
     {
         _refreshTimer?.Dispose();
         _refreshTimer = null;
+    }
+
+    private void HandleMetricsUpdate(MetricsUpdate metrics)
+    {
+        // Update UI on the UI thread
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            CpuUsage = metrics.CpuUsage;
+            MemoryUsage = metrics.MemoryUsage;
+            TotalMemoryBytes = metrics.TotalMemoryBytes;
+            AvailableMemoryBytes = metrics.AvailableMemoryBytes;
+            DiskUsage = metrics.DiskUsage;
+            ActiveOperations = metrics.ActiveOperations;
+            Uptime = metrics.Uptime;
+            LastUpdate = DateTime.Now;
+            IsMonitoring = true;
+
+            OnPropertyChanged(nameof(TotalMemoryDisplay));
+            OnPropertyChanged(nameof(AvailableMemoryDisplay));
+            OnPropertyChanged(nameof(UptimeDisplay));
+
+            // Add to history
+            CpuHistory.Add(new MetricHistory
+            {
+                Timestamp = metrics.Timestamp,
+                Value = metrics.CpuUsage
+            });
+
+            MemoryHistory.Add(new MetricHistory
+            {
+                Timestamp = metrics.Timestamp,
+                Value = metrics.MemoryUsage
+            });
+
+            // Limit history size
+            while (CpuHistory.Count > 50)
+            {
+                CpuHistory.RemoveAt(0);
+            }
+
+            while (MemoryHistory.Count > 50)
+            {
+                MemoryHistory.RemoveAt(0);
+            }
+        });
+    }
+
+    private void HandleAlertReceived(AlertReceived alert)
+    {
+        // Add alert to UI on the UI thread
+        System.Windows.Application.Current?.Dispatcher.Invoke(() =>
+        {
+            RecentAlerts.Insert(0, new AlertEventDisplay
+            {
+                Timestamp = alert.Timestamp,
+                MetricType = alert.MetricType,
+                Value = alert.Value,
+                Threshold = alert.Threshold,
+                Message = alert.Message
+            });
+
+            // Limit alerts history
+            while (RecentAlerts.Count > 10)
+            {
+                RecentAlerts.RemoveAt(RecentAlerts.Count - 1);
+            }
+
+            _logger.LogInformation("Received alert: {Message}", alert.Message);
+        });
     }
 }
 

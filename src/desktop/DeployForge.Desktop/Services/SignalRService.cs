@@ -13,6 +13,8 @@ public class SignalRService : ISignalRService
     private readonly List<Action<ProgressUpdate>> _progressHandlers = new();
     private readonly List<Action<OperationCompleted>> _completedHandlers = new();
     private readonly List<Action<OperationError>> _errorHandlers = new();
+    private readonly List<Action<MetricsUpdate>> _metricsHandlers = new();
+    private readonly List<Action<AlertReceived>> _alertHandlers = new();
 
     public bool IsConnected => _connection?.State == HubConnectionState.Connected;
 
@@ -40,6 +42,8 @@ public class SignalRService : ISignalRService
             _connection.On<object>("ReceiveProgress", HandleProgressUpdate);
             _connection.On<object>("OperationCompleted", HandleOperationCompleted);
             _connection.On<object>("OperationError", HandleOperationError);
+            _connection.On<object>("ReceiveMetrics", HandleMetricsUpdate);
+            _connection.On<object>("ReceiveAlert", HandleAlertReceived);
 
             _connection.Closed += async (error) =>
             {
@@ -131,6 +135,60 @@ public class SignalRService : ISignalRService
         _errorHandlers.Add(handler);
     }
 
+    public async Task SubscribeToMonitoringAsync()
+    {
+        if (_connection == null || !IsConnected)
+        {
+            throw new InvalidOperationException("Not connected to SignalR hub");
+        }
+
+        await _connection.InvokeAsync("SubscribeToMonitoring");
+        _logger.LogInformation("Subscribed to monitoring updates");
+    }
+
+    public async Task UnsubscribeFromMonitoringAsync()
+    {
+        if (_connection == null || !IsConnected)
+        {
+            return;
+        }
+
+        await _connection.InvokeAsync("UnsubscribeFromMonitoring");
+        _logger.LogInformation("Unsubscribed from monitoring updates");
+    }
+
+    public async Task SubscribeToAlertsAsync()
+    {
+        if (_connection == null || !IsConnected)
+        {
+            throw new InvalidOperationException("Not connected to SignalR hub");
+        }
+
+        await _connection.InvokeAsync("SubscribeToAlerts");
+        _logger.LogInformation("Subscribed to alerts");
+    }
+
+    public async Task UnsubscribeFromAlertsAsync()
+    {
+        if (_connection == null || !IsConnected)
+        {
+            return;
+        }
+
+        await _connection.InvokeAsync("UnsubscribeFromAlerts");
+        _logger.LogInformation("Unsubscribed from alerts");
+    }
+
+    public void OnMetricsUpdate(Action<MetricsUpdate> handler)
+    {
+        _metricsHandlers.Add(handler);
+    }
+
+    public void OnAlertReceived(Action<AlertReceived> handler)
+    {
+        _alertHandlers.Add(handler);
+    }
+
     private void HandleProgressUpdate(object data)
     {
         try
@@ -191,6 +249,48 @@ public class SignalRService : ISignalRService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling operation error");
+        }
+    }
+
+    private void HandleMetricsUpdate(object data)
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(data);
+            var metrics = System.Text.Json.JsonSerializer.Deserialize<MetricsUpdate>(json);
+
+            if (metrics != null)
+            {
+                foreach (var handler in _metricsHandlers)
+                {
+                    handler(metrics);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling metrics update");
+        }
+    }
+
+    private void HandleAlertReceived(object data)
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(data);
+            var alert = System.Text.Json.JsonSerializer.Deserialize<AlertReceived>(json);
+
+            if (alert != null)
+            {
+                foreach (var handler in _alertHandlers)
+                {
+                    handler(alert);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling alert");
         }
     }
 }

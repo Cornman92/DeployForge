@@ -92,6 +92,42 @@ public class ProgressHub : Hub
             Context.ConnectionId, operationId);
     }
 
+    /// <summary>
+    /// Subscribe to monitoring metrics updates
+    /// </summary>
+    public async Task SubscribeToMonitoring()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "monitoring");
+        _logger.LogInformation("Client {ConnectionId} subscribed to monitoring updates", Context.ConnectionId);
+    }
+
+    /// <summary>
+    /// Unsubscribe from monitoring metrics updates
+    /// </summary>
+    public async Task UnsubscribeFromMonitoring()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "monitoring");
+        _logger.LogInformation("Client {ConnectionId} unsubscribed from monitoring updates", Context.ConnectionId);
+    }
+
+    /// <summary>
+    /// Subscribe to alert notifications
+    /// </summary>
+    public async Task SubscribeToAlerts()
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, "alerts");
+        _logger.LogInformation("Client {ConnectionId} subscribed to alerts", Context.ConnectionId);
+    }
+
+    /// <summary>
+    /// Unsubscribe from alert notifications
+    /// </summary>
+    public async Task UnsubscribeFromAlerts()
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, "alerts");
+        _logger.LogInformation("Client {ConnectionId} unsubscribed from alerts", Context.ConnectionId);
+    }
+
     public override async Task OnConnectedAsync()
     {
         await base.OnConnectedAsync();
