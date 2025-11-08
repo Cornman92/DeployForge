@@ -1,0 +1,38 @@
+# Include documentation files
+include README.md
+include README_v0.2.md
+include RELEASE_NOTES_v0.2.0.md
+include LICENSE
+include ROADMAP.md
+include CONTRIBUTING.md
+
+# Include documentation directory
+recursive-include docs *.md *.rst *.png *.jpg
+
+# Include examples
+recursive-include examples *.py *.md
+
+# Include configuration examples
+include deployforge.yaml.example
+include .dockerignore
+include Dockerfile
+
+# Include tests (for source distributions)
+recursive-include tests *.py
+
+# Include package data
+recursive-include src/deployforge *.yaml *.json *.xml
+
+# Exclude compiled files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .DS_Store
+global-exclude *.so
+global-exclude *.egg-info
+
+# Exclude development files
+exclude .gitignore
+exclude .gitattributes
+prune .github
+prune .git

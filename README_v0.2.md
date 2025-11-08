@@ -1,6 +1,6 @@
-# DeployForge v0.3.0
+# DeployForge v0.2.0
 
-**Enterprise Windows Deployment Suite** - Complete automation from disk partitioning to multi-language deployment.
+**Enterprise Windows Deployment Suite** - Customize, personalize and optimize Windows images at scale.
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
@@ -8,17 +8,8 @@
 
 DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Process hundreds of images in parallel, customize offline, and automate with REST API.
 
-## 🎉 What's New in v0.3.0
+## 🎉 What's New in v0.2.0
 
-**Complete Deployment Automation** - End-to-end Windows deployment from disk creation to installation.
-
-### New in v0.3.0:
-- 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables with standard Windows layouts
-- 🛠️ **WinPE Customization** - Build custom Windows PE deployment environments with PowerShell and drivers
-- 📝 **Answer File Generation** - Automated unattend.xml creation for zero-touch deployment
-- 🌍 **Multi-Language Support** - MUI package management for 40+ languages with regional settings
-
-### All Features from v0.2.0:
 - 🖥️ **PyQt6 Desktop GUI** - Beautiful desktop application
 - ☁️ **Remote Storage** - S3, Azure Blob, HTTP repositories
 - 🔄 **Batch Operations** - Process multiple images in parallel
@@ -43,21 +34,6 @@ deployforge formats
 
 # Get image info
 deployforge info install.wim
-
-# === NEW in v0.3.0 ===
-
-# Create UEFI bootable disk with partitions
-deployforge partition create disk.vhdx --size 50 --recovery
-
-# Generate automated installation answer file
-deployforge unattend create autounattend.xml \
-    --username Admin --password P@ssw0rd \
-    --computer-name WORKSTATION-01
-
-# Manage multi-language support
-deployforge language list install.wim
-
-# === v0.2.0 Features ===
 
 # Compare two images
 deployforge compare image1.wim image2.wim
