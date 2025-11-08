@@ -1,6 +1,7 @@
 using DeployForge.Common.Models.Scheduling;
 using DeployForge.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DeployForge.Api.Controllers;
 
@@ -9,6 +10,7 @@ namespace DeployForge.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("schedules")]
 public class SchedulesController : ControllerBase
 {
     private readonly IScheduleService _scheduleService;

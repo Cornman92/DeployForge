@@ -81,12 +81,22 @@ Security audit and compliance checklist for DeployForge Option B features.
 
 **Scenario**: Attacker floods notification channels or report generation
 **Impact**: Service degradation, resource exhaustion
-**Likelihood**: MEDIUM
+**Likelihood**: LOW (mitigated)
 **Mitigation**:
-- ✅ Rate limiting on notification endpoints
-- ✅ Request throttling in API
-- ✅ Concurrency limits for schedules
-- ⚠️ TODO: Add request queue with backpressure
+- ✅ **Comprehensive rate limiting implemented** (.NET 8 built-in)
+- ✅ Global rate limiter (100 requests/minute per IP)
+- ✅ Per-endpoint rate limiting:
+  * Health: 60 req/min (sliding window)
+  * Monitoring: 120 req/min (high limit for real-time data)
+  * Notifications: 30 req/min
+  * Reports: 10 req/min (expensive operations)
+  * Schedules: 20 req/min
+  * Images: 30 req/min
+- ✅ IP-based partitioning with whitelist/blacklist support
+- ✅ Request queueing with configurable limits
+- ✅ Concurrency limits for expensive operations
+- ✅ Proper 429 responses with Retry-After headers
+- ✅ Sliding window algorithm for smooth rate limiting
 
 #### 4. Information Disclosure
 
@@ -251,7 +261,7 @@ Security audit and compliance checklist for DeployForge Option B features.
 | A01: Broken Access Control | HIGH | No authentication | ⚠️ Implement auth before production |
 | A02: Cryptographic Failures | LOW | Proper encryption | ✅ Using industry standards |
 | A03: Injection | LOW | Input validation present | ✅ Validated and encoded |
-| A04: Insecure Design | MEDIUM | No rate limiting on some endpoints | ⚠️ Add comprehensive rate limiting |
+| A04: Insecure Design | LOW | Comprehensive rate limiting implemented | ✅ Per-endpoint + global limits |
 | A05: Security Misconfiguration | MEDIUM | Default secrets in dev | ⚠️ Environment-specific secrets |
 | A06: Vulnerable Components | LOW | Dependencies scanned | ✅ Automated scanning |
 | A07: ID & Auth Failures | HIGH | No authentication | ⚠️ Implement auth before production |
@@ -377,11 +387,13 @@ Security audit and compliance checklist for DeployForge Option B features.
    - Rotate signing keys regularly
    - Timeline: Sprint 1
 
-3. **Implement Rate Limiting** ⚠️ MEDIUM PRIORITY
-   - Add rate limiting to all public endpoints
-   - Implement per-user/IP quotas
-   - Add backpressure mechanisms
-   - Timeline: Sprint 2
+3. **Implement Rate Limiting** ✅ COMPLETED
+   - ✅ Rate limiting added to all public endpoints
+   - ✅ Per-IP quotas with sliding window algorithm
+   - ✅ Global and per-endpoint policies
+   - ✅ Request queueing with backpressure
+   - ✅ IP whitelist/blacklist support
+   - Completed: 2025-01-08
 
 ### Important (Production Hardening)
 
@@ -456,6 +468,7 @@ Security audit and compliance checklist for DeployForge Option B features.
 - ✅ Strong data encryption (at rest and in transit)
 - ✅ Comprehensive input validation
 - ✅ Proper output encoding
+- ✅ Comprehensive rate limiting (per-endpoint + global policies)
 - ✅ Good logging practices
 - ✅ Automated security scanning in CI/CD
 - ✅ Secure dependencies
@@ -463,7 +476,6 @@ Security audit and compliance checklist for DeployForge Option B features.
 **Weaknesses**:
 - ⚠️ No authentication (blocking issue for production)
 - ⚠️ No webhook signature verification
-- ⚠️ Limited rate limiting
 - ⚠️ No code signing
 
 ### Recommendation for Production
@@ -471,8 +483,10 @@ Security audit and compliance checklist for DeployForge Option B features.
 **DO NOT DEPLOY TO PRODUCTION** without implementing:
 1. API Authentication
 2. Webhook signature verification
-3. Comprehensive rate limiting
-4. Code signing
+3. Code signing
+
+**Recently Completed** (2025-01-08):
+- ✅ Comprehensive rate limiting (per-endpoint + global, IP-based partitioning)
 
 **Timeline to Production-Ready Security**: 2-3 sprints
 

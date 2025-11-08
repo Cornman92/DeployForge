@@ -73,6 +73,9 @@ try
     // Health checks
     builder.Services.AddHealthChecks();
 
+    // Configure rate limiting
+    builder.Services.AddRateLimitingPolicies(builder.Configuration);
+
     // Configure application services
     builder.Services.ConfigureApplicationServices(builder.Configuration);
 
@@ -98,6 +101,9 @@ try
     app.UseHttpsRedirection();
 
     app.UseCors("AllowFrontend");
+
+    // Enable rate limiting
+    app.UseRateLimiter();
 
     app.UseAuthorization();
 

@@ -2,6 +2,7 @@ using DeployForge.Common.Models;
 using DeployForge.Common.Models.Reports;
 using DeployForge.Core.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace DeployForge.Api.Controllers;
 
@@ -10,6 +11,7 @@ namespace DeployForge.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
+[EnableRateLimiting("reports")]
 public class ReportsController : ControllerBase
 {
     private readonly IReportService _reportService;
