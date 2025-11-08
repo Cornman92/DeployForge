@@ -1,11 +1,12 @@
 """
-DeployForge - Windows Deployment Suite
-Customize, personalize and optimize Windows images and packages.
+DeployForge - Enterprise Windows Deployment Suite
+Complete automation solution with UEFI/GPT partitioning, WinPE customization,
+answer files, and multi-language support.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 __author__ = "DeployForge Team"
-__description__ = "Windows Deployment Suite for image customization"
+__description__ = "Enterprise Windows Deployment Suite for complete image automation"
 
 from deployforge.core.image_manager import ImageManager
 from deployforge.core.exceptions import (

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "deployforge"
-version = "0.2.0"
-description = "Enterprise Windows Deployment Suite - Customize, personalize and optimize Windows images at scale with GUI, REST API, and batch operations"
+version = "0.3.0"
+description = "Enterprise Windows Deployment Suite - Complete automation with UEFI/GPT partitioning, WinPE customization, answer files, and multi-language support"
 readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
@@ -15,7 +15,8 @@ authors = [
 keywords = [
     "windows", "deployment", "wim", "iso", "esd", "ppkg", "vhd", "vhdx",
     "image", "customization", "registry", "driver", "batch", "enterprise",
-    "automation", "api", "gui"
+    "automation", "api", "gui", "uefi", "gpt", "partition", "winpe",
+    "unattend", "answer-file", "multilingual", "mui", "language-pack"
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
