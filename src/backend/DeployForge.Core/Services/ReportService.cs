@@ -4,6 +4,9 @@ using DeployForge.Common.Models;
 using DeployForge.Common.Models.Reports;
 using DeployForge.Core.Interfaces;
 using Microsoft.Extensions.Logging;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 
 namespace DeployForge.Core.Services;
 
@@ -34,6 +37,9 @@ public class ReportService : IReportService
         var appData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         _reportsDirectory = Path.Combine(appData, "DeployForge", "Reports");
         Directory.CreateDirectory(_reportsDirectory);
+
+        // Configure QuestPDF license (community license for open source)
+        QuestPDF.Settings.License = LicenseType.Community;
     }
 
     public async Task<OperationResult<Report>> GenerateReportAsync(
@@ -127,13 +133,24 @@ public class ReportService : IReportService
             }
 
             // Generate content based on format
-            report.Content = format switch
+            if (format == ReportFormat.Pdf)
             {
-                ReportFormat.Html => GenerateHtmlReport(report),
-                ReportFormat.Json => GenerateJsonReport(report),
-                ReportFormat.Markdown => GenerateMarkdownReport(report),
-                _ => throw new NotSupportedException($"Format {format} is not supported")
-            };
+                // For PDF, we generate the file directly and set the path
+                var pdfPath = outputPath ?? Path.Combine(_reportsDirectory, $"report_{report.Id}.pdf");
+                GeneratePdfReport(report, pdfPath);
+                report.FilePath = pdfPath;
+                report.Content = $"PDF report generated at: {pdfPath}";
+            }
+            else
+            {
+                report.Content = format switch
+                {
+                    ReportFormat.Html => GenerateHtmlReport(report),
+                    ReportFormat.Json => GenerateJsonReport(report),
+                    ReportFormat.Markdown => GenerateMarkdownReport(report),
+                    _ => throw new NotSupportedException($"Format {format} is not supported")
+                };
+            }
 
             // Save to file if requested
             if (!string.IsNullOrEmpty(outputPath))
@@ -521,6 +538,127 @@ public class ReportService : IReportService
 
         await File.WriteAllTextAsync(path, report.Content ?? string.Empty, cancellationToken);
         _logger.LogInformation("Report saved to {Path}", path);
+    }
+
+    private void GeneratePdfReport(Report report, string outputPath)
+    {
+        try
+        {
+            Document.Create(container =>
+            {
+                container.Page(page =>
+                {
+                    page.Size(PageSizes.A4);
+                    page.Margin(2, Unit.Centimetre);
+                    page.PageColor(Colors.White);
+                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily("Arial"));
+
+                    page.Header()
+                        .Row(row =>
+                        {
+                            row.RelativeItem().Column(column =>
+                            {
+                                column.Item().Text("DeployForge")
+                                    .FontSize(20)
+                                    .Bold()
+                                    .FontColor(Colors.Blue.Medium);
+
+                                column.Item().Text(report.Title)
+                                    .FontSize(16)
+                                    .SemiBold();
+                            });
+
+                            row.ConstantItem(100).AlignRight().Text($"{DateTime.UtcNow:yyyy-MM-dd}")
+                                .FontSize(9);
+                        });
+
+                    page.Content()
+                        .PaddingVertical(1, Unit.Centimetre)
+                        .Column(column =>
+                        {
+                            column.Spacing(10);
+
+                            // Description
+                            column.Item().Text(report.Description)
+                                .FontSize(11)
+                                .Italic();
+
+                            column.Item().LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+
+                            // Generated timestamp
+                            column.Item().Text($"Generated: {report.GeneratedAt:yyyy-MM-dd HH:mm:ss} UTC")
+                                .FontSize(9)
+                                .Italic()
+                                .FontColor(Colors.Grey.Darken1);
+
+                            column.Item().PaddingTop(10);
+
+                            // Render sections
+                            foreach (var section in report.Sections.OrderBy(s => s.Order))
+                            {
+                                column.Item().Text(section.Title)
+                                    .FontSize(14)
+                                    .SemiBold()
+                                    .FontColor(Colors.Blue.Darken1);
+
+                                if (section.Type == SectionType.Table && section.Data != null)
+                                {
+                                    column.Item().Table(table =>
+                                    {
+                                        table.ColumnsDefinition(columns =>
+                                        {
+                                            columns.RelativeColumn(2);
+                                            columns.RelativeColumn(3);
+                                        });
+
+                                        var json = JsonSerializer.Serialize(section.Data);
+                                        var dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+
+                                        if (dict != null)
+                                        {
+                                            foreach (var kvp in dict)
+                                            {
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1)
+                                                    .Padding(5).Background(Colors.Blue.Lighten4)
+                                                    .Text(kvp.Key).Bold();
+
+                                                table.Cell().Border(1).BorderColor(Colors.Grey.Lighten1)
+                                                    .Padding(5)
+                                                    .Text(kvp.Value?.ToString() ?? "");
+                                            }
+                                        }
+                                    });
+                                }
+                                else
+                                {
+                                    column.Item().Text(section.Content)
+                                        .FontSize(10);
+                                }
+
+                                column.Item().PaddingBottom(10);
+                            }
+                        });
+
+                    page.Footer()
+                        .AlignCenter()
+                        .Text(x =>
+                        {
+                            x.Span("Page ");
+                            x.CurrentPageNumber();
+                            x.Span(" of ");
+                            x.TotalPages();
+                        });
+                });
+            })
+            .GeneratePdf(outputPath);
+
+            _logger.LogInformation("PDF report generated at {Path}", outputPath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to generate PDF report");
+            throw;
+        }
     }
 
     #endregion

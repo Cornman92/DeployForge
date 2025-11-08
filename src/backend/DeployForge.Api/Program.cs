@@ -113,6 +113,11 @@ try
     await monitoringService.StartMonitoringAsync();
     Log.Information("Monitoring service started");
 
+    // Start schedule service
+    var scheduleService = app.Services.GetRequiredService<IScheduleService>();
+    await scheduleService.StartAsync();
+    Log.Information("Schedule service started");
+
     app.Run();
 
     Log.Information("DeployForge API started successfully");

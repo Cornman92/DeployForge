@@ -50,6 +50,15 @@ public static class ServiceConfiguration
         // Register report service as scoped
         services.AddScoped<IReportService, ReportService>();
 
+        // Register notification service as singleton
+        services.AddSingleton<INotificationService, NotificationService>();
+
+        // Register schedule service as singleton
+        services.AddSingleton<IScheduleService, ScheduleService>();
+
+        // Register HttpClient factory for webhooks
+        services.AddHttpClient();
+
         // Register application services
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IImageConversionService, ImageConversionService>();
