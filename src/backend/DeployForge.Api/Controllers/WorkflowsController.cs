@@ -1,10 +1,12 @@
 using DeployForge.Common.Models;
 using DeployForge.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeployForge.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 public class WorkflowsController : ControllerBase
 {

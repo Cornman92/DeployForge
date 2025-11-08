@@ -53,6 +53,9 @@ try
         {
             options.IncludeXmlComments(xmlPath);
         }
+
+        // Add JWT authentication to Swagger
+        options.AddSwaggerAuthentication();
     });
 
     // CORS configuration
@@ -72,6 +75,9 @@ try
 
     // Health checks
     builder.Services.AddHealthChecks();
+
+    // Configure authentication (JWT + API Keys)
+    builder.Services.AddDeployForgeAuthentication(builder.Configuration);
 
     // Configure rate limiting
     builder.Services.AddRateLimitingPolicies(builder.Configuration);
@@ -102,6 +108,9 @@ try
 
     app.UseCors("AllowFrontend");
 
+    // Enable authentication
+    app.UseAuthentication();
+
     // Enable rate limiting
     app.UseRateLimiter();
 
@@ -113,6 +122,9 @@ try
 
     // Map SignalR hubs
     app.MapHub<ProgressHub>("/hubs/progress");
+
+    // Initialize authentication database and create default admin
+    await app.EnsureAuthenticationDatabaseAsync();
 
     // Start monitoring service
     var monitoringService = app.Services.GetRequiredService<IMonitoringService>();

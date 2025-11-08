@@ -1,11 +1,13 @@
 using DeployForge.Common.Models;
 using DeployForge.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeployForge.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ImagesController : ControllerBase
 {
     private readonly IImageService _imageService;

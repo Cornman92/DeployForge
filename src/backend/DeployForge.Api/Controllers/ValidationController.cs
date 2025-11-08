@@ -1,5 +1,6 @@
 using DeployForge.Common.Models;
 using DeployForge.Core.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DeployForge.Api.Controllers;
@@ -8,6 +9,7 @@ namespace DeployForge.Api.Controllers;
 /// Controller for image and deployment validation
 /// </summary>
 [ApiController]
+[Authorize]
 [Route("api/[controller]")]
 [Produces("application/json")]
 public class ValidationController : ControllerBase

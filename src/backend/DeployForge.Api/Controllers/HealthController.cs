@@ -1,6 +1,7 @@
 using DeployForge.Core.Interfaces;
 using DeployForge.Common.Models.Monitoring;
 using DeployForge.DismEngine;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Diagnostics;
@@ -17,6 +18,7 @@ namespace DeployForge.Api.Controllers;
 [Route("api/[controller]")]
 [SupportedOSPlatform("windows")]
 [EnableRateLimiting("health")]
+[AllowAnonymous]
 public class HealthController : ControllerBase
 {
     private readonly DismManager _dismManager;
