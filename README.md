@@ -55,12 +55,19 @@ Dismount-DFImage -Session $session -Save
 
 ## 📚 Documentation
 
+### User Guides
+
+- **[Getting Started](docs/user-guide/GETTING_STARTED.md)** - Quick start guide for new users
+- **[User Guide](docs/user-guide/USER_GUIDE.md)** - Complete feature documentation
+- **[Configuration Guide](docs/user-guide/CONFIGURATION_GUIDE.md)** - Advanced configuration options
+- **[Troubleshooting](docs/user-guide/TROUBLESHOOTING.md)** - Common issues and solutions
+
+### Technical Documentation
+
 - **[Master Plan](MASTER_PLAN.md)** - Complete project architecture and roadmap
 - **[Technology Stack](TECHNOLOGY_STACK.md)** - Technical decisions and justifications
-- **[User Guide](docs/user-guide/README.md)** - Complete user manual
-- **[API Reference](docs/api/README.md)** - REST API and PowerShell cmdlets
-- **[Developer Guide](docs/dev-guide/README.md)** - Contributing and development
-- **[Workflow Templates](workflows/templates/README.md)** - Pre-built automation workflows
+- **[Option B Features](docs/OPTION_B_FEATURES.md)** - Backend API documentation for advanced features
+- **[Development Setup](docs/DEVELOPMENT_SETUP.md)** - Developer environment setup
 
 ---
 
