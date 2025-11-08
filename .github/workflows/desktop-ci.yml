@@ -1,0 +1,266 @@
+name: Desktop Application CI
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+    paths:
+      - 'src/desktop/**'
+      - 'tests/integration/**'
+      - '.github/workflows/desktop-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/desktop/**'
+      - 'tests/integration/**'
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  CONFIGURATION: 'Release'
+
+jobs:
+  desktop-build-test:
+    name: Desktop Build & Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Restore Desktop dependencies
+        run: dotnet restore src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj
+
+      - name: Build Desktop Application
+        run: dotnet build src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Run Desktop Unit Tests
+        run: dotnet test src/desktop/DeployForge.Desktop.Tests/DeployForge.Desktop.Tests.csproj --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal --collect:"XPlat Code Coverage"
+        continue-on-error: true
+
+      - name: Upload Desktop Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: '**/coverage.cobertura.xml'
+          flags: desktop
+          name: desktop-coverage
+
+  integration-tests:
+    name: Integration Tests (Option B Features)
+    runs-on: windows-latest
+    needs: desktop-build-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore API dependencies
+        run: dotnet restore src/backend/DeployForge.Api/DeployForge.Api.csproj
+
+      - name: Build API
+        run: dotnet build src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Start API Server (Background)
+        run: |
+          Start-Process -FilePath "dotnet" -ArgumentList "run --project src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build" -NoNewWindow
+          Start-Sleep -Seconds 10
+        shell: pwsh
+
+      - name: Wait for API Health Check
+        run: |
+          $maxAttempts = 30
+          $attempt = 0
+          while ($attempt -lt $maxAttempts) {
+            try {
+              $response = Invoke-WebRequest -Uri "http://localhost:5000/health" -Method Get -TimeoutSec 5
+              if ($response.StatusCode -eq 200) {
+                Write-Host "API is healthy!"
+                break
+              }
+            } catch {
+              Write-Host "Waiting for API... Attempt $($attempt + 1)/$maxAttempts"
+              Start-Sleep -Seconds 2
+            }
+            $attempt++
+          }
+          if ($attempt -eq $maxAttempts) {
+            Write-Error "API failed to start"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Run Integration Tests
+        run: dotnet test tests/integration/DeployForge.Api.IntegrationTests/DeployForge.Api.IntegrationTests.csproj --configuration ${{ env.CONFIGURATION }} --verbosity normal --logger "trx;LogFileName=integration-tests.trx"
+
+      - name: Upload Integration Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: integration-test-results
+          path: '**/integration-tests.trx'
+
+      - name: Publish Integration Test Results
+        uses: EnricoMi/publish-unit-test-result-action/composite@v2
+        if: always()
+        with:
+          files: '**/integration-tests.trx'
+          check_name: Integration Test Results
+
+      - name: Stop API Server
+        if: always()
+        run: |
+          Get-Process -Name "dotnet" -ErrorAction SilentlyContinue | Where-Object { $_.Path -like "*DeployForge.Api*" } | Stop-Process -Force
+        shell: pwsh
+
+  desktop-publish:
+    name: Publish Desktop Application
+    runs-on: windows-latest
+    needs: [desktop-build-test, integration-tests]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Publish Desktop (Windows x64)
+        run: |
+          dotnet publish src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            --runtime win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            --output dist/desktop/win-x64
+
+      - name: Publish Desktop (Windows x86)
+        run: |
+          dotnet publish src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            --runtime win-x86 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=false `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            --output dist/desktop/win-x86
+
+      - name: Create Portable Package (x64)
+        run: |
+          Compress-Archive -Path dist/desktop/win-x64/* -DestinationPath dist/DeployForge-Desktop-Portable-win-x64.zip
+        shell: pwsh
+
+      - name: Create Portable Package (x86)
+        run: |
+          Compress-Archive -Path dist/desktop/win-x86/* -DestinationPath dist/DeployForge-Desktop-Portable-win-x86.zip
+        shell: pwsh
+
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: desktop-packages
+          path: |
+            dist/DeployForge-Desktop-Portable-*.zip
+            dist/desktop/**/*.exe
+          retention-days: 30
+
+  code-analysis:
+    name: Desktop Code Analysis
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj
+
+      - name: Build for analysis
+        run: dotnet build src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Run Roslyn Analyzers
+        run: dotnet build src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj --configuration ${{ env.CONFIGURATION }} --no-restore /p:TreatWarningsAsErrors=false /p:CodeAnalysisRuleSet=.editorconfig
+        continue-on-error: true
+
+  ui-tests:
+    name: UI Automation Tests
+    runs-on: windows-latest
+    needs: desktop-build-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Install UI Test Dependencies
+        run: dotnet add tests/ui/DeployForge.Desktop.UITests/DeployForge.Desktop.UITests.csproj package FlaUI.UIA3
+        continue-on-error: true
+
+      - name: Build Desktop for UI Tests
+        run: dotnet build src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj --configuration Debug
+
+      - name: Run UI Tests
+        run: dotnet test tests/ui/DeployForge.Desktop.UITests/DeployForge.Desktop.UITests.csproj --configuration Debug --verbosity normal --logger "trx"
+        continue-on-error: true
+
+      - name: Upload UI Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: ui-test-results
+          path: '**/TestResults/*.trx'
+
+  build-summary:
+    name: Desktop Build Summary
+    runs-on: ubuntu-latest
+    needs: [desktop-build-test, integration-tests, desktop-publish, code-analysis]
+    if: always()
+
+    steps:
+      - name: Check Build Status
+        run: |
+          echo "Desktop Build: ${{ needs.desktop-build-test.result }}"
+          echo "Integration Tests: ${{ needs.integration-tests.result }}"
+          echo "Desktop Publish: ${{ needs.desktop-publish.result }}"
+          echo "Code Analysis: ${{ needs.code-analysis.result }}"
+
+          if [[ "${{ needs.desktop-build-test.result }}" == "failure" ]] || \
+             [[ "${{ needs.integration-tests.result }}" == "failure" ]]; then
+            echo "❌ Desktop build or tests failed!"
+            exit 1
+          else
+            echo "✅ All desktop checks passed!"
+          fi

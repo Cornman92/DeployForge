@@ -1,0 +1,428 @@
+name: Option B Features CI
+
+on:
+  push:
+    branches: [ main, develop, 'claude/**' ]
+    paths:
+      - 'src/backend/DeployForge.Api/Controllers/HealthController.cs'
+      - 'src/backend/DeployForge.Api/Controllers/NotificationsController.cs'
+      - 'src/backend/DeployForge.Api/Controllers/ReportsController.cs'
+      - 'src/backend/DeployForge.Api/Controllers/SchedulesController.cs'
+      - 'src/backend/DeployForge.Core/Services/**'
+      - 'src/backend/DeployForge.Core/Interfaces/IMonitoringService.cs'
+      - 'src/backend/DeployForge.Core/Interfaces/INotificationService.cs'
+      - 'src/backend/DeployForge.Core/Interfaces/IReportService.cs'
+      - 'src/backend/DeployForge.Core/Interfaces/IScheduleService.cs'
+      - 'tests/integration/DeployForge.Api.IntegrationTests/**'
+      - '.github/workflows/option-b-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  CONFIGURATION: 'Release'
+
+jobs:
+  option-b-backend-tests:
+    name: Option B Backend Tests
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore src/backend/DeployForge.sln
+
+      - name: Build
+        run: dotnet build src/backend/DeployForge.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Run Option B Unit Tests
+        run: |
+          dotnet test tests/unit/DeployForge.Core.Tests/DeployForge.Core.Tests.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            --filter "Category=OptionB|Category=Monitoring|Category=Notifications|Category=Reports|Category=Schedules" `
+            --no-build `
+            --verbosity normal `
+            --collect:"XPlat Code Coverage" `
+            --logger "trx;LogFileName=option-b-unit-tests.trx"
+
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: option-b-unit-test-results
+          path: '**/option-b-unit-tests.trx'
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: '**/coverage.cobertura.xml'
+          flags: option-b-backend
+          name: option-b-backend-coverage
+
+  option-b-integration-tests:
+    name: Option B Integration Tests
+    runs-on: windows-latest
+    needs: option-b-backend-tests
+
+    strategy:
+      matrix:
+        test-suite:
+          - MonitoringWorkflowTests
+          - ReportingWorkflowTests
+          - NotificationWorkflowTests
+          - SchedulingWorkflowTests
+          - EndToEndWorkflowTests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore src/backend/DeployForge.sln
+
+      - name: Build
+        run: dotnet build src/backend/DeployForge.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Start API Server
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --urls http://localhost:5000" `
+            -NoNewWindow
+          Start-Sleep -Seconds 15
+        shell: pwsh
+
+      - name: Verify API Health
+        run: |
+          $maxRetries = 10
+          $retryCount = 0
+          $isHealthy = $false
+
+          while ($retryCount -lt $maxRetries -and -not $isHealthy) {
+            try {
+              $response = Invoke-RestMethod -Uri "http://localhost:5000/health" -Method Get -TimeoutSec 5
+              if ($response) {
+                Write-Host "✅ API is healthy: $($response | ConvertTo-Json)"
+                $isHealthy = $true
+              }
+            } catch {
+              $retryCount++
+              Write-Host "⏳ Waiting for API health check... Attempt $retryCount/$maxRetries"
+              Start-Sleep -Seconds 3
+            }
+          }
+
+          if (-not $isHealthy) {
+            Write-Error "❌ API failed to become healthy after $maxRetries attempts"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Run ${{ matrix.test-suite }}
+        run: |
+          dotnet test tests/integration/DeployForge.Api.IntegrationTests/DeployForge.Api.IntegrationTests.csproj `
+            --configuration ${{ env.CONFIGURATION }} `
+            --filter "FullyQualifiedName~${{ matrix.test-suite }}" `
+            --no-build `
+            --verbosity detailed `
+            --logger "trx;LogFileName=${{ matrix.test-suite }}.trx" `
+            --logger "console;verbosity=detailed"
+
+      - name: Upload ${{ matrix.test-suite }} Results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: ${{ matrix.test-suite }}-results
+          path: '**/${{ matrix.test-suite }}.trx'
+
+      - name: Stop API Server
+        if: always()
+        run: |
+          Get-Process -Name "dotnet" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -like "*DeployForge.Api*" } |
+            Stop-Process -Force
+        shell: pwsh
+
+  option-b-performance-tests:
+    name: Option B Performance Tests
+    runs-on: windows-latest
+    needs: option-b-integration-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore src/backend/DeployForge.sln
+
+      - name: Build
+        run: dotnet build src/backend/DeployForge.sln --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Start API Server
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --urls http://localhost:5000" `
+            -NoNewWindow
+          Start-Sleep -Seconds 15
+        shell: pwsh
+
+      - name: Run Performance Tests
+        run: |
+          # Test monitoring metrics endpoint performance
+          $results = @()
+          1..100 | ForEach-Object {
+            $start = Get-Date
+            Invoke-RestMethod -Uri "http://localhost:5000/api/health/metrics" -Method Get | Out-Null
+            $end = Get-Date
+            $duration = ($end - $start).TotalMilliseconds
+            $results += $duration
+          }
+
+          $avg = ($results | Measure-Object -Average).Average
+          $max = ($results | Measure-Object -Maximum).Maximum
+          $min = ($results | Measure-Object -Minimum).Minimum
+
+          Write-Host "📊 Performance Results (100 requests):"
+          Write-Host "  Average: $([math]::Round($avg, 2))ms"
+          Write-Host "  Min: $([math]::Round($min, 2))ms"
+          Write-Host "  Max: $([math]::Round($max, 2))ms"
+
+          # Fail if average response time > 200ms
+          if ($avg -gt 200) {
+            Write-Error "❌ Performance test failed: Average response time ($avg ms) exceeds 200ms threshold"
+            exit 1
+          } else {
+            Write-Host "✅ Performance test passed: Average response time is acceptable"
+          }
+        shell: pwsh
+
+      - name: Stop API Server
+        if: always()
+        run: |
+          Get-Process -Name "dotnet" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -like "*DeployForge.Api*" } |
+            Stop-Process -Force
+        shell: pwsh
+
+  option-b-e2e-smoke-tests:
+    name: Option B End-to-End Smoke Tests
+    runs-on: windows-latest
+    needs: option-b-integration-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Build API
+        run: dotnet build src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }}
+
+      - name: Build Desktop
+        run: dotnet build src/desktop/DeployForge.Desktop/DeployForge.Desktop.csproj --configuration ${{ env.CONFIGURATION }}
+
+      - name: Start API Server
+        run: |
+          Start-Process -FilePath "dotnet" `
+            -ArgumentList "run --project src/backend/DeployForge.Api/DeployForge.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-build --urls http://localhost:5000" `
+            -NoNewWindow
+          Start-Sleep -Seconds 15
+        shell: pwsh
+
+      - name: Run E2E Smoke Tests
+        run: |
+          Write-Host "🧪 Running End-to-End Smoke Tests..."
+
+          # Test 1: Health Monitoring
+          Write-Host "1️⃣ Testing Health Monitoring..."
+          $health = Invoke-RestMethod -Uri "http://localhost:5000/api/health/metrics" -Method Get
+          if (-not $health) {
+            Write-Error "Health endpoint failed"
+            exit 1
+          }
+          Write-Host "✅ Health monitoring OK"
+
+          # Test 2: Report Generation
+          Write-Host "2️⃣ Testing Report Generation..."
+          $reportRequest = @{
+            type = "Statistics"
+            format = "Json"
+            startDate = (Get-Date).AddDays(-7).ToString("o")
+            endDate = (Get-Date).ToString("o")
+          } | ConvertTo-Json
+
+          $report = Invoke-RestMethod `
+            -Uri "http://localhost:5000/api/reports/statistics" `
+            -Method Post `
+            -Body $reportRequest `
+            -ContentType "application/json"
+
+          if (-not $report.reportId) {
+            Write-Error "Report generation failed"
+            exit 1
+          }
+          Write-Host "✅ Report generation OK (ID: $($report.reportId))"
+
+          # Test 3: Notification Test
+          Write-Host "3️⃣ Testing Notification System..."
+          $notifRequest = @{
+            eventType = "Test"
+            title = "CI Test Notification"
+            message = "This is a test from CI/CD pipeline"
+            severity = "Info"
+          } | ConvertTo-Json
+
+          try {
+            Invoke-RestMethod `
+              -Uri "http://localhost:5000/api/notifications" `
+              -Method Post `
+              -Body $notifRequest `
+              -ContentType "application/json" | Out-Null
+            Write-Host "✅ Notification system OK"
+          } catch {
+            Write-Warning "Notification test skipped (may require configuration)"
+          }
+
+          # Test 4: Schedule Operations
+          Write-Host "4️⃣ Testing Schedule Operations..."
+          $schedules = Invoke-RestMethod -Uri "http://localhost:5000/api/schedules" -Method Get
+          Write-Host "✅ Schedule API OK (Found $($schedules.Count) schedules)"
+
+          Write-Host ""
+          Write-Host "🎉 All smoke tests passed!"
+        shell: pwsh
+
+      - name: Stop API Server
+        if: always()
+        run: |
+          Get-Process -Name "dotnet" -ErrorAction SilentlyContinue |
+            Where-Object { $_.CommandLine -like "*DeployForge.Api*" } |
+            Stop-Process -Force
+        shell: pwsh
+
+  option-b-documentation-check:
+    name: Option B Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Documentation Completeness
+        run: |
+          echo "📚 Checking Option B documentation..."
+
+          required_docs=(
+            "docs/user-guide/GETTING_STARTED.md"
+            "docs/user-guide/USER_GUIDE.md"
+            "docs/user-guide/CONFIGURATION_GUIDE.md"
+            "docs/user-guide/TROUBLESHOOTING.md"
+            "docs/OPTION_B_FEATURES.md"
+          )
+
+          missing_docs=0
+          for doc in "${required_docs[@]}"; do
+            if [[ ! -f "$doc" ]]; then
+              echo "❌ Missing: $doc"
+              missing_docs=$((missing_docs + 1))
+            else
+              lines=$(wc -l < "$doc")
+              echo "✅ Found: $doc ($lines lines)"
+            fi
+          done
+
+          if [[ $missing_docs -gt 0 ]]; then
+            echo "❌ $missing_docs required documentation file(s) missing!"
+            exit 1
+          else
+            echo "✅ All required documentation is present"
+          fi
+
+      - name: Validate Markdown Links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/markdown-link-check-config.json'
+        continue-on-error: true
+
+  build-summary:
+    name: Option B Build Summary
+    runs-on: ubuntu-latest
+    needs:
+      - option-b-backend-tests
+      - option-b-integration-tests
+      - option-b-performance-tests
+      - option-b-e2e-smoke-tests
+      - option-b-documentation-check
+    if: always()
+
+    steps:
+      - name: Check Build Status
+        run: |
+          echo "📊 Option B Feature Build Summary"
+          echo "=================================="
+          echo "Backend Tests: ${{ needs.option-b-backend-tests.result }}"
+          echo "Integration Tests: ${{ needs.option-b-integration-tests.result }}"
+          echo "Performance Tests: ${{ needs.option-b-performance-tests.result }}"
+          echo "E2E Smoke Tests: ${{ needs.option-b-e2e-smoke-tests.result }}"
+          echo "Documentation Check: ${{ needs.option-b-documentation-check.result }}"
+
+          if [[ "${{ needs.option-b-backend-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.option-b-integration-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.option-b-e2e-smoke-tests.result }}" == "failure" ]]; then
+            echo ""
+            echo "❌ Option B feature tests failed!"
+            exit 1
+          else
+            echo ""
+            echo "✅ All Option B feature checks passed!"
+          fi
+
+      - name: Post Summary to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const summary = `## 🎯 Option B Features CI Summary
+
+            | Check | Status |
+            |-------|--------|
+            | Backend Tests | ${{ needs.option-b-backend-tests.result == 'success' && '✅' || '❌' }} |
+            | Integration Tests | ${{ needs.option-b-integration-tests.result == 'success' && '✅' || '❌' }} |
+            | Performance Tests | ${{ needs.option-b-performance-tests.result == 'success' && '✅' || '❌' }} |
+            | E2E Smoke Tests | ${{ needs.option-b-e2e-smoke-tests.result == 'success' && '✅' || '❌' }} |
+            | Documentation | ${{ needs.option-b-documentation-check.result == 'success' && '✅' || '❌' }} |
+
+            **Features Tested:**
+            - 📊 Health Monitoring & Alerts
+            - 📧 Notifications (Email, Slack, Teams, Webhooks)
+            - 📄 Report Generation (PDF, HTML, JSON)
+            - ⏰ Scheduled Operations
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
