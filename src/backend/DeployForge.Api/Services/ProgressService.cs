@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using DeployForge.Core.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
@@ -10,6 +11,7 @@ public class ProgressService : IProgressService
 {
     private readonly IHubContext<ProgressHub> _hubContext;
     private readonly ILogger<ProgressService> _logger;
+    private readonly ConcurrentDictionary<string, bool> _activeOperations = new();
 
     public ProgressService(
         IHubContext<ProgressHub> hubContext,
@@ -23,6 +25,9 @@ public class ProgressService : IProgressService
     {
         try
         {
+            // Track operation as active
+            _activeOperations.TryAdd(operationId, true);
+
             await _hubContext.Clients.Group(operationId).SendAsync("ReceiveProgress", new
             {
                 OperationId = operationId,
@@ -45,6 +50,9 @@ public class ProgressService : IProgressService
     {
         try
         {
+            // Remove operation from active tracking
+            _activeOperations.TryRemove(operationId, out _);
+
             await _hubContext.Clients.Group(operationId).SendAsync("OperationCompleted", new
             {
                 OperationId = operationId,
@@ -87,5 +95,10 @@ public class ProgressService : IProgressService
         {
             await ReportProgressAsync(operationId, report.Percentage, report.Message, report.Stage);
         });
+    }
+
+    public int GetActiveOperations()
+    {
+        return _activeOperations.Count;
     }
 }

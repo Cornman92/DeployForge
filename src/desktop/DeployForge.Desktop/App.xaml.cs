@@ -40,6 +40,10 @@ public partial class App : Application
                 services.AddTransient<DebloatWizardViewModel>();
                 services.AddTransient<BackupManagerViewModel>();
                 services.AddTransient<SettingsViewModel>();
+                services.AddTransient<ConfigurationProfilesViewModel>();
+                services.AddTransient<AuditLogViewerViewModel>();
+                services.AddTransient<BatchOperationsViewModel>();
+                services.AddTransient<TemplateManagerViewModel>();
 
                 // Register Views
                 services.AddTransient<MainWindow>();
@@ -50,6 +54,10 @@ public partial class App : Application
                 services.AddTransient<DebloatWizardView>();
                 services.AddTransient<BackupManagerView>();
                 services.AddTransient<SettingsView>();
+                services.AddTransient<ConfigurationProfilesView>();
+                services.AddTransient<AuditLogViewerView>();
+                services.AddTransient<BatchOperationsView>();
+                services.AddTransient<TemplateManagerView>();
             })
             .Build();
     }

@@ -24,6 +24,11 @@ public interface IProgressService
     /// Create a progress reporter for an operation
     /// </summary>
     IProgress<ProgressReport> CreateProgressReporter(string operationId);
+
+    /// <summary>
+    /// Get count of active operations
+    /// </summary>
+    int GetActiveOperations();
 }
 
 /// <summary>

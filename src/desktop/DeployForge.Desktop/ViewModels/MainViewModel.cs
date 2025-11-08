@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.Input;
 using DeployForge.Desktop.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace DeployForge.Desktop.ViewModels;
@@ -14,11 +15,14 @@ public partial class MainViewModel : ViewModelBase
     private readonly ISignalRService _signalRService;
     private readonly ISettingsService _settingsService;
     private readonly IDialogService _dialogService;
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<MainViewModel> _logger;
 
     private ViewModelBase? _currentViewModel;
     private bool _isConnected;
     private string _apiStatus = "Disconnected";
+    private bool _isMenuOpen = true;
+    private NavigationItem? _selectedNavigationItem;
 
     public ViewModelBase? CurrentViewModel
     {
@@ -38,6 +42,25 @@ public partial class MainViewModel : ViewModelBase
         set => SetProperty(ref _apiStatus, value);
     }
 
+    public bool IsMenuOpen
+    {
+        get => _isMenuOpen;
+        set => SetProperty(ref _isMenuOpen, value);
+    }
+
+    public NavigationItem? SelectedNavigationItem
+    {
+        get => _selectedNavigationItem;
+        set
+        {
+            if (SetProperty(ref _selectedNavigationItem, value) && value != null)
+            {
+                // Trigger navigation when selection changes
+                _ = Navigate(value);
+            }
+        }
+    }
+
     public ObservableCollection<NavigationItem> NavigationItems { get; } = new();
 
     public MainViewModel(
@@ -45,12 +68,14 @@ public partial class MainViewModel : ViewModelBase
         ISignalRService signalRService,
         ISettingsService settingsService,
         IDialogService dialogService,
+        IServiceProvider serviceProvider,
         ILogger<MainViewModel> logger)
     {
         _apiClient = apiClient;
         _signalRService = signalRService;
         _settingsService = settingsService;
         _dialogService = dialogService;
+        _serviceProvider = serviceProvider;
         _logger = logger;
 
         InitializeNavigationItems();
@@ -120,10 +145,44 @@ public partial class MainViewModel : ViewModelBase
 
         NavigationItems.Add(new NavigationItem
         {
+            Title = "Template Manager",
+            Icon = "FileDocument",
+            ViewModelType = typeof(TemplateManagerViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Configuration Profiles",
+            Icon = "FileSettings",
+            ViewModelType = typeof(ConfigurationProfilesViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Batch Operations",
+            Icon = "FormatListBulleted",
+            ViewModelType = typeof(BatchOperationsViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
+            Title = "Audit Log Viewer",
+            Icon = "FileDocumentEdit",
+            ViewModelType = typeof(AuditLogViewerViewModel)
+        });
+
+        NavigationItems.Add(new NavigationItem
+        {
             Title = "Settings",
             Icon = "Cog",
             ViewModelType = typeof(SettingsViewModel)
         });
+    }
+
+    [RelayCommand]
+    private void ToggleMenu()
+    {
+        IsMenuOpen = !IsMenuOpen;
     }
 
     [RelayCommand]
@@ -158,13 +217,56 @@ public partial class MainViewModel : ViewModelBase
     }
 
     [RelayCommand]
-    private void Navigate(NavigationItem item)
+    private async Task Navigate(NavigationItem item)
     {
+        if (item.ViewModelType == null)
+        {
+            _logger.LogWarning("Navigation item {Title} has no ViewModelType", item.Title);
+            return;
+        }
+
         _logger.LogInformation("Navigating to {ViewModelType}", item.ViewModelType.Name);
 
-        // In a full implementation, this would resolve the ViewModel from DI
-        // and set CurrentViewModel
-        StatusMessage = $"Navigated to {item.Title}";
+        try
+        {
+            IsBusy = true;
+            StatusMessage = $"Loading {item.Title}...";
+
+            // Cleanup previous ViewModel
+            if (CurrentViewModel != null)
+            {
+                await CurrentViewModel.CleanupAsync();
+            }
+
+            // Resolve new ViewModel from DI container
+            var viewModel = _serviceProvider.GetRequiredService(item.ViewModelType) as ViewModelBase;
+
+            if (viewModel == null)
+            {
+                _logger.LogError("Failed to resolve ViewModel of type {ViewModelType}", item.ViewModelType.Name);
+                StatusMessage = $"Failed to load {item.Title}";
+                return;
+            }
+
+            // Set the new ViewModel
+            CurrentViewModel = viewModel;
+
+            // Initialize the ViewModel
+            await viewModel.InitializeAsync();
+
+            StatusMessage = $"Navigated to {item.Title}";
+            _logger.LogInformation("Successfully navigated to {ViewModelType}", item.ViewModelType.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error navigating to {ViewModelType}", item.ViewModelType.Name);
+            StatusMessage = $"Error loading {item.Title}";
+            _dialogService.ShowError("Navigation Error", $"Failed to navigate to {item.Title}: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     public override async Task CleanupAsync()

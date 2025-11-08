@@ -1,3 +1,5 @@
+using DeployForge.Core.Interfaces;
+using DeployForge.Common.Models.Monitoring;
 using DeployForge.DismEngine;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
@@ -16,13 +18,16 @@ namespace DeployForge.Api.Controllers;
 public class HealthController : ControllerBase
 {
     private readonly DismManager _dismManager;
+    private readonly IMonitoringService _monitoringService;
     private readonly ILogger<HealthController> _logger;
 
     public HealthController(
         DismManager dismManager,
+        IMonitoringService monitoringService,
         ILogger<HealthController> logger)
     {
         _dismManager = dismManager;
+        _monitoringService = monitoringService;
         _logger = logger;
     }
 
@@ -31,14 +36,18 @@ public class HealthController : ControllerBase
     /// </summary>
     /// <returns>Health status</returns>
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
+        var metrics = await _monitoringService.GetCurrentMetricsAsync();
+
         return Ok(new
         {
             Status = "Healthy",
             Version = GetVersion(),
             Timestamp = DateTime.UtcNow,
-            Uptime = GetUptime()
+            Uptime = GetUptime(),
+            CpuUsage = metrics.CpuUsage,
+            MemoryUsage = metrics.MemoryUsage
         });
     }
 
@@ -116,6 +125,73 @@ public class HealthController : ControllerBase
     {
         var status = GetPermissionsStatus();
         return Ok(status);
+    }
+
+    /// <summary>
+    /// Get current system metrics
+    /// </summary>
+    [HttpGet("metrics")]
+    public async Task<ActionResult<SystemMetrics>> GetMetrics()
+    {
+        var metrics = await _monitoringService.GetCurrentMetricsAsync();
+        return Ok(metrics);
+    }
+
+    /// <summary>
+    /// Get historical metrics
+    /// </summary>
+    [HttpGet("metrics/history")]
+    public async Task<ActionResult<IEnumerable<SystemMetrics>>> GetMetricsHistory(
+        [FromQuery] DateTime? startTime = null,
+        [FromQuery] DateTime? endTime = null)
+    {
+        var start = startTime ?? DateTime.UtcNow.AddHours(-1);
+        var end = endTime ?? DateTime.UtcNow;
+
+        var history = await _monitoringService.GetMetricsHistoryAsync(start, end);
+        return Ok(history);
+    }
+
+    /// <summary>
+    /// Get performance statistics
+    /// </summary>
+    [HttpGet("performance")]
+    public async Task<ActionResult<PerformanceMetrics>> GetPerformance()
+    {
+        var metrics = await _monitoringService.GetPerformanceMetricsAsync();
+        return Ok(metrics);
+    }
+
+    /// <summary>
+    /// Configure alert thresholds
+    /// </summary>
+    [HttpPost("alerts/configure")]
+    public async Task<IActionResult> ConfigureAlerts([FromBody] AlertThreshold thresholds)
+    {
+        await _monitoringService.ConfigureAlertThresholdsAsync(thresholds);
+        return Ok(new { Message = "Alert thresholds updated successfully" });
+    }
+
+    /// <summary>
+    /// Get alert configuration
+    /// </summary>
+    [HttpGet("alerts")]
+    public async Task<ActionResult<AlertThreshold>> GetAlerts()
+    {
+        var thresholds = await _monitoringService.GetAlertThresholdsAsync();
+        return Ok(thresholds);
+    }
+
+    /// <summary>
+    /// Get alert history
+    /// </summary>
+    [HttpGet("alerts/history")]
+    public async Task<ActionResult<IEnumerable<AlertEvent>>> GetAlertHistory(
+        [FromQuery] DateTime? startTime = null,
+        [FromQuery] DateTime? endTime = null)
+    {
+        var history = await _monitoringService.GetAlertHistoryAsync(startTime, endTime);
+        return Ok(history);
     }
 
     #region Private Helper Methods

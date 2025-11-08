@@ -44,6 +44,9 @@ public static class ServiceConfiguration
         // Register progress service as singleton (for SignalR)
         services.AddSingleton<IProgressService, ProgressService>();
 
+        // Register monitoring service as singleton (for metrics tracking)
+        services.AddSingleton<IMonitoringService, MonitoringService>();
+
         // Register application services
         services.AddScoped<IImageService, ImageService>();
         services.AddScoped<IImageConversionService, ImageConversionService>();

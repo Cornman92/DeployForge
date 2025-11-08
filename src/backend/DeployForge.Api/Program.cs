@@ -1,5 +1,6 @@
 using DeployForge.Api;
 using DeployForge.Api.Middleware;
+using DeployForge.Core.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -106,6 +107,11 @@ try
 
     // Map SignalR hubs
     app.MapHub<ProgressHub>("/hubs/progress");
+
+    // Start monitoring service
+    var monitoringService = app.Services.GetRequiredService<IMonitoringService>();
+    await monitoringService.StartMonitoringAsync();
+    Log.Information("Monitoring service started");
 
     app.Run();
 

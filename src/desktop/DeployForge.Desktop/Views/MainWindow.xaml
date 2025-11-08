@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:vm="clr-namespace:DeployForge.Desktop.ViewModels"
+        xmlns:views="clr-namespace:DeployForge.Desktop.Views"
         mc:Ignorable="d"
         Title="DeployForge - Windows Image Configurator"
         Height="800" Width="1400"
@@ -11,6 +13,43 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         Background="{DynamicResource MaterialDesignPaper}"
         FontFamily="{materialDesign:MaterialDesignFont}">
+
+    <Window.Resources>
+        <!-- DataTemplates for ViewModel to View mapping -->
+        <DataTemplate DataType="{x:Type vm:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ImageManagementViewModel}">
+            <views:ImageManagementView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ComponentManagerViewModel}">
+            <views:ComponentManagerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WorkflowDesignerViewModel}">
+            <views:WorkflowDesignerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DebloatWizardViewModel}">
+            <views:DebloatWizardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BackupManagerViewModel}">
+            <views:BackupManagerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ConfigurationProfilesViewModel}">
+            <views:ConfigurationProfilesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:AuditLogViewerViewModel}">
+            <views:AuditLogViewerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:BatchOperationsViewModel}">
+            <views:BatchOperationsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TemplateManagerViewModel}">
+            <views:TemplateManagerView />
+        </DataTemplate>
+    </Window.Resources>
 
     <materialDesign:DialogHost Identifier="RootDialog">
         <materialDesign:DrawerHost IsLeftDrawerOpen="{Binding IsMenuOpen}">
@@ -97,16 +136,17 @@
                 </Border>
 
                 <!-- Content Area -->
-                <ContentControl Content="{Binding CurrentViewModel}" Margin="20">
-                    <ContentControl.ContentTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="Select a menu item to begin"
-                                      Style="{StaticResource MaterialDesignHeadline6TextBlock}"
-                                      HorizontalAlignment="Center" VerticalAlignment="Center"
-                                      Opacity="0.5"/>
-                        </DataTemplate>
-                    </ContentControl.ContentTemplate>
-                </ContentControl>
+                <Grid Margin="20">
+                    <!-- Default message when no view is selected -->
+                    <TextBlock Text="Select a menu item to begin"
+                              Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Opacity="0.5"
+                              Visibility="{Binding CurrentViewModel, Converter={StaticResource InvertedNullToVisibility}}"/>
+
+                    <!-- Current view content -->
+                    <ContentControl Content="{Binding CurrentViewModel}" />
+                </Grid>
             </DockPanel>
         </materialDesign:DrawerHost>
     </materialDesign:DialogHost>
