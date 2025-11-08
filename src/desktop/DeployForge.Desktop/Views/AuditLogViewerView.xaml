@@ -1,0 +1,279 @@
+<UserControl x:Class="DeployForge.Desktop.Views.AuditLogViewerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Audit Log Viewer" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                <TextBlock Text="Search and view operation history"
+                          Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                          Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding ExportLogsCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Export" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Export"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignOutlinedButton}"
+                       Command="{Binding DeleteOldLogsCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="DeleteClock" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Delete Old"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Filters Card -->
+        <materialDesign:Card Grid.Row="1" Padding="15" Margin="0,0,0,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- First Row: Search and Dates -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Search Box -->
+                    <Grid Grid.Column="0" Margin="0,0,10,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                                materialDesign:HintAssist.Hint="Search logs..."
+                                Style="{StaticResource MaterialDesignOutlinedTextBox}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+
+                        <Button Grid.Column="1"
+                               Style="{StaticResource MaterialDesignIconButton}"
+                               Command="{Binding SearchCommand}"
+                               Margin="5,0,0,0">
+                            <materialDesign:PackIcon Kind="Magnify"/>
+                        </Button>
+                    </Grid>
+
+                    <!-- Start Date -->
+                    <DatePicker Grid.Column="1"
+                               SelectedDate="{Binding StartDate}"
+                               materialDesign:HintAssist.Hint="Start Date"
+                               Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                               Margin="0,0,10,0"/>
+
+                    <!-- End Date -->
+                    <DatePicker Grid.Column="2"
+                               SelectedDate="{Binding EndDate}"
+                               materialDesign:HintAssist.Hint="End Date"
+                               Style="{StaticResource MaterialDesignOutlinedDatePicker}"
+                               Margin="0,0,10,0"/>
+
+                    <!-- Search Button -->
+                    <Button Grid.Column="3"
+                           Style="{StaticResource MaterialDesignRaisedButton}"
+                           Command="{Binding SearchCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Magnify" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Apply"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+
+                <!-- Second Row: Filter Dropdowns -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <ComboBox Grid.Column="0"
+                             ItemsSource="{Binding Categories}"
+                             SelectedItem="{Binding FilterCategory}"
+                             materialDesign:HintAssist.Hint="Category"
+                             Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                             Margin="0,0,10,0"/>
+
+                    <ComboBox Grid.Column="1"
+                             ItemsSource="{Binding Results}"
+                             SelectedItem="{Binding FilterResult}"
+                             materialDesign:HintAssist.Hint="Result"
+                             Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                             Margin="0,0,10,0"/>
+
+                    <ComboBox Grid.Column="2"
+                             ItemsSource="{Binding Severities}"
+                             SelectedItem="{Binding FilterSeverity}"
+                             materialDesign:HintAssist.Hint="Severity"
+                             Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                             Margin="0,0,10,0"/>
+
+                    <Button Grid.Column="3"
+                           Style="{StaticResource MaterialDesignFlatButton}"
+                           Command="{Binding ClearFiltersCommand}">
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="FilterRemove" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                            <TextBlock Text="Clear"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Logs DataGrid -->
+        <materialDesign:Card Grid.Row="2" Padding="0">
+            <Grid>
+                <DataGrid ItemsSource="{Binding LogEntries}"
+                         SelectedItem="{Binding SelectedEntry, Mode=TwoWay}"
+                         AutoGenerateColumns="False"
+                         CanUserAddRows="False"
+                         CanUserDeleteRows="False"
+                         IsReadOnly="True"
+                         SelectionMode="Single"
+                         materialDesign:DataGridAssist.CellPadding="8"
+                         materialDesign:DataGridAssist.ColumnHeaderPadding="8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding TimestampFormatted}" Width="Auto"/>
+                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="Auto"/>
+                        <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="*"/>
+                        <DataGridTextColumn Header="Resource" Binding="{Binding Resource}" Width="2*"/>
+                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="Auto"/>
+                        <DataGridTextColumn Header="User" Binding="{Binding User}" Width="Auto"/>
+                        <DataGridTextColumn Header="Duration" Binding="{Binding DurationFormatted}" Width="Auto"/>
+                        <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="Auto"/>
+                        <DataGridTemplateColumn Header="Actions" Width="Auto">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding DataContext.ViewDetailsCommand,
+                                                   RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                           ToolTip="View Details">
+                                        <materialDesign:PackIcon Kind="InformationOutline"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+
+                    <!-- Row Style for Result Coloring -->
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Result}" Value="Success">
+                                    <Setter Property="Background" Value="#F1F8F4"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Result}" Value="Failure">
+                                    <Setter Property="Background" Value="#FFEBEE"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Result}" Value="PartialSuccess">
+                                    <Setter Property="Background" Value="#FFF8E1"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Severity}" Value="Error">
+                                    <Setter Property="Foreground" Value="#D32F2F"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Severity}" Value="Critical">
+                                    <Setter Property="Foreground" Value="#B71C1C"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGrid.RowStyle>
+                </DataGrid>
+
+                <!-- No Data Message -->
+                <StackPanel VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Margin="20"
+                           Visibility="{Binding LogEntries.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <materialDesign:PackIcon Kind="FileDocumentOutline" Width="64" Height="64"
+                                           Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                    <TextBlock Text="No audit logs found"
+                              Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"
+                              Margin="0,10,0,5"/>
+                    <TextBlock Text="Try adjusting your search filters"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+
+        <!-- Pagination -->
+        <materialDesign:Card Grid.Row="3" Padding="15" Margin="0,10,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Previous Button -->
+                <Button Grid.Column="0"
+                       Style="{StaticResource MaterialDesignOutlinedButton}"
+                       Command="{Binding PreviousPageCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="ChevronLeft" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Previous"/>
+                    </StackPanel>
+                </Button>
+
+                <!-- Page Info -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="Page" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding CurrentPage}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Text="of" VerticalAlignment="Center" Margin="5,0"/>
+                    <TextBlock Text="{Binding TotalPages}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Next Button -->
+                <Button Grid.Column="2"
+                       Style="{StaticResource MaterialDesignOutlinedButton}"
+                       Command="{Binding NextPageCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Next"/>
+                        <materialDesign:PackIcon Kind="ChevronRight" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>
