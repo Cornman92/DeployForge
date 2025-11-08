@@ -1,0 +1,356 @@
+<UserControl x:Class="DeployForge.Desktop.Views.BatchOperationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+                <TextBlock Text="Batch Operations" Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                <TextBlock Text="Create and monitor batch image operations"
+                          Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                          Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <CheckBox IsChecked="{Binding AutoRefresh}"
+                         Content="Auto-Refresh"
+                         VerticalAlignment="Center"
+                         Margin="0,0,15,0"/>
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding CreateOperationCommand}"
+                       Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Create"/>
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource MaterialDesignRaisedButton}"
+                       Command="{Binding RefreshCommand}">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                        <TextBlock Text="Refresh"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="3*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Panel - Operations List -->
+            <materialDesign:Card Grid.Column="0" Margin="0,0,10,0" Padding="15">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Filters -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                        <ComboBox ItemsSource="{Binding StatusFilters}"
+                                 SelectedItem="{Binding FilterStatus}"
+                                 materialDesign:HintAssist.Hint="Filter by Status"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                 Margin="0,0,0,10"/>
+
+                        <ComboBox ItemsSource="{Binding TypeFilters}"
+                                 SelectedItem="{Binding FilterType}"
+                                 materialDesign:HintAssist.Hint="Filter by Type"
+                                 Style="{StaticResource MaterialDesignOutlinedComboBox}"/>
+                    </StackPanel>
+
+                    <!-- Operation Count -->
+                    <TextBlock Grid.Row="1"
+                              Text="{Binding Operations.Count, StringFormat='{}{0} operations'}"
+                              Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                              Margin="0,0,0,10"/>
+
+                    <!-- Operations List -->
+                    <ListBox Grid.Row="2"
+                            ItemsSource="{Binding Operations}"
+                            SelectedItem="{Binding SelectedOperation, Mode=TwoWay}"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource MaterialDesignDivider}"
+                                       BorderThickness="0,0,0,1"
+                                       Padding="0,10"
+                                       Margin="0,0,0,5">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Name and Status Badge -->
+                                        <Grid Grid.Row="0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14"/>
+
+                                            <Border Grid.Column="1"
+                                                   Background="{DynamicResource PrimaryHueMidBrush}"
+                                                   CornerRadius="3"
+                                                   Padding="6,2">
+                                                <TextBlock Text="{Binding Status}" Foreground="White" FontSize="10"/>
+                                            </Border>
+                                        </Grid>
+
+                                        <!-- Type -->
+                                        <TextBlock Grid.Row="1"
+                                                  Text="{Binding Type}"
+                                                  Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                  Margin="0,2,0,0"/>
+
+                                        <!-- Progress Bar -->
+                                        <ProgressBar Grid.Row="2"
+                                                    Value="{Binding ProgressPercentage}"
+                                                    Maximum="100"
+                                                    Height="4"
+                                                    Margin="0,5,0,2"/>
+
+                                        <!-- Summary Info -->
+                                        <Grid Grid.Row="3" Margin="0,5,0,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0"
+                                                      Text="{Binding Summary.TotalImages, StringFormat='{}{0} images'}"
+                                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+
+                                            <TextBlock Grid.Column="1"
+                                                      Text="{Binding DurationFormatted}"
+                                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                                      Foreground="{DynamicResource MaterialDesignBodyLight}"/>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </materialDesign:Card>
+
+            <!-- Right Panel - Operation Details -->
+            <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <!-- Operation Info Card -->
+                    <materialDesign:Card Padding="15" Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header -->
+                            <Grid Grid.Row="0" Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Text="Operation Details" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding StartOperationCommand}"
+                                           ToolTip="Start Operation"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="Play"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding PauseOperationCommand}"
+                                           ToolTip="Pause Operation"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="Pause"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding ResumeOperationCommand}"
+                                           ToolTip="Resume Operation"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="PlayCircle"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding CancelOperationCommand}"
+                                           ToolTip="Cancel Operation"
+                                           Margin="0,0,5,0">
+                                        <materialDesign:PackIcon Kind="Stop"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}"
+                                           Command="{Binding DeleteOperationCommand}"
+                                           ToolTip="Delete Operation">
+                                        <materialDesign:PackIcon Kind="Delete"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Details -->
+                            <StackPanel Grid.Row="1"
+                                       Visibility="{Binding SelectedOperation, Converter={StaticResource NullToVisibilityConverter}}">
+                                <Grid Margin="0,0,0,15">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="Name:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedOperation.Name}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="Type:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SelectedOperation.Type}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Status:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedOperation.Status}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Created:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedOperation.CreatedAt, StringFormat='g'}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="4" Grid.Column="0" Text="Duration:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedOperation.DurationFormatted}" Margin="0,0,0,5"/>
+
+                                    <TextBlock Grid.Row="5" Grid.Column="0" Text="Created By:" FontWeight="SemiBold" Margin="0,0,10,5"/>
+                                    <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedOperation.CreatedBy}" Margin="0,0,0,5"/>
+                                </Grid>
+
+                                <!-- Progress -->
+                                <StackPanel Margin="0,0,0,15">
+                                    <TextBlock Text="Progress" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                                    <ProgressBar Value="{Binding SelectedOperation.ProgressPercentage}"
+                                                Maximum="100"
+                                                Height="8"
+                                                Margin="0,0,0,5"/>
+                                    <TextBlock Text="{Binding SelectedOperation.ProgressDisplay}"
+                                              Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                                </StackPanel>
+
+                                <!-- Status Message -->
+                                <TextBlock Text="{Binding SelectedOperation.StatusMessage}"
+                                          TextWrapping="Wrap"
+                                          Style="{StaticResource MaterialDesignBody2TextBlock}"
+                                          Margin="0,0,0,10"
+                                          Visibility="{Binding SelectedOperation.StatusMessage, Converter={StaticResource NullToVisibilityConverter}}"/>
+                            </StackPanel>
+
+                            <!-- No Selection Message -->
+                            <TextBlock Grid.Row="1"
+                                      Text="Select an operation to view details"
+                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Margin="0,40,0,40"
+                                      Visibility="{Binding SelectedOperation, Converter={StaticResource InvertedNullToVisibilityConverter}}"/>
+                        </Grid>
+                    </materialDesign:Card>
+
+                    <!-- Summary Card -->
+                    <materialDesign:Card Padding="15" Margin="0,0,0,10"
+                                        Visibility="{Binding SelectedOperation.Summary, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Summary" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding SelectedOperation.Summary.TotalImages}"
+                                              Style="{StaticResource MaterialDesignHeadline4TextBlock}"/>
+                                    <TextBlock Text="Total Images" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding SelectedOperation.Summary.SuccessfulImages}"
+                                              Style="{StaticResource MaterialDesignHeadline4TextBlock}"
+                                              Foreground="#4CAF50"/>
+                                    <TextBlock Text="Successful" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="{Binding SelectedOperation.Summary.FailedImages}"
+                                              Style="{StaticResource MaterialDesignHeadline4TextBlock}"
+                                              Foreground="#F44336"/>
+                                    <TextBlock Text="Failed" Style="{StaticResource MaterialDesignCaptionTextBlock}"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Button Style="{StaticResource MaterialDesignFlatButton}"
+                                   Command="{Binding RetryFailedCommand}"
+                                   HorizontalAlignment="Left"
+                                   Margin="0,10,0,0">
+                                <StackPanel Orientation="Horizontal">
+                                    <materialDesign:PackIcon Kind="Refresh" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                    <TextBlock Text="Retry Failed Images"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </materialDesign:Card>
+
+                    <!-- Target Images Card -->
+                    <materialDesign:Card Padding="15"
+                                        Visibility="{Binding SelectedOperation, Converter={StaticResource NullToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Text="Target Images" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,0,0,15"/>
+
+                            <DataGrid ItemsSource="{Binding SelectedOperation.TargetImages}"
+                                     AutoGenerateColumns="False"
+                                     CanUserAddRows="False"
+                                     CanUserDeleteRows="False"
+                                     IsReadOnly="True"
+                                     SelectionMode="Single"
+                                     materialDesign:DataGridAssist.CellPadding="8"
+                                     materialDesign:DataGridAssist.ColumnHeaderPadding="8"
+                                     MaxHeight="400">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Image" Binding="{Binding ImageName}" Width="2*"/>
+                                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="Auto"/>
+                                    <DataGridTextColumn Header="Progress" Binding="{Binding ProgressPercentage, StringFormat='{}{0}%'}" Width="Auto"/>
+                                    <DataGridTextColumn Header="Duration" Binding="{Binding DurationFormatted}" Width="Auto"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <TextBlock Text="No target images"
+                                      Style="{StaticResource MaterialDesignCaptionTextBlock}"
+                                      HorizontalAlignment="Center"
+                                      Margin="0,20,0,0"
+                                      Visibility="{Binding SelectedOperation.TargetImages.Count, Converter={StaticResource CountToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </materialDesign:Card>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Grid>
+</UserControl>
