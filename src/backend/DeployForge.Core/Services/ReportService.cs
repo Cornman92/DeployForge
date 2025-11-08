@@ -629,6 +629,15 @@ public class ReportService : IReportService
                                         }
                                     });
                                 }
+                                else if (section.Type == SectionType.Chart && section.Data != null)
+                                {
+                                    // Render charts
+                                    var chartData = section.Data as Dictionary<string, object>;
+                                    if (chartData != null && chartData.ContainsKey("type"))
+                                    {
+                                        RenderChart(column.Item(), chartData);
+                                    }
+                                }
                                 else
                                 {
                                     column.Item().Text(section.Content)
@@ -658,6 +667,40 @@ public class ReportService : IReportService
         {
             _logger.LogError(ex, "Failed to generate PDF report");
             throw;
+        }
+    }
+
+    private void RenderChart(IContainer container, Dictionary<string, object> chartData)
+    {
+        var chartType = chartData["type"]?.ToString()?.ToLower();
+
+        switch (chartType)
+        {
+            case "bar":
+                if (chartData.ContainsKey("data") && chartData["data"] is Dictionary<string, double> barData)
+                {
+                    var title = chartData.GetValueOrDefault("title")?.ToString() ?? "Chart";
+                    ChartGenerator.GenerateBarChart(container, title, barData);
+                }
+                break;
+
+            case "pie":
+                if (chartData.ContainsKey("data") && chartData["data"] is Dictionary<string, double> pieData)
+                {
+                    var title = chartData.GetValueOrDefault("title")?.ToString() ?? "Chart";
+                    ChartGenerator.GeneratePieChart(container, title, pieData);
+                }
+                break;
+
+            case "progress":
+                if (chartData.ContainsKey("percentage"))
+                {
+                    var label = chartData.GetValueOrDefault("label")?.ToString() ?? "Progress";
+                    var percentage = Convert.ToDouble(chartData["percentage"]);
+                    var color = chartData.GetValueOrDefault("color")?.ToString() ?? "blue";
+                    ChartGenerator.GenerateProgressBar(container, label, percentage, color);
+                }
+                break;
         }
     }
 

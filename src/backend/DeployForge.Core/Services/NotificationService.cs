@@ -88,6 +88,24 @@ public class NotificationService : INotificationService
                             }
                         }
                         break;
+
+                    case NotificationChannel.Slack when _settings.Slack.Enabled:
+                        var slackResult = await SendSlackNotificationAsync(request, cancellationToken);
+                        if (!slackResult.Success)
+                        {
+                            success = false;
+                            errors.Add(slackResult.ErrorMessage ?? "Slack failed");
+                        }
+                        break;
+
+                    case NotificationChannel.Teams when _settings.Teams.Enabled:
+                        var teamsResult = await SendTeamsNotificationAsync(request, cancellationToken);
+                        if (!teamsResult.Success)
+                        {
+                            success = false;
+                            errors.Add(teamsResult.ErrorMessage ?? "Teams failed");
+                        }
+                        break;
                 }
             }
 
@@ -392,6 +410,171 @@ public class NotificationService : INotificationService
 
         var result = query.OrderByDescending(h => h.Timestamp).ToList();
         return Task.FromResult(OperationResult<List<NotificationHistory>>.SuccessResult(result));
+    }
+
+    private async Task<OperationResult<bool>> SendSlackNotificationAsync(
+        NotificationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!_settings.Slack.Enabled || string.IsNullOrEmpty(_settings.Slack.WebhookUrl))
+            {
+                return OperationResult<bool>.FailureResult("Slack not configured");
+            }
+
+            var color = request.Severity switch
+            {
+                NotificationSeverity.Success => "good",
+                NotificationSeverity.Warning => "warning",
+                NotificationSeverity.Error => "danger",
+                NotificationSeverity.Critical => "danger",
+                _ => "#17a2b8"
+            };
+
+            var payload = new
+            {
+                channel = _settings.Slack.DefaultChannel,
+                username = _settings.Slack.BotUsername,
+                icon_emoji = _settings.Slack.IconEmoji,
+                attachments = new[]
+                {
+                    new
+                    {
+                        color,
+                        title = request.Title,
+                        text = request.Message,
+                        fields = request.Data.Select(kvp => new
+                        {
+                            title = kvp.Key,
+                            value = kvp.Value?.ToString() ?? "",
+                            @short = true
+                        }).ToArray(),
+                        footer = "DeployForge",
+                        ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+                    }
+                }
+            };
+
+            var content = JsonContent.Create(payload);
+            var response = await _httpClient.PostAsync(_settings.Slack.WebhookUrl, content, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Slack notification sent successfully");
+
+                _history.Add(new NotificationHistory
+                {
+                    EventType = request.EventType,
+                    Title = request.Title,
+                    Message = request.Message,
+                    Channel = NotificationChannel.Slack,
+                    Success = true,
+                    Recipient = _settings.Slack.DefaultChannel
+                });
+
+                return OperationResult<bool>.SuccessResult(true);
+            }
+            else
+            {
+                var error = $"Slack returned {response.StatusCode}";
+                _logger.LogWarning("Slack notification failed: {Error}", error);
+                return OperationResult<bool>.FailureResult(error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send Slack notification");
+            return OperationResult<bool>.FailureResult($"Failed to send Slack notification: {ex.Message}");
+        }
+    }
+
+    private async Task<OperationResult<bool>> SendTeamsNotificationAsync(
+        NotificationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (!_settings.Teams.Enabled || string.IsNullOrEmpty(_settings.Teams.WebhookUrl))
+            {
+                return OperationResult<bool>.FailureResult("Teams not configured");
+            }
+
+            var payload = new
+            {
+                type = "message",
+                attachments = new[]
+                {
+                    new
+                    {
+                        contentType = "application/vnd.microsoft.card.adaptive",
+                        contentUrl = (string?)null,
+                        content = new
+                        {
+                            type = "AdaptiveCard",
+                            body = new object[]
+                            {
+                                new
+                                {
+                                    type = "TextBlock",
+                                    size = "Large",
+                                    weight = "Bolder",
+                                    text = request.Title
+                                },
+                                new
+                                {
+                                    type = "TextBlock",
+                                    text = request.Message,
+                                    wrap = true
+                                },
+                                new
+                                {
+                                    type = "FactSet",
+                                    facts = request.Data.Select(kvp => new
+                                    {
+                                        title = kvp.Key,
+                                        value = kvp.Value?.ToString() ?? ""
+                                    }).ToArray()
+                                }
+                            },
+                            actions = new object[0],
+                            version = "1.4"
+                        }
+                    }
+                }
+            };
+
+            var content = JsonContent.Create(payload);
+            var response = await _httpClient.PostAsync(_settings.Teams.WebhookUrl, content, cancellationToken);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _logger.LogInformation("Teams notification sent successfully");
+
+                _history.Add(new NotificationHistory
+                {
+                    EventType = request.EventType,
+                    Title = request.Title,
+                    Message = request.Message,
+                    Channel = NotificationChannel.Teams,
+                    Success = true,
+                    Recipient = "Teams Channel"
+                });
+
+                return OperationResult<bool>.SuccessResult(true);
+            }
+            else
+            {
+                var error = $"Teams returned {response.StatusCode}";
+                _logger.LogWarning("Teams notification failed: {Error}", error);
+                return OperationResult<bool>.FailureResult(error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send Teams notification");
+            return OperationResult<bool>.FailureResult($"Failed to send Teams notification: {ex.Message}");
+        }
     }
 
     #region Private Methods

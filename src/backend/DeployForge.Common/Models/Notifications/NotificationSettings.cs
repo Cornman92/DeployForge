@@ -26,9 +26,71 @@ public class NotificationSettings
     public List<WebhookEndpoint> Webhooks { get; set; } = new();
 
     /// <summary>
+    /// Slack configuration
+    /// </summary>
+    public SlackSettings Slack { get; set; } = new();
+
+    /// <summary>
+    /// Microsoft Teams configuration
+    /// </summary>
+    public TeamsSettings Teams { get; set; } = new();
+
+    /// <summary>
     /// Notification rules
     /// </summary>
     public List<NotificationRule> Rules { get; set; } = new();
+}
+
+/// <summary>
+/// Slack settings
+/// </summary>
+public class SlackSettings
+{
+    /// <summary>
+    /// Enable Slack notifications
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Slack webhook URL
+    /// </summary>
+    public string WebhookUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Default channel
+    /// </summary>
+    public string DefaultChannel { get; set; } = "#general";
+
+    /// <summary>
+    /// Bot username
+    /// </summary>
+    public string BotUsername { get; set; } = "DeployForge";
+
+    /// <summary>
+    /// Bot icon emoji
+    /// </summary>
+    public string IconEmoji { get; set; } = ":robot_face:";
+}
+
+/// <summary>
+/// Microsoft Teams settings
+/// </summary>
+public class TeamsSettings
+{
+    /// <summary>
+    /// Enable Teams notifications
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Teams webhook URL
+    /// </summary>
+    public string WebhookUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Theme color (hex)
+    /// </summary>
+    public string ThemeColor { get; set; } = "0076D7";
 }
 
 /// <summary>
@@ -176,5 +238,7 @@ public enum NotificationEventType
 public enum NotificationChannel
 {
     Email,
-    Webhook
+    Webhook,
+    Slack,
+    Teams
 }
