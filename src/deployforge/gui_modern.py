@@ -30,6 +30,7 @@ from PyQt6.QtGui import QIcon, QFont, QPixmap, QAction, QPalette, QColor, QDragE
 try:
     from deployforge.cli.profiles import ProfileManager, apply_profile
     from deployforge.cli.analyzer import ImageAnalyzer
+    from deployforge.config_manager import ConfigurationManager
     BACKEND_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Backend modules not available: {e}")
@@ -868,11 +869,53 @@ class BuildWorker(QThread):
                 )
 
                 self.log.emit("[OK] Profile applied successfully")
-                self.progress.emit(80, "Finalizing image...")
+                self.progress.emit(50, "Profile configuration complete")
 
             except Exception as e:
                 self.log.emit(f"[ERROR] Failed to apply profile: {str(e)}")
                 raise
+
+            if self._cancelled:
+                self.log.emit("[WARN] Build cancelled by user")
+                self.finished.emit(False, "Cancelled by user")
+                return
+
+            # Apply additional features using ConfigurationManager
+            self.progress.emit(55, "Applying additional features...")
+            self.log.emit(f"[INFO] Processing {len([f for f in self.selected_features.values() if f])} additional features...")
+
+            try:
+                # Create configuration manager
+                config_manager = ConfigurationManager()
+
+                # Set up callbacks for progress and logging
+                config_manager.progress_callback = lambda pct, msg: self.progress.emit(
+                    55 + int(pct * 0.25),  # Map 0-100% to 55-80% of total progress
+                    msg
+                )
+                config_manager.log_callback = lambda msg: self.log.emit(msg)
+
+                # Configure modules from GUI selections
+                config_manager.configure_from_gui(self.selected_features)
+
+                # Execute all enabled modules
+                success = config_manager.execute_all(
+                    image_path=self.image_path,
+                    profile_name=self.profile_name,
+                    output_path=self.output_path
+                )
+
+                if success:
+                    self.log.emit("[OK] Additional features applied successfully")
+                else:
+                    self.log.emit("[WARN] Some features completed with warnings")
+
+                self.progress.emit(80, "Features application complete")
+
+            except Exception as e:
+                self.log.emit(f"[ERROR] Failed to apply features: {str(e)}")
+                # Continue with build even if features fail
+                self.log.emit("[WARN] Continuing build despite feature application errors")
 
             if self._cancelled:
                 self.log.emit("[WARN] Build cancelled by user")
