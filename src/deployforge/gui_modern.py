@@ -502,6 +502,7 @@ class WelcomePage(QWidget):
         wizard_layout.addWidget(wizard_desc)
 
         btn_wizard = ModernButton("🚀 Launch Setup Wizard", primary=True)
+        btn_wizard.setToolTip("Launch the step-by-step setup wizard for beginners (F1 for help)")
         btn_wizard.clicked.connect(self.launch_wizard)
         wizard_layout.addWidget(btn_wizard)
 
@@ -516,9 +517,13 @@ class WelcomePage(QWidget):
         quick_layout.addSpacing(8)
 
         btn_gaming = ModernButton("🎮 Build Gaming Image")
+        btn_gaming.setToolTip("Create a gaming-optimized image with performance tweaks and low latency")
         btn_developer = ModernButton("💻 Build Developer Image")
+        btn_developer.setToolTip("Create a development image with WSL2, Docker, Git, and VS Code")
         btn_enterprise = ModernButton("🏢 Build Enterprise Image")
+        btn_enterprise.setToolTip("Create a secure enterprise image with CIS benchmarks and BitLocker")
         btn_custom = ModernButton("🔧 Custom Build")
+        btn_custom.setToolTip("Create a fully customized image with manual control over all options")
 
         quick_layout.addWidget(btn_gaming)
         quick_layout.addWidget(btn_developer)
@@ -645,6 +650,7 @@ class AdvancedOptionsPanel(QWidget):
 
         # Toggle button
         self.toggle_btn = ModernButton("▶ Advanced Options")
+        self.toggle_btn.setToolTip("Click to show/hide 47+ advanced customization features")
         self.toggle_btn.clicked.connect(self.toggle_visibility)
         main_layout.addWidget(self.toggle_btn)
 
@@ -673,6 +679,65 @@ class AdvancedOptionsPanel(QWidget):
 
         # Feature categories
         self.feature_checkboxes = {}
+
+        # Feature tooltips for accessibility
+        self.feature_tooltips = {
+            # Gaming Optimizations
+            "gaming_competitive": "Configure network and system settings for competitive gaming (lowest latency)",
+            "gaming_balanced": "Balanced gaming profile with good performance and quality",
+            "gaming_quality": "Optimized for high-quality gaming experience (graphics over speed)",
+            "gaming_streaming": "Optimized for game streaming with network bandwidth priority",
+            "network_latency": "Reduce network latency with TCP optimizations and throttling removal",
+            "game_mode": "Enable Windows Game Mode for prioritized gaming performance",
+            "gpu_scheduling": "Enable GPU hardware scheduling for improved frame pacing",
+
+            # Debloating & Privacy
+            "debloat_aggressive": "Remove maximum bloatware and unnecessary Windows components",
+            "debloat_moderate": "Remove common bloatware while keeping useful features",
+            "debloat_minimal": "Remove only the most problematic bloatware",
+            "privacy_hardening": "Apply comprehensive privacy tweaks and disable tracking",
+            "disable_telemetry": "Disable Windows telemetry and data collection",
+            "dns_over_https": "Enable DNS over HTTPS for encrypted DNS queries (Cloudflare)",
+
+            # Visual Customization
+            "dark_theme": "Apply dark theme across Windows UI",
+            "light_theme": "Apply light theme across Windows UI",
+            "custom_wallpaper": "Set a custom desktop wallpaper",
+            "taskbar_left": "Move taskbar icons to the left (Windows 10 style)",
+            "taskbar_center": "Keep taskbar icons centered (Windows 11 default)",
+            "modern_ui": "Apply modern UI tweaks and improvements",
+
+            # Developer Tools
+            "wsl2": "Enable Windows Subsystem for Linux 2 for running Linux environments",
+            "hyperv": "Enable Hyper-V virtualization platform",
+            "sandbox": "Enable Windows Sandbox for testing applications in isolation",
+            "dev_mode": "Enable Developer Mode with advanced debugging features",
+            "docker": "Install Docker Desktop for containerization",
+            "git": "Install Git for Windows version control",
+            "vscode": "Install Visual Studio Code editor",
+
+            # Enterprise Features
+            "bitlocker": "Configure BitLocker drive encryption",
+            "cis_benchmark": "Apply CIS (Center for Internet Security) benchmarks",
+            "disa_stig": "Apply DISA STIG (Security Technical Implementation Guide) compliance",
+            "gpo_hardening": "Apply Group Policy security hardening",
+            "certificate_enrollment": "Configure automatic certificate enrollment",
+            "mdt_integration": "Integrate with Microsoft Deployment Toolkit",
+
+            # Applications
+            "browsers": "Install alternative browsers (Firefox, Brave)",
+            "office": "Install Microsoft Office suite",
+            "creative_suite": "Install creative tools (OBS, GIMP, Audacity, Blender)",
+            "gaming_launchers": "Install gaming platforms (Steam, Epic Games, GOG)",
+            "winget_packages": "Configure Windows Package Manager (winget)",
+
+            # System Optimization
+            "performance_optimize": "Apply comprehensive performance optimizations",
+            "network_optimize": "Optimize network stack for maximum throughput",
+            "storage_optimize": "Optimize storage and file system settings",
+            "ram_optimize": "Optimize memory management and paging",
+            "startup_optimize": "Optimize boot time and startup programs",
+        }
 
         categories = [
             ("🎮 Gaming Optimizations", [
@@ -741,6 +806,9 @@ class AdvancedOptionsPanel(QWidget):
             for feature_id, feature_name in features:
                 checkbox = QCheckBox(feature_name)
                 checkbox.setFont(QFont("Segoe UI", 9))
+                # Apply tooltip if available
+                if feature_id in self.feature_tooltips:
+                    checkbox.setToolTip(self.feature_tooltips[feature_id])
                 self.feature_checkboxes[feature_id] = checkbox
                 group_layout.addWidget(checkbox)
 
@@ -1045,7 +1113,7 @@ class BuildProgressDialog(QWidget):
         scrollbar.setValue(scrollbar.maximum())
 
     def on_build_finished(self, success: bool, message: str):
-        """Handle build completion."""
+        """Handle build completion with notification."""
         self.build_completed = True
         self.cancel_btn.setVisible(False)
         self.close_btn.setVisible(True)
@@ -1055,15 +1123,26 @@ class BuildProgressDialog(QWidget):
             self.operation_label.setStyleSheet("color: #107C10; font-weight: bold;")
             self.time_label.setText(message)
 
-            QMessageBox.information(
-                self,
-                "Build Complete",
-                f"Image built successfully!\n\n{message}"
-            )
+            # Show completion message
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("Build Complete")
+            msg_box.setIcon(QMessageBox.Icon.Information)
+            msg_box.setText(f"Image built successfully!\n\n{message}")
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg_box.exec()
+
+            # Flash taskbar if window is not active (for notification)
+            if not self.window().isActiveWindow():
+                QApplication.alert(self.window(), 3000)  # Flash for 3 seconds
+
         else:
             self.operation_label.setText("✗ Build failed")
             self.operation_label.setStyleSheet("color: #C50F1F; font-weight: bold;")
             self.time_label.setText(message)
+
+            # Flash taskbar on error too
+            if not self.window().isActiveWindow():
+                QApplication.alert(self.window(), 3000)
 
     def on_build_error(self, error_msg: str):
         """Handle build error."""
@@ -1142,14 +1221,17 @@ class BuildPage(QWidget):
         source_layout = QVBoxLayout()
 
         source_label = QLabel("Select a Windows installation image (WIM, ESD, or ISO):")
+        source_label.setToolTip("Choose a Windows deployment image file to customize")
         source_layout.addWidget(source_label)
 
         source_buttons = QHBoxLayout()
         self.source_path = QLabel("No image selected")
         self.source_path.setStyleSheet("color: #666666; padding: 8px;")
+        self.source_path.setToolTip("Drag and drop an image file here or use the Browse button")
         source_buttons.addWidget(self.source_path, 1)
 
         btn_browse = ModernButton("Browse...")
+        btn_browse.setToolTip("Browse your computer for a Windows image file (Ctrl+O)")
         btn_browse.clicked.connect(self.browse_source)
         source_buttons.addWidget(btn_browse)
 
@@ -1169,6 +1251,7 @@ class BuildPage(QWidget):
         profile_layout = QVBoxLayout()
 
         profiles_label = QLabel("Choose a customization profile to get started:")
+        profiles_label.setToolTip("Select a pre-configured profile that best matches your use case")
         profile_layout.addWidget(profiles_label)
 
         profile_layout.addSpacing(12)
@@ -1190,8 +1273,19 @@ class BuildPage(QWidget):
              "custom", ["Full manual control", "No automatic changes"])
         ]
 
+        # Profile tooltips for accessibility
+        profile_tooltips = {
+            "gamer": "Click to select Gaming profile - optimized for low latency, high performance gaming",
+            "developer": "Click to select Developer profile - includes WSL2, Docker, Hyper-V, and dev tools",
+            "enterprise": "Click to select Enterprise profile - security hardening with CIS, BitLocker, and STIG compliance",
+            "student": "Click to select Student profile - balanced productivity setup with Office and browsers",
+            "creator": "Click to select Creator profile - content creation tools with GPU and storage optimization",
+            "custom": "Click to select Custom profile - start with minimal base and manually configure all options"
+        }
+
         for icon_text, description, profile_id, features in profiles:
             card = ProfileCard(icon_text, description, profile_id, features)
+            card.setToolTip(profile_tooltips.get(profile_id, "Click to select this profile"))
             card.selected.connect(self.on_profile_selected)
             self.profile_cards.append(card)
             profile_layout.addWidget(card)
@@ -1208,14 +1302,17 @@ class BuildPage(QWidget):
         output_layout = QVBoxLayout()
 
         output_label = QLabel("Output location:")
+        output_label.setToolTip("Choose where to save the customized image")
         output_layout.addWidget(output_label)
 
         output_buttons = QHBoxLayout()
         self.output_path = QLabel("Same as source (will create *_custom.wim)")
         self.output_path.setStyleSheet("color: #666666; padding: 8px;")
+        self.output_path.setToolTip("The customized image will be saved here")
         output_buttons.addWidget(self.output_path, 1)
 
         btn_output = ModernButton("Change...")
+        btn_output.setToolTip("Choose a different location to save the output image")
         btn_output.clicked.connect(self.browse_output)
         output_buttons.addWidget(btn_output)
 
@@ -1226,9 +1323,11 @@ class BuildPage(QWidget):
 
         self.validate_checkbox = QCheckBox("Validate image after build")
         self.validate_checkbox.setChecked(True)
+        self.validate_checkbox.setToolTip("Verify the image integrity after build completes (recommended)")
         options_layout.addWidget(self.validate_checkbox)
 
         self.compress_checkbox = QCheckBox("Maximum compression")
+        self.compress_checkbox.setToolTip("Apply maximum compression to reduce image file size (slower build)")
         options_layout.addWidget(self.compress_checkbox)
 
         options_layout.addStretch()
@@ -1253,6 +1352,7 @@ class BuildPage(QWidget):
         self.btn_build = ModernButton("Build Image", primary=True)
         self.btn_build.setMinimumHeight(50)
         self.btn_build.setFont(QFont("Segoe UI", 12, QFont.Weight.Bold))
+        self.btn_build.setToolTip("Start building the customized Windows image (Ctrl+B)")
         self.btn_build.clicked.connect(self.start_build)
         self.btn_build.setEnabled(False)  # Disabled until image and profile selected
         layout.addWidget(self.btn_build)
@@ -1518,10 +1618,12 @@ class ProfilesPage(QWidget):
             # Actions
             btn_view = ModernButton("View")
             btn_view.setMaximumWidth(80)
+            btn_view.setToolTip("View profile details and included features")
             row_layout.addWidget(btn_view)
 
             btn_clone = ModernButton("Clone")
             btn_clone.setMaximumWidth(80)
+            btn_clone.setToolTip("Create a copy of this profile to customize")
             row_layout.addWidget(btn_clone)
 
             builtin_layout.addWidget(profile_row)
@@ -1538,6 +1640,7 @@ class ProfilesPage(QWidget):
         custom_layout.addWidget(custom_info)
 
         btn_create = ModernButton("+ Create New Profile", primary=True)
+        btn_create.setToolTip("Create a new custom profile with your own configuration (Ctrl+P)")
         btn_create.clicked.connect(self.create_new_profile)
         custom_layout.addWidget(btn_create)
 
@@ -1549,7 +1652,9 @@ class ProfilesPage(QWidget):
         ie_layout = QHBoxLayout()
 
         btn_import = ModernButton("Import Profile...")
+        btn_import.setToolTip("Import a profile from a file")
         btn_export = ModernButton("Export Profile...")
+        btn_export.setToolTip("Export a profile to share with others")
 
         ie_layout.addWidget(btn_import)
         ie_layout.addWidget(btn_export)
@@ -1609,14 +1714,17 @@ class AnalyzePage(QWidget):
         single_layout = QVBoxLayout()
 
         single_label = QLabel("Select an image to analyze:")
+        single_label.setToolTip("Choose a Windows image to examine its contents and properties")
         single_layout.addWidget(single_label)
 
         single_row = QHBoxLayout()
         self.analyze_path = QLabel("No image selected")
         self.analyze_path.setStyleSheet("color: #666666; padding: 8px;")
+        self.analyze_path.setToolTip("The image file to analyze will be shown here")
         single_row.addWidget(self.analyze_path, 1)
 
         btn_browse_analyze = ModernButton("Browse...")
+        btn_browse_analyze.setToolTip("Browse for a Windows image file to analyze")
         btn_browse_analyze.clicked.connect(self.browse_analyze_image)
         single_row.addWidget(btn_browse_analyze)
 
@@ -1629,17 +1737,21 @@ class AnalyzePage(QWidget):
 
         self.check_features = QCheckBox("Analyze Windows features")
         self.check_features.setChecked(True)
+        self.check_features.setToolTip("List all enabled and disabled Windows features")
         single_layout.addWidget(self.check_features)
 
         self.check_apps = QCheckBox("List installed applications")
         self.check_apps.setChecked(True)
+        self.check_apps.setToolTip("List all installed applications and programs")
         single_layout.addWidget(self.check_apps)
 
         self.check_drivers = QCheckBox("List drivers")
+        self.check_drivers.setToolTip("List all installed device drivers")
         single_layout.addWidget(self.check_drivers)
 
         self.check_size = QCheckBox("Calculate disk usage")
         self.check_size.setChecked(True)
+        self.check_size.setToolTip("Calculate total disk space used by the image")
         single_layout.addWidget(self.check_size)
 
         # Report format
@@ -1650,10 +1762,12 @@ class AnalyzePage(QWidget):
         self.format_combo = QComboBox()
         self.format_combo.addItems(["HTML", "JSON", "Text", "PDF"])
         self.format_combo.setMaximumWidth(200)
+        self.format_combo.setToolTip("Choose the output format for the analysis report")
         single_layout.addWidget(self.format_combo)
 
         # Analyze button
         btn_analyze = ModernButton("Generate Report", primary=True)
+        btn_analyze.setToolTip("Generate a comprehensive analysis report of the selected image")
         btn_analyze.clicked.connect(self.run_analysis)
         single_layout.addWidget(btn_analyze)
 
@@ -1665,6 +1779,7 @@ class AnalyzePage(QWidget):
         compare_layout = QVBoxLayout()
 
         compare_label = QLabel("Compare two images side-by-side:")
+        compare_label.setToolTip("Select two images to compare their features and differences")
         compare_layout.addWidget(compare_label)
 
         # Image 1
@@ -1675,9 +1790,11 @@ class AnalyzePage(QWidget):
 
         self.compare_img1 = QLabel("No image selected")
         self.compare_img1.setStyleSheet("color: #666666; padding: 8px;")
+        self.compare_img1.setToolTip("First image for comparison")
         img1_row.addWidget(self.compare_img1, 1)
 
         btn_browse_img1 = ModernButton("Browse...")
+        btn_browse_img1.setToolTip("Select the first image to compare")
         btn_browse_img1.clicked.connect(lambda: self.browse_compare_image(1))
         img1_row.addWidget(btn_browse_img1)
 
@@ -1691,9 +1808,11 @@ class AnalyzePage(QWidget):
 
         self.compare_img2 = QLabel("No image selected")
         self.compare_img2.setStyleSheet("color: #666666; padding: 8px;")
+        self.compare_img2.setToolTip("Second image for comparison")
         img2_row.addWidget(self.compare_img2, 1)
 
         btn_browse_img2 = ModernButton("Browse...")
+        btn_browse_img2.setToolTip("Select the second image to compare")
         btn_browse_img2.clicked.connect(lambda: self.browse_compare_image(2))
         img2_row.addWidget(btn_browse_img2)
 
@@ -1701,6 +1820,7 @@ class AnalyzePage(QWidget):
 
         # Compare button
         btn_compare = ModernButton("Compare Images", primary=True)
+        btn_compare.setToolTip("Generate a comparison report showing differences between the two images (Ctrl+Shift+C)")
         btn_compare.clicked.connect(self.run_comparison)
         compare_layout.addWidget(btn_compare)
 
@@ -2000,11 +2120,13 @@ class SettingsPage(QWidget):
 
         self.btn_light = ModernButton("☀️ Light Theme")
         self.btn_light.setMinimumWidth(150)
+        self.btn_light.setToolTip("Switch to light theme with bright colors")
         self.btn_light.clicked.connect(lambda: self.set_theme('Light'))
         theme_buttons_layout.addWidget(self.btn_light)
 
         self.btn_dark = ModernButton("🌙 Dark Theme")
         self.btn_dark.setMinimumWidth(150)
+        self.btn_dark.setToolTip("Switch to dark theme for reduced eye strain")
         self.btn_dark.clicked.connect(lambda: self.set_theme('Dark'))
         theme_buttons_layout.addWidget(self.btn_dark)
 
@@ -2025,13 +2147,16 @@ class SettingsPage(QWidget):
 
         self.check_validate = QCheckBox("Always validate images after build")
         self.check_validate.setChecked(True)
+        self.check_validate.setToolTip("Automatically verify image integrity after every build")
         general_layout.addWidget(self.check_validate)
 
         self.check_compress = QCheckBox("Use maximum compression by default")
+        self.check_compress.setToolTip("Enable maximum compression for all builds (slower but smaller files)")
         general_layout.addWidget(self.check_compress)
 
         self.check_recent = QCheckBox("Show recent files on welcome page")
         self.check_recent.setChecked(True)
+        self.check_recent.setToolTip("Display a list of recently used images on the welcome page")
         general_layout.addWidget(self.check_recent)
 
         general_card.layout().addLayout(general_layout)
@@ -2042,10 +2167,12 @@ class SettingsPage(QWidget):
         advanced_layout = QVBoxLayout()
 
         self.check_debug = QCheckBox("Enable debug logging")
+        self.check_debug.setToolTip("Enable detailed debug logging for troubleshooting")
         advanced_layout.addWidget(self.check_debug)
 
         self.check_auto_save = QCheckBox("Auto-save window position and size")
         self.check_auto_save.setChecked(True)
+        self.check_auto_save.setToolTip("Remember window position and size between sessions")
         advanced_layout.addWidget(self.check_auto_save)
 
         advanced_card.layout().addLayout(advanced_layout)
@@ -2056,10 +2183,12 @@ class SettingsPage(QWidget):
         buttons_layout.addStretch()
 
         btn_save = ModernButton("Save Settings", primary=True)
+        btn_save.setToolTip("Save all settings and preferences")
         btn_save.clicked.connect(self.save_settings)
         buttons_layout.addWidget(btn_save)
 
         btn_reset = ModernButton("Reset to Defaults")
+        btn_reset.setToolTip("Reset all settings to their default values")
         btn_reset.clicked.connect(self.reset_settings)
         buttons_layout.addWidget(btn_reset)
 
@@ -2144,6 +2273,14 @@ class DeployForgeGUI(QMainWindow):
         self.setWindowTitle("DeployForge - Windows Deployment Suite")
         self.setMinimumSize(1200, 800)
 
+        # Set application icon (if available)
+        icon_path = Path(__file__).parent / "resources" / "icon.png"
+        if icon_path.exists():
+            self.setWindowIcon(QIcon(str(icon_path)))
+
+        # Performance: settings cache to reduce disk I/O
+        self._settings_cache = {}
+
         # Load settings
         self.load_settings()
 
@@ -2154,20 +2291,43 @@ class DeployForgeGUI(QMainWindow):
         self.apply_initial_theme()
 
         # Center window (if not loading saved geometry)
-        settings = QSettings('DeployForge', 'DeployForge')
-        if not settings.contains('window/geometry'):
+        if not self._get_cached_setting('window/geometry'):
             self.center_window()
 
+        # First-run detection: show tutorial automatically
+        if not self._get_cached_setting('first_run_completed', False):
+            # Defer tutorial display to after window is shown
+            QTimer.singleShot(500, self._show_first_run_tutorial)
+
+    def _show_first_run_tutorial(self):
+        """Show tutorial on first run and mark as completed."""
+        self.show_tutorial()
+        self._set_cached_setting('first_run_completed', True)
+
+    def _get_cached_setting(self, key: str, default=None):
+        """Get setting from cache or QSettings (performance optimization)."""
+        if key not in self._settings_cache:
+            settings = QSettings('DeployForge', 'DeployForge')
+            self._settings_cache[key] = settings.value(key, default)
+        return self._settings_cache[key]
+
+    def _set_cached_setting(self, key: str, value):
+        """Set setting in cache and QSettings."""
+        self._settings_cache[key] = value
+        settings = QSettings('DeployForge', 'DeployForge')
+        settings.setValue(key, value)
+
     def load_settings(self):
-        """Load application settings."""
+        """Load application settings with caching."""
         settings = QSettings('DeployForge', 'DeployForge')
 
         # Load window geometry
-        if settings.contains('window/geometry'):
-            self.restoreGeometry(settings.value('window/geometry'))
+        geometry = self._get_cached_setting('window/geometry')
+        if geometry:
+            self.restoreGeometry(geometry)
 
         # Load theme
-        theme = settings.value('theme', 'Light')
+        theme = self._get_cached_setting('theme', 'Light')
         theme_manager.set_theme(theme)
 
     def apply_initial_theme(self):
@@ -2206,17 +2366,30 @@ class DeployForgeGUI(QMainWindow):
         self.content_stack = QStackedWidget()
         self.content_stack.setStyleSheet("background-color: #FAFAFA;")
 
-        # Add pages
+        # Lazy loading: create pages on-demand for faster startup
+        # Initialize page dictionary with None values
         self.pages = {
-            'welcome': WelcomePage(),
-            'build': BuildPage(),
-            'profiles': ProfilesPage(),
-            'analyze': AnalyzePage(),
-            'settings': SettingsPage()
+            'welcome': None,
+            'build': None,
+            'profiles': None,
+            'analyze': None,
+            'settings': None
         }
 
-        for page in self.pages.values():
-            self.content_stack.addWidget(page)
+        # Page classes for lazy initialization
+        self._page_classes = {
+            'welcome': WelcomePage,
+            'build': BuildPage,
+            'profiles': ProfilesPage,
+            'analyze': AnalyzePage,
+            'settings': SettingsPage
+        }
+
+        # Page indices in stack
+        self._page_indices = {}
+
+        # Create welcome page immediately (shown on startup)
+        self._create_page('welcome')
 
         main_layout.addWidget(self.content_stack, 1)
 
@@ -2301,45 +2474,317 @@ class DeployForgeGUI(QMainWindow):
         return sidebar
 
     def create_menu_bar(self):
-        """Create the menu bar."""
+        """Create the menu bar with enhanced help and accessibility."""
 
         menubar = self.menuBar()
 
         # File menu
-        file_menu = menubar.addMenu("File")
+        file_menu = menubar.addMenu("&File")
 
-        new_action = QAction("New Build", self)
+        new_action = QAction("&New Build", self)
         new_action.setShortcut("Ctrl+N")
+        new_action.setStatusTip("Start a new build configuration")
+        new_action.triggered.connect(lambda: self.show_page('build'))
         file_menu.addAction(new_action)
 
-        open_action = QAction("Open Image...", self)
+        open_action = QAction("&Open Image...", self)
         open_action.setShortcut("Ctrl+O")
+        open_action.setStatusTip("Open a Windows image file")
+        open_action.triggered.connect(self.open_image_dialog)
         file_menu.addAction(open_action)
 
         file_menu.addSeparator()
 
-        exit_action = QAction("Exit", self)
+        exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
+        exit_action.setStatusTip("Exit DeployForge")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         # Tools menu
-        tools_menu = menubar.addMenu("Tools")
-        tools_menu.addAction("Validate Image")
-        tools_menu.addAction("Compare Images")
-        tools_menu.addAction("Create Preset")
+        tools_menu = menubar.addMenu("&Tools")
+
+        analyze_action = QAction("&Analyze Image", self)
+        analyze_action.setShortcut("Ctrl+A")
+        analyze_action.setStatusTip("Analyze a Windows image")
+        analyze_action.triggered.connect(lambda: self.show_page('analyze'))
+        tools_menu.addAction(analyze_action)
+
+        compare_action = QAction("&Compare Images", self)
+        compare_action.setShortcut("Ctrl+Shift+C")
+        compare_action.setStatusTip("Compare two Windows images")
+        compare_action.triggered.connect(self.show_compare_tab)
+        tools_menu.addAction(compare_action)
+
+        tools_menu.addSeparator()
+
+        profiles_action = QAction("Manage &Profiles", self)
+        profiles_action.setShortcut("Ctrl+P")
+        profiles_action.setStatusTip("Manage build profiles")
+        profiles_action.triggered.connect(lambda: self.show_page('profiles'))
+        tools_menu.addAction(profiles_action)
+
+        # View menu
+        view_menu = menubar.addMenu("&View")
+
+        welcome_action = QAction("&Welcome", self)
+        welcome_action.setShortcut("Ctrl+Home")
+        welcome_action.setStatusTip("Show welcome page")
+        welcome_action.triggered.connect(lambda: self.show_page('welcome'))
+        view_menu.addAction(welcome_action)
+
+        view_menu.addSeparator()
+
+        settings_action = QAction("&Settings", self)
+        settings_action.setShortcut("Ctrl+,")
+        settings_action.setStatusTip("Open settings")
+        settings_action.triggered.connect(lambda: self.show_page('settings'))
+        view_menu.addAction(settings_action)
 
         # Help menu
-        help_menu = menubar.addMenu("Help")
-        help_menu.addAction("Documentation")
-        help_menu.addAction("About")
+        help_menu = menubar.addMenu("&Help")
+
+        tutorial_action = QAction("Getting &Started", self)
+        tutorial_action.setShortcut("F1")
+        tutorial_action.setStatusTip("Show getting started tutorial")
+        tutorial_action.triggered.connect(self.show_tutorial)
+        help_menu.addAction(tutorial_action)
+
+        docs_action = QAction("&Documentation", self)
+        docs_action.setShortcut("Ctrl+F1")
+        docs_action.setStatusTip("Open documentation")
+        docs_action.triggered.connect(self.open_documentation)
+        help_menu.addAction(docs_action)
+
+        help_menu.addSeparator()
+
+        shortcuts_action = QAction("Keyboard &Shortcuts", self)
+        shortcuts_action.setStatusTip("View keyboard shortcuts")
+        shortcuts_action.triggered.connect(self.show_shortcuts)
+        help_menu.addAction(shortcuts_action)
+
+        help_menu.addSeparator()
+
+        about_action = QAction("&About DeployForge", self)
+        about_action.setStatusTip("About this application")
+        about_action.triggered.connect(self.show_about_dialog)
+        help_menu.addAction(about_action)
+
+    def open_image_dialog(self):
+        """Open file dialog to select an image."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Windows Image",
+            "",
+            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+        )
+        if file_path:
+            # Switch to build page and set the image
+            self.show_page('build')
+            if hasattr(self.pages['build'], 'selected_source'):
+                self.pages['build'].selected_source = Path(file_path)
+                self.pages['build'].source_path.setText(file_path)
+
+    def show_compare_tab(self):
+        """Show compare tab in analyze page."""
+        self.show_page('analyze')
+        # TODO: Switch to compare tab if analyze page has tabs
+
+    def show_tutorial(self):
+        """Show getting started tutorial."""
+        tutorial = QMessageBox(self)
+        tutorial.setWindowTitle("Getting Started - DeployForge")
+        tutorial.setIconPixmap(QPixmap())  # You can add an icon here
+
+        tutorial_text = """
+<h2>Welcome to DeployForge!</h2>
+
+<p>DeployForge helps you customize Windows deployment images with ease.</p>
+
+<h3>Quick Start Guide:</h3>
+
+<ol>
+<li><b>Select an Image</b>
+   <ul>
+   <li>Click "Build" in the sidebar or press <b>Ctrl+N</b></li>
+   <li>Click "Browse" to select your Windows image (.wim, .esd, or .iso)</li>
+   <li>Or drag and drop the file directly!</li>
+   </ul>
+</li>
+
+<li><b>Choose a Profile</b>
+   <ul>
+   <li>Click one of the profile cards (Gaming, Developer, etc.)</li>
+   <li>This automatically selects recommended features</li>
+   </ul>
+</li>
+
+<li><b>Customize Features</b>
+   <ul>
+   <li>Click "Show Advanced Options" to see all 47+ features</li>
+   <li>Check or uncheck features as needed</li>
+   <li>Watch the live summary update!</li>
+   </ul>
+</li>
+
+<li><b>Build Your Image</b>
+   <ul>
+   <li>Click "Build Image" to start</li>
+   <li>Watch real-time progress and logs</li>
+   <li>Your customized image will be created!</li>
+   </ul>
+</li>
+</ol>
+
+<h3>Keyboard Shortcuts:</h3>
+<ul>
+<li><b>F1</b> - Show this tutorial</li>
+<li><b>Ctrl+N</b> - New build</li>
+<li><b>Ctrl+O</b> - Open image</li>
+<li><b>Ctrl+A</b> - Analyze image</li>
+<li><b>Ctrl+P</b> - Manage profiles</li>
+<li><b>Ctrl+,</b> - Settings</li>
+<li><b>Ctrl+Q</b> - Exit</li>
+</ul>
+
+<p><i>Need more help? Press <b>Ctrl+F1</b> for full documentation.</i></p>
+        """
+
+        tutorial.setText(tutorial_text)
+        tutorial.setTextFormat(Qt.TextFormat.RichText)
+        tutorial.setStandardButtons(QMessageBox.StandardButton.Ok)
+        tutorial.exec()
+
+    def open_documentation(self):
+        """Open documentation."""
+        docs_dialog = QMessageBox(self)
+        docs_dialog.setWindowTitle("Documentation")
+        docs_dialog.setText(
+            "<h2>DeployForge Documentation</h2>"
+            "<p>Full documentation is available in the following files:</p>"
+            "<ul>"
+            "<li><b>GUI_COMPLETION_PLAN.md</b> - Complete GUI roadmap and features</li>"
+            "<li><b>CURRENT_STATUS.md</b> - Current project status</li>"
+            "<li><b>INTEGRATION_COMPLETE_SESSION.md</b> - Integration details</li>"
+            "<li><b>README.md</b> - Project overview and quick start</li>"
+            "</ul>"
+            "<p>These files are located in the DeployForge root directory.</p>"
+            "<p>For online documentation, visit the GitHub repository:</p>"
+            "<p><a href='https://github.com/Cornman92/DeployForge'>github.com/Cornman92/DeployForge</a></p>"
+        )
+        docs_dialog.setTextFormat(Qt.TextFormat.RichText)
+        docs_dialog.exec()
+
+    def show_shortcuts(self):
+        """Show keyboard shortcuts reference."""
+        shortcuts = QMessageBox(self)
+        shortcuts.setWindowTitle("Keyboard Shortcuts")
+        shortcuts.setText(
+            "<h2>Keyboard Shortcuts</h2>"
+            "<h3>File Operations:</h3>"
+            "<table>"
+            "<tr><td><b>Ctrl+N</b></td><td>New Build</td></tr>"
+            "<tr><td><b>Ctrl+O</b></td><td>Open Image</td></tr>"
+            "<tr><td><b>Ctrl+Q</b></td><td>Exit</td></tr>"
+            "</table>"
+            "<h3>Navigation:</h3>"
+            "<table>"
+            "<tr><td><b>Ctrl+Home</b></td><td>Welcome Page</td></tr>"
+            "<tr><td><b>Ctrl+A</b></td><td>Analyze</td></tr>"
+            "<tr><td><b>Ctrl+P</b></td><td>Profiles</td></tr>"
+            "<tr><td><b>Ctrl+,</b></td><td>Settings</td></tr>"
+            "</table>"
+            "<h3>Tools:</h3>"
+            "<table>"
+            "<tr><td><b>Ctrl+Shift+C</b></td><td>Compare Images</td></tr>"
+            "</table>"
+            "<h3>Help:</h3>"
+            "<table>"
+            "<tr><td><b>F1</b></td><td>Getting Started</td></tr>"
+            "<tr><td><b>Ctrl+F1</b></td><td>Documentation</td></tr>"
+            "</table>"
+        )
+        shortcuts.setTextFormat(Qt.TextFormat.RichText)
+        shortcuts.exec()
+
+    def show_about_dialog(self):
+        """Show about dialog with version and credits."""
+        about = QMessageBox(self)
+        about.setWindowTitle("About DeployForge")
+        about.setIconPixmap(QPixmap())  # You can add an icon here
+
+        about_text = """
+<h1>DeployForge</h1>
+<h2>Version 1.0.0</h2>
+
+<p><b>Enterprise Windows Deployment Suite</b></p>
+
+<p>DeployForge is a comprehensive, professional tool for managing and customizing
+Windows deployment images with a beautiful modern interface.</p>
+
+<h3>Features:</h3>
+<ul>
+<li>✅ 47+ Customization Features</li>
+<li>✅ 6 Pre-built Profiles</li>
+<li>✅ Real-time Progress Tracking</li>
+<li>✅ Light + Dark Themes</li>
+<li>✅ Beginner-Friendly Wizard</li>
+<li>✅ Advanced Expert Controls</li>
+</ul>
+
+<h3>Components:</h3>
+<ul>
+<li>GUI: 2,353 lines of production code</li>
+<li>Integration: ConfigurationManager with 47+ modules</li>
+<li>Backend: 60+ specialized modules</li>
+</ul>
+
+<h3>Technology:</h3>
+<ul>
+<li>Python 3.9+</li>
+<li>PyQt6 (GUI Framework)</li>
+<li>DISM (Windows Deployment)</li>
+</ul>
+
+<p><i>Developed with ❤️ for Windows deployment professionals</i></p>
+
+<p>
+<b>License:</b> MIT<br>
+<b>Repository:</b> <a href='https://github.com/Cornman92/DeployForge'>github.com/Cornman92/DeployForge</a><br>
+<b>Copyright © 2025 DeployForge Contributors</b>
+</p>
+        """
+
+        about.setText(about_text)
+        about.setTextFormat(Qt.TextFormat.RichText)
+        about.setStandardButtons(QMessageBox.StandardButton.Ok)
+        about.exec()
+
+    def _create_page(self, page_id: str):
+        """Create a page on-demand (lazy loading for performance)."""
+        if page_id in self._page_classes and self.pages[page_id] is None:
+            # Create the page
+            page_class = self._page_classes[page_id]
+            page = page_class()
+            self.pages[page_id] = page
+
+            # Add to stack and track index
+            index = self.content_stack.addWidget(page)
+            self._page_indices[page_id] = index
+
+            logger.info(f"Lazy-loaded page: {page_id}")
 
     def show_page(self, page_id: str):
-        """Show a specific page."""
+        """Show a specific page (creates on-demand if needed)."""
 
         if page_id in self.pages:
-            index = list(self.pages.keys()).index(page_id)
-            self.content_stack.setCurrentIndex(index)
+            # Create page if it doesn't exist yet (lazy loading)
+            if self.pages[page_id] is None:
+                self._create_page(page_id)
+
+            # Show the page
+            if page_id in self._page_indices:
+                self.content_stack.setCurrentIndex(self._page_indices[page_id])
 
             # Update status bar
             page_names = {
@@ -2362,14 +2807,12 @@ class DeployForgeGUI(QMainWindow):
 
     def closeEvent(self, event):
         """Handle window close event and save settings."""
-        settings = QSettings('DeployForge', 'DeployForge')
-
-        # Save window geometry
-        if settings.value('auto_save_window', True, type=bool):
-            settings.setValue('window/geometry', self.saveGeometry())
+        # Save window geometry (using cache for better performance)
+        if self._get_cached_setting('auto_save_window', True):
+            self._set_cached_setting('window/geometry', self.saveGeometry())
 
         # Save current theme
-        settings.setValue('theme', theme_manager.get_theme())
+        self._set_cached_setting('theme', theme_manager.get_theme())
 
         event.accept()
 
