@@ -23,8 +23,8 @@ from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QSpinBox, QGroupBox, QGridLayout, QRadioButton,
     QSlider, QLineEdit
 )
-from PyQt6.QtCore import Qt, QSize, pyqtSignal, QThread, QTimer, pyqtSlot
-from PyQt6.QtGui import QIcon, QFont, QPixmap, QAction, QPalette, QColor
+from PyQt6.QtCore import Qt, QSize, pyqtSignal, QThread, QTimer, pyqtSlot, QSettings, QMimeData
+from PyQt6.QtGui import QIcon, QFont, QPixmap, QAction, QPalette, QColor, QDragEnterEvent, QDropEvent
 
 # Import DeployForge backend modules
 try:
@@ -38,8 +38,94 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 
+# Theme Management
+class Theme:
+    """Theme color definitions."""
+
+    LIGHT = {
+        'name': 'Light',
+        'background': '#FAFAFA',
+        'surface': '#FFFFFF',
+        'surface_variant': '#F9F9F9',
+        'primary': '#0078D4',
+        'primary_hover': '#106EBE',
+        'primary_pressed': '#005A9E',
+        'text': '#1F1F1F',
+        'text_secondary': '#666666',
+        'border': '#E0E0E0',
+        'border_hover': '#B3B3B3',
+        'button_bg': '#F3F3F3',
+        'button_hover': '#E5E5E5',
+        'button_pressed': '#D6D6D6',
+        'success': '#107C10',
+        'error': '#C50F1F',
+        'warning': '#FFB900',
+        'sidebar': '#FFFFFF',
+        'sidebar_selected': '#E5F3FF',
+        'sidebar_hover': '#F3F3F3',
+    }
+
+    DARK = {
+        'name': 'Dark',
+        'background': '#1E1E1E',
+        'surface': '#252526',
+        'surface_variant': '#2D2D30',
+        'primary': '#0078D4',
+        'primary_hover': '#1890F6',
+        'primary_pressed': '#005A9E',
+        'text': '#FFFFFF',
+        'text_secondary': '#CCCCCC',
+        'border': '#3E3E42',
+        'border_hover': '#555555',
+        'button_bg': '#3E3E42',
+        'button_hover': '#4E4E52',
+        'button_pressed': '#5E5E62',
+        'success': '#4EC9B0',
+        'error': '#F48771',
+        'warning': '#FFCC00',
+        'sidebar': '#2D2D30',
+        'sidebar_selected': '#094771',
+        'sidebar_hover': '#3E3E42',
+    }
+
+    @staticmethod
+    def get(theme_name: str = 'Light') -> dict:
+        """Get theme colors by name."""
+        return Theme.DARK if theme_name == 'Dark' else Theme.LIGHT
+
+
+class ThemeManager:
+    """Manages application theme."""
+
+    def __init__(self):
+        self.current_theme = 'Light'
+        self.callbacks = []
+
+    def set_theme(self, theme_name: str):
+        """Set the current theme."""
+        self.current_theme = theme_name
+        # Notify all callbacks
+        for callback in self.callbacks:
+            callback(theme_name)
+
+    def get_theme(self) -> str:
+        """Get current theme name."""
+        return self.current_theme
+
+    def get_colors(self) -> dict:
+        """Get current theme colors."""
+        return Theme.get(self.current_theme)
+
+    def on_theme_changed(self, callback):
+        """Register callback for theme changes."""
+        self.callbacks.append(callback)
+
+# Global theme manager
+theme_manager = ThemeManager()
+
+
 class ModernButton(QPushButton):
-    """Modern styled button with hover effects."""
+    """Modern styled button with hover effects and theme support."""
 
     def __init__(self, text: str, icon: Optional[str] = None, primary: bool = False):
         super().__init__(text)
@@ -52,39 +138,49 @@ class ModernButton(QPushButton):
         self.setFont(QFont("Segoe UI", 10))
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        if primary:
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: #0078D4;
+        self.is_primary = primary
+        self.apply_theme()
+
+        # Register for theme changes
+        theme_manager.on_theme_changed(lambda _: self.apply_theme())
+
+    def apply_theme(self):
+        """Apply current theme to button."""
+        colors = theme_manager.get_colors()
+
+        if self.is_primary:
+            self.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {colors['primary']};
                     color: white;
                     border: none;
                     border-radius: 4px;
                     padding: 8px 16px;
                     font-weight: 600;
-                }
-                QPushButton:hover {
-                    background-color: #106EBE;
-                }
-                QPushButton:pressed {
-                    background-color: #005A9E;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {colors['primary_hover']};
+                }}
+                QPushButton:pressed {{
+                    background-color: {colors['primary_pressed']};
+                }}
             """)
         else:
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: #F3F3F3;
-                    color: #1F1F1F;
-                    border: 1px solid #D1D1D1;
+            self.setStyleSheet(f"""
+                QPushButton {{
+                    background-color: {colors['button_bg']};
+                    color: {colors['text']};
+                    border: 1px solid {colors['border']};
                     border-radius: 4px;
                     padding: 8px 16px;
-                }
-                QPushButton:hover {
-                    background-color: #E5E5E5;
-                    border-color: #B3B3B3;
-                }
-                QPushButton:pressed {
-                    background-color: #D6D6D6;
-                }
+                }}
+                QPushButton:hover {{
+                    background-color: {colors['button_hover']};
+                    border-color: {colors['border_hover']};
+                }}
+                QPushButton:pressed {{
+                    background-color: {colors['button_pressed']};
+                }}
             """)
 
 
@@ -150,8 +246,232 @@ class ModernCard(QFrame):
             layout.addWidget(title_label)
 
 
+class SetupWizard(QWidget):
+    """Setup wizard for guided image building."""
+
+    finished = pyqtSignal(dict)  # Emits configuration when done
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("DeployForge Setup Wizard")
+        self.setMinimumSize(700, 500)
+        self.setWindowFlags(Qt.WindowType.Dialog)
+
+        self.current_step = 0
+        self.config = {}
+
+        layout = QVBoxLayout(self)
+
+        # Header
+        header = QLabel("🚀 DeployForge Setup Wizard")
+        header.setFont(QFont("Segoe UI", 18, QFont.Weight.Bold))
+        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(header)
+
+        # Step indicator
+        self.step_label = QLabel("Step 1 of 4")
+        self.step_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.step_label.setStyleSheet("color: #666666; font-size: 10pt;")
+        layout.addWidget(self.step_label)
+
+        layout.addSpacing(16)
+
+        # Content stack
+        self.content_stack = QStackedWidget()
+        self.content_stack.addWidget(self.create_step1())  # Welcome
+        self.content_stack.addWidget(self.create_step2())  # Image selection
+        self.content_stack.addWidget(self.create_step3())  # Use case
+        self.content_stack.addWidget(self.create_step4())  # Review
+        layout.addWidget(self.content_stack)
+
+        # Navigation buttons
+        nav_layout = QHBoxLayout()
+        nav_layout.addStretch()
+
+        self.btn_back = ModernButton("← Back")
+        self.btn_back.clicked.connect(self.go_back)
+        self.btn_back.setEnabled(False)
+        nav_layout.addWidget(self.btn_back)
+
+        self.btn_next = ModernButton("Next →", primary=True)
+        self.btn_next.clicked.connect(self.go_next)
+        nav_layout.addWidget(self.btn_next)
+
+        layout.addLayout(nav_layout)
+
+    def create_step1(self):
+        """Step 1: Welcome."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        title = QLabel("Welcome to DeployForge!")
+        title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        layout.addWidget(title)
+
+        desc = QLabel(
+            "This wizard will guide you through creating a customized Windows deployment image.\n\n"
+            "We'll help you:\n"
+            "• Select your Windows image\n"
+            "• Choose your use case\n"
+            "• Configure optimization settings\n"
+            "• Build your custom image"
+        )
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        layout.addStretch()
+        return widget
+
+    def create_step2(self):
+        """Step 2: Image selection."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        title = QLabel("Select Windows Image")
+        title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        layout.addWidget(title)
+
+        desc = QLabel("Choose the Windows installation image you want to customize:")
+        desc.setWordWrap(True)
+        layout.addWidget(desc)
+
+        # File selector
+        file_layout = QHBoxLayout()
+        self.wizard_image_path = QLabel("No image selected")
+        self.wizard_image_path.setStyleSheet("padding: 8px; background-color: #F3F3F3; border-radius: 4px;")
+        file_layout.addWidget(self.wizard_image_path, 1)
+
+        btn_browse = ModernButton("Browse...")
+        btn_browse.clicked.connect(self.browse_wizard_image)
+        file_layout.addWidget(btn_browse)
+
+        layout.addLayout(file_layout)
+
+        layout.addStretch()
+        return widget
+
+    def create_step3(self):
+        """Step 3: Use case selection."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        title = QLabel("Choose Your Use Case")
+        title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        layout.addWidget(title)
+
+        desc = QLabel("What will you primarily use this Windows installation for?")
+        layout.addWidget(desc)
+
+        self.use_case_group = QButtonGroup()
+
+        use_cases = [
+            ("🎮 Gaming", "Optimized for gaming with performance tweaks", "gamer"),
+            ("💻 Development", "Developer tools and environments", "developer"),
+            ("🏢 Work/Office", "Productivity and office work", "student"),
+            ("🎨 Content Creation", "Video editing, design, and creative work", "creator"),
+        ]
+
+        for icon_text, description, profile_id in use_cases:
+            radio = QRadioButton(f"{icon_text} - {description}")
+            radio.setProperty("profile_id", profile_id)
+            self.use_case_group.addButton(radio)
+            layout.addWidget(radio)
+
+        self.use_case_group.buttons()[0].setChecked(True)
+
+        layout.addStretch()
+        return widget
+
+    def create_step4(self):
+        """Step 4: Review and build."""
+        widget = QWidget()
+        layout = QVBoxLayout(widget)
+
+        title = QLabel("Review Your Configuration")
+        title.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        layout.addWidget(title)
+
+        self.review_label = QLabel()
+        self.review_label.setWordWrap(True)
+        layout.addWidget(self.review_label)
+
+        layout.addStretch()
+        return widget
+
+    def browse_wizard_image(self):
+        """Browse for image in wizard."""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Windows Image",
+            "",
+            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+        )
+
+        if file_path:
+            self.wizard_image_path.setText(file_path)
+            self.config['image_path'] = file_path
+
+    def go_next(self):
+        """Go to next step."""
+        if self.current_step == 3:  # Last step
+            self.finish_wizard()
+            return
+
+        # Validate current step
+        if self.current_step == 1 and not self.config.get('image_path'):
+            QMessageBox.warning(self, "Image Required", "Please select a Windows image first.")
+            return
+
+        self.current_step += 1
+        self.content_stack.setCurrentIndex(self.current_step)
+        self.update_navigation()
+
+        # Update review if on last step
+        if self.current_step == 3:
+            self.update_review()
+
+    def go_back(self):
+        """Go to previous step."""
+        if self.current_step > 0:
+            self.current_step -= 1
+            self.content_stack.setCurrentIndex(self.current_step)
+            self.update_navigation()
+
+    def update_navigation(self):
+        """Update navigation buttons."""
+        self.btn_back.setEnabled(self.current_step > 0)
+        self.step_label.setText(f"Step {self.current_step + 1} of 4")
+
+        if self.current_step == 3:
+            self.btn_next.setText("Build Image ✓")
+        else:
+            self.btn_next.setText("Next →")
+
+    def update_review(self):
+        """Update review information."""
+        selected_radio = self.use_case_group.checkedButton()
+        profile_id = selected_radio.property("profile_id") if selected_radio else "gamer"
+        profile_name = selected_radio.text() if selected_radio else "Gaming"
+
+        self.config['profile'] = profile_id
+
+        review_text = f"""
+<b>Configuration Summary:</b><br><br>
+<b>Source Image:</b> {Path(self.config.get('image_path', '')).name}<br>
+<b>Profile:</b> {profile_name}<br>
+<b>Output:</b> Custom image in same directory<br><br>
+Click "Build Image" to start the build process!
+        """
+        self.review_label.setText(review_text)
+
+    def finish_wizard(self):
+        """Finish wizard and emit configuration."""
+        self.finished.emit(self.config)
+        self.close()
+
+
 class WelcomePage(QWidget):
-    """Welcome/Home page with quick actions."""
+    """Welcome/Home page with quick actions and wizard."""
 
     def __init__(self):
         super().__init__()
@@ -172,6 +492,21 @@ class WelcomePage(QWidget):
 
         layout.addSpacing(16)
 
+        # Wizard Card
+        wizard_card = ModernCard("🧙 New User?")
+        wizard_layout = QVBoxLayout()
+
+        wizard_desc = QLabel("Let our wizard guide you through the process step-by-step!")
+        wizard_desc.setStyleSheet("color: #666666;")
+        wizard_layout.addWidget(wizard_desc)
+
+        btn_wizard = ModernButton("🚀 Launch Setup Wizard", primary=True)
+        btn_wizard.clicked.connect(self.launch_wizard)
+        wizard_layout.addWidget(btn_wizard)
+
+        wizard_card.layout().addLayout(wizard_layout)
+        layout.addWidget(wizard_card)
+
         # Quick Actions
         quick_actions = ModernCard("Quick Start")
         quick_layout = QVBoxLayout()
@@ -179,7 +514,7 @@ class WelcomePage(QWidget):
         quick_layout.addWidget(QLabel("Get started with these common tasks:"))
         quick_layout.addSpacing(8)
 
-        btn_gaming = ModernButton("🎮 Build Gaming Image", primary=True)
+        btn_gaming = ModernButton("🎮 Build Gaming Image")
         btn_developer = ModernButton("💻 Build Developer Image")
         btn_enterprise = ModernButton("🏢 Build Enterprise Image")
         btn_custom = ModernButton("🔧 Custom Build")
@@ -200,6 +535,23 @@ class WelcomePage(QWidget):
         layout.addWidget(recent_card)
 
         layout.addStretch()
+
+    def launch_wizard(self):
+        """Launch the setup wizard."""
+        wizard = SetupWizard(self)
+        wizard.finished.connect(self.on_wizard_finished)
+        wizard.show()
+
+    def on_wizard_finished(self, config):
+        """Handle wizard completion."""
+        QMessageBox.information(
+            self,
+            "Wizard Complete",
+            f"Configuration saved!\n\n"
+            f"Image: {Path(config.get('image_path', '')).name}\n"
+            f"Profile: {config.get('profile', 'gamer')}\n\n"
+            f"Go to the Build page to customize further or build now."
+        )
 
 
 class ProfileCard(QFrame):
@@ -710,7 +1062,7 @@ class BuildProgressDialog(QWidget):
 
 
 class BuildPage(QWidget):
-    """Image builder page with profile selection and advanced options."""
+    """Image builder page with profile selection, advanced options, and drag-and-drop support."""
 
     def __init__(self):
         super().__init__()
@@ -718,6 +1070,9 @@ class BuildPage(QWidget):
         self.selected_profile = None
         self.selected_source = None
         self.selected_output = None
+
+        # Enable drag and drop
+        self.setAcceptDrops(True)
 
         # Create scrollable area
         scroll = QScrollArea()
@@ -978,6 +1333,45 @@ class BuildPage(QWidget):
 
         if reply == QMessageBox.StandardButton.Yes:
             self.execute_build()
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        """Handle drag enter event for image files."""
+        if event.mimeData().hasUrls():
+            # Check if any URL is a valid image file
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                if file_path.lower().endswith(('.wim', '.esd', '.iso')):
+                    event.acceptProposedAction()
+                    return
+        event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        """Handle drop event for image files."""
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            if file_path.lower().endswith(('.wim', '.esd', '.iso')):
+                # Set as source image
+                self.selected_source = Path(file_path)
+                self.source_path.setText(file_path)
+                self.source_path.setStyleSheet("color: #1F1F1F; padding: 8px;")
+
+                # Show image info
+                file_size = self.selected_source.stat().st_size / (1024 * 1024 * 1024)
+                self.image_info.setText(f"✓ Image loaded: {file_size:.2f} GB (via drag-and-drop)")
+                self.image_info.setVisible(True)
+
+                self.update_build_button()
+                self.update_summary()
+
+                # Show notification
+                QMessageBox.information(
+                    self,
+                    "Image Loaded",
+                    f"Source image loaded successfully!\n\n{Path(file_path).name}\n{file_size:.2f} GB"
+                )
+                break
+
+        event.acceptProposedAction()
 
     def execute_build(self):
         """Execute the actual build operation."""
@@ -1522,39 +1916,184 @@ Common:
 
 
 class SettingsPage(QWidget):
-    """Settings page."""
+    """Settings page with theme switcher and preferences."""
 
     def __init__(self):
         super().__init__()
 
-        layout = QVBoxLayout(self)
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+
+        scroll_widget = QWidget()
+        layout = QVBoxLayout(scroll_widget)
         layout.setContentsMargins(32, 32, 32, 32)
+        layout.setSpacing(24)
 
         header = QLabel("Settings")
         header.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
         layout.addWidget(header)
+
+        subtitle = QLabel("Customize your DeployForge experience")
+        subtitle.setStyleSheet("color: #666666;")
+        layout.addWidget(subtitle)
 
         # Theme Settings
         theme_card = ModernCard("Appearance")
         theme_layout = QVBoxLayout()
 
         theme_label = QLabel("Theme:")
+        theme_label.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         theme_layout.addWidget(theme_label)
 
-        btn_light = ModernButton("Light Theme")
-        btn_dark = ModernButton("Dark Theme")
+        theme_desc = QLabel("Choose your preferred color scheme")
+        theme_desc.setStyleSheet("color: #666666; font-size: 9pt;")
+        theme_layout.addWidget(theme_desc)
 
-        theme_layout.addWidget(btn_light)
-        theme_layout.addWidget(btn_dark)
+        theme_layout.addSpacing(8)
+
+        # Theme buttons
+        theme_buttons_layout = QHBoxLayout()
+
+        self.btn_light = ModernButton("☀️ Light Theme")
+        self.btn_light.setMinimumWidth(150)
+        self.btn_light.clicked.connect(lambda: self.set_theme('Light'))
+        theme_buttons_layout.addWidget(self.btn_light)
+
+        self.btn_dark = ModernButton("🌙 Dark Theme")
+        self.btn_dark.setMinimumWidth(150)
+        self.btn_dark.clicked.connect(lambda: self.set_theme('Dark'))
+        theme_buttons_layout.addWidget(self.btn_dark)
+
+        theme_buttons_layout.addStretch()
+        theme_layout.addLayout(theme_buttons_layout)
+
+        # Current theme indicator
+        self.theme_status = QLabel(f"Current theme: {theme_manager.get_theme()}")
+        self.theme_status.setStyleSheet(f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;")
+        theme_layout.addWidget(self.theme_status)
 
         theme_card.layout().addLayout(theme_layout)
         layout.addWidget(theme_card)
 
+        # General Settings
+        general_card = ModernCard("General")
+        general_layout = QVBoxLayout()
+
+        self.check_validate = QCheckBox("Always validate images after build")
+        self.check_validate.setChecked(True)
+        general_layout.addWidget(self.check_validate)
+
+        self.check_compress = QCheckBox("Use maximum compression by default")
+        general_layout.addWidget(self.check_compress)
+
+        self.check_recent = QCheckBox("Show recent files on welcome page")
+        self.check_recent.setChecked(True)
+        general_layout.addWidget(self.check_recent)
+
+        general_card.layout().addLayout(general_layout)
+        layout.addWidget(general_card)
+
+        # Advanced Settings
+        advanced_card = ModernCard("Advanced")
+        advanced_layout = QVBoxLayout()
+
+        self.check_debug = QCheckBox("Enable debug logging")
+        advanced_layout.addWidget(self.check_debug)
+
+        self.check_auto_save = QCheckBox("Auto-save window position and size")
+        self.check_auto_save.setChecked(True)
+        advanced_layout.addWidget(self.check_auto_save)
+
+        advanced_card.layout().addLayout(advanced_layout)
+        layout.addWidget(advanced_card)
+
+        # Save/Reset buttons
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()
+
+        btn_save = ModernButton("Save Settings", primary=True)
+        btn_save.clicked.connect(self.save_settings)
+        buttons_layout.addWidget(btn_save)
+
+        btn_reset = ModernButton("Reset to Defaults")
+        btn_reset.clicked.connect(self.reset_settings)
+        buttons_layout.addWidget(btn_reset)
+
+        layout.addLayout(buttons_layout)
+
         layout.addStretch()
+
+        scroll.setWidget(scroll_widget)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(scroll)
+
+        # Register for theme changes
+        theme_manager.on_theme_changed(self.on_theme_changed)
+
+    def set_theme(self, theme_name: str):
+        """Set the application theme."""
+        theme_manager.set_theme(theme_name)
+        self.theme_status.setText(f"Current theme: {theme_name}")
+        self.theme_status.setStyleSheet(f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;")
+
+        # Save to settings
+        settings = QSettings('DeployForge', 'DeployForge')
+        settings.setValue('theme', theme_name)
+
+        QMessageBox.information(
+            self,
+            "Theme Changed",
+            f"Theme changed to {theme_name}!\n\nSome elements will update immediately,\nothers may require restarting the application."
+        )
+
+    def on_theme_changed(self, theme_name: str):
+        """Handle theme change event."""
+        self.theme_status.setText(f"Current theme: {theme_name}")
+
+    def save_settings(self):
+        """Save all settings."""
+        settings = QSettings('DeployForge', 'DeployForge')
+        settings.setValue('validate_default', self.check_validate.isChecked())
+        settings.setValue('compress_default', self.check_compress.isChecked())
+        settings.setValue('show_recent', self.check_recent.isChecked())
+        settings.setValue('debug_logging', self.check_debug.isChecked())
+        settings.setValue('auto_save_window', self.check_auto_save.isChecked())
+
+        QMessageBox.information(
+            self,
+            "Settings Saved",
+            "Your settings have been saved successfully!"
+        )
+
+    def reset_settings(self):
+        """Reset settings to defaults."""
+        reply = QMessageBox.question(
+            self,
+            "Reset Settings",
+            "Are you sure you want to reset all settings to defaults?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.check_validate.setChecked(True)
+            self.check_compress.setChecked(False)
+            self.check_recent.setChecked(True)
+            self.check_debug.setChecked(False)
+            self.check_auto_save.setChecked(True)
+            self.set_theme('Light')
+
+            QMessageBox.information(
+                self,
+                "Settings Reset",
+                "All settings have been reset to defaults!"
+            )
 
 
 class DeployForgeGUI(QMainWindow):
-    """Main application window with modern UI."""
+    """Main application window with modern UI and settings persistence."""
 
     def __init__(self):
         super().__init__()
@@ -1562,11 +2101,48 @@ class DeployForgeGUI(QMainWindow):
         self.setWindowTitle("DeployForge - Windows Deployment Suite")
         self.setMinimumSize(1200, 800)
 
+        # Load settings
+        self.load_settings()
+
         # Setup UI
         self.setup_ui()
 
-        # Center window
-        self.center_window()
+        # Apply theme
+        self.apply_initial_theme()
+
+        # Center window (if not loading saved geometry)
+        settings = QSettings('DeployForge', 'DeployForge')
+        if not settings.contains('window/geometry'):
+            self.center_window()
+
+    def load_settings(self):
+        """Load application settings."""
+        settings = QSettings('DeployForge', 'DeployForge')
+
+        # Load window geometry
+        if settings.contains('window/geometry'):
+            self.restoreGeometry(settings.value('window/geometry'))
+
+        # Load theme
+        theme = settings.value('theme', 'Light')
+        theme_manager.set_theme(theme)
+
+    def apply_initial_theme(self):
+        """Apply theme to main window components."""
+        colors = theme_manager.get_colors()
+        self.setStyleSheet(f"background-color: {colors['background']};")
+
+        # Register for theme changes
+        theme_manager.on_theme_changed(self.on_theme_changed)
+
+    def on_theme_changed(self, theme_name: str):
+        """Handle theme change."""
+        colors = theme_manager.get_colors()
+        self.setStyleSheet(f"background-color: {colors['background']};")
+        self.content_stack.setStyleSheet(f"background-color: {colors['background']};")
+        self.statusBar().setStyleSheet(
+            f"background-color: {colors['surface']}; border-top: 1px solid {colors['border']}; color: {colors['text']};"
+        )
 
     def setup_ui(self):
         """Setup the main user interface."""
@@ -1740,6 +2316,19 @@ class DeployForgeGUI(QMainWindow):
             (screen.width() - size.width()) // 2,
             (screen.height() - size.height()) // 2
         )
+
+    def closeEvent(self, event):
+        """Handle window close event and save settings."""
+        settings = QSettings('DeployForge', 'DeployForge')
+
+        # Save window geometry
+        if settings.value('auto_save_window', True, type=bool):
+            settings.setValue('window/geometry', self.saveGeometry())
+
+        # Save current theme
+        settings.setValue('theme', theme_manager.get_theme())
+
+        event.accept()
 
 
 def launch_modern_gui():
