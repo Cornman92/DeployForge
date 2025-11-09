@@ -1,22 +1,43 @@
-# DeployForge v0.3.0
+# DeployForge v0.9.4
 
-**Enterprise Windows Deployment Suite** - Complete automation from disk partitioning to multi-language deployment.
+**Enterprise Windows Deployment Suite** - Complete automation with a beautiful modern GUI.
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Cornman92/DeployForge/actions)
+[![Version](https://img.shields.io/badge/version-0.9.4%20(94%25%20to%20v1.0)-orange)](https://github.com/Cornman92/DeployForge)
 
-DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Process hundreds of images in parallel, customize offline, and automate with REST API.
+DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Beautiful modern GUI with 47+ features, complete backend integration, and full automation support.
 
-## 🎉 What's New in v0.3.0
+## 🎉 What's New in v0.9.4
 
-**Complete Deployment Automation** - End-to-end Windows deployment from disk creation to installation.
+**Modern GUI with Complete Integration** - Professional interface with end-to-end functionality.
 
-### New in v0.3.0:
-- 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables with standard Windows layouts
-- 🛠️ **WinPE Customization** - Build custom Windows PE deployment environments with PowerShell and drivers
-- 📝 **Answer File Generation** - Automated unattend.xml creation for zero-touch deployment
-- 🌍 **Multi-Language Support** - MUI package management for 40+ languages with regional settings
+### New in v0.9.4:
+- 🎨 **Modern GUI** - Beautiful PyQt6 interface with 2,353 lines of production code
+- 🔗 **Complete Integration** - All 47+ features fully wired to backend modules
+- ⚡ **ConfigurationManager** - Priority-based module execution with real-time progress
+- 📊 **Enhanced Modules** - Network, Optimizer, and Features modules massively enhanced (+1,097 lines)
+- 🎮 **Gaming Optimizations** - 7 gaming features with competitive/balanced/quality profiles
+- 🗑️ **Advanced Debloating** - Aggressive/moderate/minimal with privacy hardening
+- 💻 **Developer Features** - WSL2, Hyper-V, Sandbox, Docker, Git, VS Code
+- 🏢 **Enterprise Ready** - BitLocker, CIS, DISA STIG, GPO hardening
+- 🌓 **Dark Theme** - Light + Dark themes with live switching
+- 🧙 **Setup Wizard** - 4-step guided setup for beginners
+
+### v0.9.4 GUI Features:
+- ✅ **5 Pages**: Welcome, Build, Profiles, Analyze, Settings
+- ✅ **6 Profiles**: Gaming, Developer, Enterprise, Lightweight, Privacy-Focused, Custom
+- ✅ **47+ Features**: All fully functional end-to-end
+- ✅ **Real-time Progress**: Live progress bar and logs during build
+- ✅ **Drag-and-Drop**: Drop .wim/.esd/.iso files anywhere
+- ✅ **Settings Persistence**: Window position, theme, preferences auto-saved
+
+### Previous Versions (v0.3.0-v0.7.0):
+- 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables
+- 🛠️ **WinPE Customization** - Build custom Windows PE environments
+- 📝 **Answer File Generation** - Automated unattend.xml creation
+- 🌍 **Multi-Language Support** - MUI package management for 40+ languages
 
 ### All Features from v0.2.0:
 - 🖥️ **PyQt6 Desktop GUI** - Beautiful desktop application
@@ -38,13 +59,22 @@ DeployForge is a comprehensive, enterprise-grade tool for managing Windows deplo
 # Install
 pip install deployforge
 
+# === NEW in v0.9.4: Modern GUI ===
+
+# Launch the modern GUI (recommended!)
+python -m deployforge.gui_modern
+
+# Or via module
+from deployforge import gui_modern
+gui_modern.main()
+
+# === CLI Commands ===
+
 # View supported formats
 deployforge formats
 
 # Get image info
 deployforge info install.wim
-
-# === NEW in v0.3.0 ===
 
 # Create UEFI bootable disk with partitions
 deployforge partition create disk.vhdx --size 50 --recovery
@@ -57,13 +87,8 @@ deployforge unattend create autounattend.xml \
 # Manage multi-language support
 deployforge language list install.wim
 
-# === v0.2.0 Features ===
-
 # Compare two images
 deployforge compare image1.wim image2.wim
-
-# Start GUI
-python -m deployforge.gui.main_window
 
 # Start REST API
 python -m deployforge.api.main
