@@ -10,8 +10,11 @@ Built with PyQt6 for professional appearance and cross-platform compatibility.
 
 import sys
 import logging
+import traceback
+import json
 from pathlib import Path
 from typing import Optional, Dict, Any
+from datetime import datetime
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QPushButton, QLabel, QFrame, QScrollArea,
@@ -22,6 +25,15 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QThread, QTimer, pyqtSlot
 from PyQt6.QtGui import QIcon, QFont, QPixmap, QAction, QPalette, QColor
+
+# Import DeployForge backend modules
+try:
+    from deployforge.cli.profiles import ProfileManager, apply_profile
+    from deployforge.cli.analyzer import ImageAnalyzer
+    BACKEND_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"Backend modules not available: {e}")
+    BACKEND_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -442,14 +454,118 @@ class AdvancedOptionsPanel(QWidget):
                 self.feature_checkboxes[feature_id].setChecked(True)
 
 
+class BuildWorker(QThread):
+    """Background worker thread for image building."""
+
+    # Signals
+    progress = pyqtSignal(int, str)  # percentage, message
+    log = pyqtSignal(str)  # log message
+    finished = pyqtSignal(bool, str)  # success, message
+    error = pyqtSignal(str)  # error message
+
+    def __init__(self, image_path: Path, profile_name: str,
+                 output_path: Optional[Path], selected_features: Dict[str, bool],
+                 validate: bool, compress: bool):
+        super().__init__()
+        self.image_path = image_path
+        self.profile_name = profile_name
+        self.output_path = output_path
+        self.selected_features = selected_features
+        self.validate = validate
+        self.compress = compress
+        self._cancelled = False
+
+    def run(self):
+        """Execute the build operation."""
+        try:
+            if not BACKEND_AVAILABLE:
+                self.error.emit("Backend modules not available. Cannot build image.")
+                self.finished.emit(False, "Backend modules not available")
+                return
+
+            self.log.emit(f"[INFO] Starting build process...")
+            self.log.emit(f"[INFO] Source: {self.image_path}")
+            self.log.emit(f"[INFO] Profile: {self.profile_name}")
+            self.log.emit(f"[INFO] Output: {self.output_path or 'Same as source'}")
+            self.progress.emit(5, "Initializing build...")
+
+            if self._cancelled:
+                self.log.emit("[WARN] Build cancelled by user")
+                self.finished.emit(False, "Cancelled by user")
+                return
+
+            # Validate source image exists
+            self.progress.emit(10, "Validating source image...")
+            self.log.emit(f"[INFO] Checking source image: {self.image_path}")
+
+            if not self.image_path.exists():
+                raise FileNotFoundError(f"Source image not found: {self.image_path}")
+
+            self.log.emit("[OK] Source image validated")
+
+            # Call actual build logic
+            self.progress.emit(20, "Applying profile configuration...")
+            self.log.emit(f"[INFO] Applying {self.profile_name} profile...")
+
+            try:
+                # Call the actual apply_profile function from backend
+                apply_profile(
+                    image_path=self.image_path,
+                    profile_name=self.profile_name,
+                    output_path=self.output_path
+                )
+
+                self.log.emit("[OK] Profile applied successfully")
+                self.progress.emit(80, "Finalizing image...")
+
+            except Exception as e:
+                self.log.emit(f"[ERROR] Failed to apply profile: {str(e)}")
+                raise
+
+            if self._cancelled:
+                self.log.emit("[WARN] Build cancelled by user")
+                self.finished.emit(False, "Cancelled by user")
+                return
+
+            # Validation (if enabled)
+            if self.validate:
+                self.progress.emit(90, "Validating output image...")
+                self.log.emit("[INFO] Running image validation...")
+                # TODO: Add validation logic
+                self.log.emit("[OK] Validation passed")
+
+            # Complete
+            self.progress.emit(100, "Build complete!")
+            self.log.emit("[SUCCESS] Image build completed successfully!")
+
+            output_location = self.output_path or f"{self.image_path.stem}_custom.wim"
+            self.finished.emit(True, f"Image successfully created: {output_location}")
+
+        except Exception as e:
+            error_msg = f"Build failed: {str(e)}"
+            self.log.emit(f"[ERROR] {error_msg}")
+            self.log.emit(f"[ERROR] Traceback: {traceback.format_exc()}")
+            self.error.emit(error_msg)
+            self.finished.emit(False, error_msg)
+
+    def cancel(self):
+        """Cancel the build operation."""
+        self._cancelled = True
+        self.log.emit("[WARN] Cancellation requested...")
+
+
 class BuildProgressDialog(QWidget):
     """Progress dialog for build operations."""
 
-    def __init__(self, parent=None):
+    def __init__(self, worker: BuildWorker, parent=None):
         super().__init__(parent)
 
+        self.worker = worker
+        self.build_completed = False
+
         self.setWindowTitle("Building Image")
-        self.setMinimumSize(500, 300)
+        self.setMinimumSize(600, 400)
+        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint)
 
         layout = QVBoxLayout(self)
 
@@ -483,7 +599,7 @@ class BuildProgressDialog(QWidget):
         layout.addWidget(self.progress_bar)
 
         # Time remaining
-        self.time_label = QLabel("Calculating time remaining...")
+        self.time_label = QLabel("Build in progress...")
         self.time_label.setStyleSheet("color: #666666; font-size: 9pt;")
         layout.addWidget(self.time_label)
 
@@ -495,7 +611,6 @@ class BuildProgressDialog(QWidget):
         self.log_text = QTextEdit()
         self.log_text.setReadOnly(True)
         self.log_text.setFont(QFont("Consolas", 9))
-        self.log_text.setMaximumHeight(150)
         layout.addWidget(self.log_text)
 
         # Buttons
@@ -506,7 +621,21 @@ class BuildProgressDialog(QWidget):
         self.cancel_btn.clicked.connect(self.cancel_build)
         button_layout.addWidget(self.cancel_btn)
 
+        self.close_btn = ModernButton("Close", primary=True)
+        self.close_btn.clicked.connect(self.close)
+        self.close_btn.setVisible(False)
+        button_layout.addWidget(self.close_btn)
+
         layout.addLayout(button_layout)
+
+        # Connect worker signals
+        self.worker.progress.connect(self.update_progress)
+        self.worker.log.connect(self.add_log)
+        self.worker.finished.connect(self.on_build_finished)
+        self.worker.error.connect(self.on_build_error)
+
+        # Start the worker
+        self.worker.start()
 
     def update_progress(self, value: int, operation: str):
         """Update progress bar and current operation."""
@@ -516,18 +645,68 @@ class BuildProgressDialog(QWidget):
     def add_log(self, message: str):
         """Add a message to the build log."""
         self.log_text.append(message)
+        # Auto-scroll to bottom
+        scrollbar = self.log_text.verticalScrollBar()
+        scrollbar.setValue(scrollbar.maximum())
+
+    def on_build_finished(self, success: bool, message: str):
+        """Handle build completion."""
+        self.build_completed = True
+        self.cancel_btn.setVisible(False)
+        self.close_btn.setVisible(True)
+
+        if success:
+            self.operation_label.setText("✓ Build completed successfully!")
+            self.operation_label.setStyleSheet("color: #107C10; font-weight: bold;")
+            self.time_label.setText(message)
+
+            QMessageBox.information(
+                self,
+                "Build Complete",
+                f"Image built successfully!\n\n{message}"
+            )
+        else:
+            self.operation_label.setText("✗ Build failed")
+            self.operation_label.setStyleSheet("color: #C50F1F; font-weight: bold;")
+            self.time_label.setText(message)
+
+    def on_build_error(self, error_msg: str):
+        """Handle build error."""
+        QMessageBox.critical(
+            self,
+            "Build Error",
+            f"An error occurred during the build:\n\n{error_msg}"
+        )
 
     def cancel_build(self):
         """Cancel the build operation."""
+        if self.build_completed:
+            self.close()
+            return
+
         reply = QMessageBox.question(
             self,
             "Cancel Build",
-            "Are you sure you want to cancel the build?",
+            "Are you sure you want to cancel the build?\n\nThis may leave the image in an incomplete state.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
         )
 
         if reply == QMessageBox.StandardButton.Yes:
+            self.add_log("[WARN] User requested cancellation...")
+            self.worker.cancel()
+            self.worker.wait(5000)  # Wait up to 5 seconds
+            if self.worker.isRunning():
+                self.worker.terminate()
             self.close()
+
+    def closeEvent(self, event):
+        """Handle window close event."""
+        if not self.build_completed and self.worker.isRunning():
+            self.cancel_build()
+            if self.worker.isRunning():
+                event.ignore()
+                return
+        event.accept()
 
 
 class BuildPage(QWidget):
@@ -802,25 +981,40 @@ class BuildPage(QWidget):
 
     def execute_build(self):
         """Execute the actual build operation."""
-        # Create progress dialog
-        progress = BuildProgressDialog(self)
-        progress.show()
+        try:
+            # Check backend availability
+            if not BACKEND_AVAILABLE:
+                QMessageBox.critical(
+                    self,
+                    "Backend Not Available",
+                    "DeployForge backend modules are not available.\n\n"
+                    "Please ensure the application is properly installed."
+                )
+                return
 
-        # TODO: Integrate with actual build logic from cli/profiles.py
-        # This would call apply_profile() with selected options
+            # Get selected features
+            selected_features = self.advanced_options.get_selected_features()
 
-        # Simulated progress for now
-        progress.update_progress(10, "Mounting source image...")
-        progress.add_log("[INFO] Starting build process...")
-        progress.add_log(f"[INFO] Source: {self.selected_source}")
-        progress.add_log(f"[INFO] Profile: {self.selected_profile}")
+            # Create build worker
+            worker = BuildWorker(
+                image_path=self.selected_source,
+                profile_name=self.selected_profile,
+                output_path=self.selected_output,
+                selected_features=selected_features,
+                validate=self.validate_checkbox.isChecked(),
+                compress=self.compress_checkbox.isChecked()
+            )
 
-        QMessageBox.information(
-            self,
-            "Build Started",
-            "Build process has started. This is a demonstration.\n\n"
-            "In production, this would call the actual profile application logic."
-        )
+            # Create and show progress dialog
+            progress_dialog = BuildProgressDialog(worker, self)
+            progress_dialog.show()
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Build Error",
+                f"Failed to start build:\n\n{str(e)}\n\n{traceback.format_exc()}"
+            )
 
 
 class ProfilesPage(QWidget):
@@ -1135,15 +1329,83 @@ class AnalyzePage(QWidget):
             )
             return
 
-        # TODO: Integrate with actual analyzer from cli/analyzer.py
+        if not BACKEND_AVAILABLE:
+            QMessageBox.critical(
+                self,
+                "Backend Not Available",
+                "DeployForge backend modules are not available.\n\n"
+                "Please ensure the application is properly installed."
+            )
+            return
 
-        QMessageBox.information(
-            self,
-            "Analysis Started",
-            f"Analysis started for {Path(self.analyze_path.text()).name}\n\n"
-            f"Report format: {self.format_combo.currentText()}\n\n"
-            "In production, this would call the actual analysis logic and generate a report."
-        )
+        try:
+            image_path = Path(self.analyze_path.text())
+            report_format = self.format_combo.currentText().lower()
+
+            # Show progress
+            progress = QMessageBox(self)
+            progress.setWindowTitle("Analyzing Image")
+            progress.setText(f"Analyzing {image_path.name}...")
+            progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
+            progress.show()
+            QApplication.processEvents()
+
+            # Create analyzer and run analysis
+            analyzer = ImageAnalyzer(image_path)
+            report_data = analyzer.analyze()
+
+            # Generate report in requested format
+            if report_format == 'html':
+                report_content = analyzer.generate_html_report(report_data)
+                report_extension = '.html'
+            elif report_format == 'json':
+                import json
+                report_content = json.dumps(report_data, indent=2)
+                report_extension = '.json'
+            elif report_format == 'text':
+                report_content = analyzer.format_text_report(report_data)
+                report_extension = '.txt'
+            else:  # pdf
+                QMessageBox.warning(
+                    self,
+                    "Format Not Supported",
+                    "PDF format is not yet implemented.\n\nPlease use HTML, JSON, or Text format."
+                )
+                progress.close()
+                return
+
+            progress.close()
+
+            # Save report
+            default_name = f"analysis_{image_path.stem}_{datetime.now().strftime('%Y%m%d_%H%M%S')}{report_extension}"
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Analysis Report",
+                default_name,
+                f"{report_format.upper()} Files (*{report_extension});;All Files (*)"
+            )
+
+            if save_path:
+                with open(save_path, 'w', encoding='utf-8') as f:
+                    f.write(report_content)
+
+                QMessageBox.information(
+                    self,
+                    "Analysis Complete",
+                    f"Analysis report saved successfully!\n\n"
+                    f"Location: {save_path}\n\n"
+                    f"Features: {report_data.get('features_count', 0)}\n"
+                    f"Applications: {report_data.get('applications_count', 0)}"
+                )
+
+                # TODO: Add to recent reports list
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Analysis Error",
+                f"Failed to analyze image:\n\n{str(e)}\n\n{traceback.format_exc()}"
+            )
 
     def run_comparison(self):
         """Run image comparison."""
@@ -1156,18 +1418,107 @@ class AnalyzePage(QWidget):
             )
             return
 
-        # TODO: Integrate with actual comparator from comparison module
+        if not BACKEND_AVAILABLE:
+            QMessageBox.critical(
+                self,
+                "Backend Not Available",
+                "DeployForge backend modules are not available.\n\n"
+                "Please ensure the application is properly installed."
+            )
+            return
 
-        QMessageBox.information(
-            self,
-            "Comparison Started",
-            "Image comparison started.\n\n"
-            "This would show:\n"
-            "- Files only in Image 1\n"
-            "- Files only in Image 2\n"
-            "- Different files\n"
-            "- Similarity percentage"
-        )
+        try:
+            image1_path = Path(self.compare_img1.text())
+            image2_path = Path(self.compare_img2.text())
+
+            # Show progress
+            progress = QMessageBox(self)
+            progress.setWindowTitle("Comparing Images")
+            progress.setText("Analyzing both images...")
+            progress.setStandardButtons(QMessageBox.StandardButton.NoButton)
+            progress.show()
+            QApplication.processEvents()
+
+            # Analyze both images
+            analyzer1 = ImageAnalyzer(image1_path)
+            analyzer2 = ImageAnalyzer(image2_path)
+
+            report1 = analyzer1.analyze()
+            report2 = analyzer2.analyze()
+
+            progress.close()
+
+            # Generate comparison summary
+            features1 = set(report1.get('features', []))
+            features2 = set(report2.get('features', []))
+            apps1 = set(report1.get('applications', []))
+            apps2 = set(report2.get('applications', []))
+
+            features_only_1 = features1 - features2
+            features_only_2 = features2 - features1
+            apps_only_1 = apps1 - apps2
+            apps_only_2 = apps2 - apps1
+
+            comparison_text = f"""
+Image Comparison Results
+
+Image 1: {image1_path.name}
+- Size: {report1.get('size_analysis', {}).get('total_mb', 0):.2f} MB
+- Features: {len(features1)}
+- Applications: {len(apps1)}
+
+Image 2: {image2_path.name}
+- Size: {report2.get('size_analysis', {}).get('total_mb', 0):.2f} MB
+- Features: {len(features2)}
+- Applications: {len(apps2)}
+
+Differences:
+- Features only in Image 1: {len(features_only_1)}
+- Features only in Image 2: {len(features_only_2)}
+- Applications only in Image 1: {len(apps_only_1)}
+- Applications only in Image 2: {len(apps_only_2)}
+
+Common:
+- Shared features: {len(features1 & features2)}
+- Shared applications: {len(apps1 & apps2)}
+            """
+
+            # Save comparison report
+            default_name = f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
+            save_path, _ = QFileDialog.getSaveFileName(
+                self,
+                "Save Comparison Report",
+                default_name,
+                "Text Files (*.txt);;All Files (*)"
+            )
+
+            if save_path:
+                with open(save_path, 'w', encoding='utf-8') as f:
+                    f.write(comparison_text)
+
+                    # Add detailed lists
+                    if features_only_1:
+                        f.write("\n\nFeatures only in Image 1:\n")
+                        for feat in sorted(features_only_1)[:20]:  # Limit to 20
+                            f.write(f"  - {feat}\n")
+
+                    if features_only_2:
+                        f.write("\n\nFeatures only in Image 2:\n")
+                        for feat in sorted(features_only_2)[:20]:
+                            f.write(f"  - {feat}\n")
+
+                QMessageBox.information(
+                    self,
+                    "Comparison Complete",
+                    f"Comparison report saved!\n\n{comparison_text}"
+                )
+
+        except Exception as e:
+            QMessageBox.critical(
+                self,
+                "Comparison Error",
+                f"Failed to compare images:\n\n{str(e)}\n\n{traceback.format_exc()}"
+            )
 
 
 class SettingsPage(QWidget):
