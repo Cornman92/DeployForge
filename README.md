@@ -1,37 +1,63 @@
-# DeployForge v0.9.4
+# DeployForge v1.5.0 🚀
 
 **Enterprise Windows Deployment Suite** - Complete automation with a beautiful modern GUI.
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Cornman92/DeployForge/actions)
-[![Version](https://img.shields.io/badge/version-0.9.4%20(94%25%20to%20v1.0)-orange)](https://github.com/Cornman92/DeployForge)
+[![Version](https://img.shields.io/badge/version-1.5.0-success)](https://github.com/Cornman92/DeployForge)
+[![Features](https://img.shields.io/badge/features-150%2B-blueviolet)](https://github.com/Cornman92/DeployForge)
 
-DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Beautiful modern GUI with 47+ features, complete backend integration, and full automation support.
+DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Beautiful modern GUI with **150+ features** across 16 categories, complete backend integration, and full automation support.
 
-## 🎉 What's New in v0.9.4
+## 🎉 What's New in v1.5.0 - MASSIVE Feature Expansion!
 
-**Modern GUI with Complete Integration** - Professional interface with end-to-end functionality.
+**150+ Features** - The most comprehensive Windows deployment tool available!
 
-### New in v0.9.4:
-- 🎨 **Modern GUI** - Beautiful PyQt6 interface with 2,353 lines of production code
-- 🔗 **Complete Integration** - All 47+ features fully wired to backend modules
-- ⚡ **ConfigurationManager** - Priority-based module execution with real-time progress
-- 📊 **Enhanced Modules** - Network, Optimizer, and Features modules massively enhanced (+1,097 lines)
-- 🎮 **Gaming Optimizations** - 7 gaming features with competitive/balanced/quality profiles
-- 🗑️ **Advanced Debloating** - Aggressive/moderate/minimal with privacy hardening
-- 💻 **Developer Features** - WSL2, Hyper-V, Sandbox, Docker, Git, VS Code
-- 🏢 **Enterprise Ready** - BitLocker, CIS, DISA STIG, GPO hardening
-- 🌓 **Dark Theme** - Light + Dark themes with live switching
-- 🧙 **Setup Wizard** - 4-step guided setup for beginners
+### 🚀 Major Expansion:
+- ✨ **150+ Customization Features** - 3x increase from v1.0 (+218% growth!)
+- 📂 **16 Feature Categories** - Doubled from 7 categories
+- 📦 **40+ Application Installers** - Browsers, Office, Creative Tools, Games, Utilities
+- 🎯 **Enhanced Profiles** - All 6 profiles expanded with 20-40 features each
+- 🌐 **Complete Application Management** - Install everything from one interface
 
-### v0.9.4 GUI Features:
+### 📋 New Feature Categories (v1.5.0):
+1. **🌐 Web Browsers** (6) - Firefox, Chrome, Brave, Edge, Opera, Vivaldi
+2. **📝 Office & Productivity** (10) - Office, LibreOffice, Zoom, Teams, Slack, Notion
+3. **🎨 Creative & Media** (10) - OBS, GIMP, Blender, Audacity, VLC, DaVinci Resolve
+4. **🎮 Gaming Platforms** (7) - Steam, Epic, GOG, Origin, Ubisoft, Battle.net, Xbox
+5. **🔧 System Utilities** (10) - 7-Zip, CCleaner, Everything, PowerToys, ShareX
+6. **⚡ Performance** (10) - Disable Superfetch, Indexing, Hibernation, Services
+7. **🔌 Services Management** (8) - Windows Update, Print Spooler, Diagnostics
+8. **🔋 Power Management** (5) - Ultimate Performance, Power Throttling control
+9. **📁 File Explorer** (7) - Quick Access, Libraries, OneDrive, 3D Objects control
+
+### 📈 Expanded Existing Categories:
+- **🎮 Gaming** - 7 → **15 features** (NVIDIA/AMD drivers, DirectX, Discord, Game DVR)
+- **🗑️ Privacy** - 6 → **16 features** (Cortana, Bing, Telemetry IPs, Lock screen ads)
+- **🎨 Visual** - 6 → **19 features** (Classic menus, Hidden files, Taskbar cleanup)
+- **💻 Dev Tools** - 7 → **19 features** (Python, Node.js, Java, .NET, PowerShell 7)
+- **🏢 Enterprise** - 6 → **12 features** (Domain prep, AppLocker, Credential Guard)
+- **🌐 Network** - NEW → **13 features** (DNS options, IPv6, Firewall, Remote Desktop)
+
+### 🎮 Enhanced Profile Features:
+- **Gaming Profile**: 27 features (Steam, Epic, GOG, NVIDIA, DirectX, Ultimate Performance)
+- **Developer Profile**: 28 features (Python, Node.js, Java, .NET, 4 browsers, PowerToys)
+- **Enterprise Profile**: 24 features (Security, Compliance, Domain prep, Office, Teams)
+- **Student Profile**: 23 features (Office, Browsers, Privacy controls, VLC, Spotify)
+- **Creator Profile**: 27 features (10 creative apps, Ultimate Performance, optimization)
+
+### v1.5.0 GUI Features:
+- ✅ **150+ Customization Features** - Unparalleled depth
+- ✅ **16 Feature Categories** - Logically organized
+- ✅ **40+ Application Installers** - Complete software management
 - ✅ **5 Pages**: Welcome, Build, Profiles, Analyze, Settings
-- ✅ **6 Profiles**: Gaming, Developer, Enterprise, Lightweight, Privacy-Focused, Custom
-- ✅ **47+ Features**: All fully functional end-to-end
+- ✅ **6 Enhanced Profiles**: Each with 20-40 auto-selected features
 - ✅ **Real-time Progress**: Live progress bar and logs during build
 - ✅ **Drag-and-Drop**: Drop .wim/.esd/.iso files anywhere
 - ✅ **Settings Persistence**: Window position, theme, preferences auto-saved
+- ✅ **Comprehensive Tooltips**: Every feature explained
+- ✅ **First-Run Tutorial**: Automatic help for new users
 
 ### Previous Versions (v0.3.0-v0.7.0):
 - 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables
