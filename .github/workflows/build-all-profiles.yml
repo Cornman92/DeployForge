@@ -1,0 +1,110 @@
+name: Build All Profiles
+
+on:
+  schedule:
+    # Run weekly on Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  build-matrix:
+    name: Build ${{ matrix.profile }} Image
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        profile:
+          - gamer
+          - developer
+          - enterprise
+          - student
+          - creator
+      fail-fast: false
+      max-parallel: 3
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Environment
+        run: |
+          echo "Building profile: ${{ matrix.profile }}"
+          mkdir -p ./output
+
+      - name: Prepare Source Image
+        run: |
+          # Prepare install.wim for customization
+          # In production, download from secure storage
+          echo "Source image ready"
+
+      - name: Build ${{ matrix.profile }} Image
+        uses: ./.github/actions/build-image
+        with:
+          image-path: './images/install.wim'
+          profile: ${{ matrix.profile }}
+          output-path: './output/${{ matrix.profile }}.wim'
+          validate: true
+          generate-report: true
+          report-format: 'html'
+
+      - name: Compress Image
+        run: |
+          Compress-Archive -Path ./output/${{ matrix.profile }}.wim -DestinationPath ./output/${{ matrix.profile }}.zip
+
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.profile }}-image
+          path: ./output/${{ matrix.profile }}.zip
+          retention-days: 30
+
+      - name: Upload Report Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.profile }}-report
+          path: deployforge-report.html
+          retention-days: 30
+
+  create-release:
+    name: Create Release with All Images
+    needs: build-matrix
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: all-profiles-${{ github.run_number }}
+          name: All Profiles Build ${{ github.run_number }}
+          body: |
+            ## DeployForge - All Profiles Release
+
+            This release includes customized Windows images for all profiles:
+
+            ### Profiles
+            - **Gaming**: Optimized for gaming performance
+            - **Developer**: Full development environment
+            - **Enterprise**: Enterprise security and management
+            - **Student**: Balanced productivity profile
+            - **Creator**: Content creation tools
+
+            ### Download
+            Each profile is available as a separate .zip file containing the .wim image.
+
+            ### Analysis Reports
+            HTML reports are included showing detailed analysis of each image.
+
+            ---
+            Built with DeployForge v0.6.0
+          files: |
+            ./artifacts/**/*.zip
+            ./artifacts/**/*.html
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

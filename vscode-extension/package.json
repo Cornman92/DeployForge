@@ -1,0 +1,236 @@
+{
+  "name": "deployforge",
+  "displayName": "DeployForge",
+  "description": "Windows deployment image customization for VS Code",
+  "version": "0.6.0",
+  "publisher": "deployforge",
+  "icon": "images/icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "windows",
+    "deployment",
+    "image",
+    "wim",
+    "dism",
+    "customization"
+  ],
+  "activationEvents": [
+    "onCommand:deployforge.buildImage",
+    "onCommand:deployforge.analyzeImage",
+    "onCommand:deployforge.validateImage",
+    "onView:deployforgeProfiles"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "deployforge.buildImage",
+        "title": "Build Image",
+        "category": "DeployForge",
+        "icon": "$(package)"
+      },
+      {
+        "command": "deployforge.analyzeImage",
+        "title": "Analyze Image",
+        "category": "DeployForge",
+        "icon": "$(search)"
+      },
+      {
+        "command": "deployforge.validateImage",
+        "title": "Validate Image",
+        "category": "DeployForge",
+        "icon": "$(check)"
+      },
+      {
+        "command": "deployforge.compareImages",
+        "title": "Compare Images",
+        "category": "DeployForge",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "deployforge.applyProfile",
+        "title": "Apply Profile",
+        "category": "DeployForge",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "deployforge.createPreset",
+        "title": "Create Preset",
+        "category": "DeployForge",
+        "icon": "$(add)"
+      },
+      {
+        "command": "deployforge.listProfiles",
+        "title": "List Profiles",
+        "category": "DeployForge"
+      },
+      {
+        "command": "deployforge.listPresets",
+        "title": "List Presets",
+        "category": "DeployForge"
+      },
+      {
+        "command": "deployforge.openReport",
+        "title": "Open Analysis Report",
+        "category": "DeployForge"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "deployforge",
+          "title": "DeployForge",
+          "icon": "resources/deployforge-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "deployforge": [
+        {
+          "id": "deployforgeProfiles",
+          "name": "Profiles"
+        },
+        {
+          "id": "deployforgePresets",
+          "name": "Presets"
+        },
+        {
+          "id": "deployforgeImages",
+          "name": "Images"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DeployForge",
+      "properties": {
+        "deployforge.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable"
+        },
+        "deployforge.defaultProfile": {
+          "type": "string",
+          "default": "gamer",
+          "enum": [
+            "gamer",
+            "developer",
+            "enterprise",
+            "student",
+            "creator",
+            "custom"
+          ],
+          "description": "Default profile for image builds"
+        },
+        "deployforge.autoValidate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically validate images after building"
+        },
+        "deployforge.generateReports": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate analysis reports automatically"
+        },
+        "deployforge.reportFormat": {
+          "type": "string",
+          "default": "html",
+          "enum": [
+            "text",
+            "json",
+            "html"
+          ],
+          "description": "Default report format"
+        },
+        "deployforge.showNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show notifications for operations"
+        }
+      }
+    },
+    "menus": {
+      "explorer/context": [
+        {
+          "when": "resourceExtname == .wim || resourceExtname == .esd",
+          "command": "deployforge.analyzeImage",
+          "group": "deployforge@1"
+        },
+        {
+          "when": "resourceExtname == .wim || resourceExtname == .esd",
+          "command": "deployforge.validateImage",
+          "group": "deployforge@2"
+        },
+        {
+          "when": "resourceExtname == .wim || resourceExtname == .esd",
+          "command": "deployforge.applyProfile",
+          "group": "deployforge@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "deployforge.buildImage",
+          "when": "true"
+        },
+        {
+          "command": "deployforge.analyzeImage",
+          "when": "true"
+        },
+        {
+          "command": "deployforge.validateImage",
+          "when": "true"
+        }
+      ]
+    },
+    "taskDefinitions": [
+      {
+        "type": "deployforge",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "The DeployForge command to run"
+          },
+          "args": {
+            "type": "array",
+            "description": "Command arguments"
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "16.x",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "eslint": "^8.41.0",
+    "typescript": "^5.0.4",
+    "@vscode/test-electron": "^2.3.0"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YourOrg/DeployForge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YourOrg/DeployForge/issues"
+  },
+  "homepage": "https://github.com/YourOrg/DeployForge#readme",
+  "license": "MIT"
+}

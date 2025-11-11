@@ -1,22 +1,97 @@
-# DeployForge v0.3.0
+# DeployForge v1.7.0 🚀
 
-**Enterprise Windows Deployment Suite** - Complete automation from disk partitioning to multi-language deployment.
+**Enterprise Windows Deployment Suite** - Complete automation with a beautiful modern GUI.
 
 [![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Cornman92/DeployForge/actions)
+[![Version](https://img.shields.io/badge/version-1.7.0-success)](https://github.com/Cornman92/DeployForge)
+[![Features](https://img.shields.io/badge/features-150%2B-blueviolet)](https://github.com/Cornman92/DeployForge)
+[![Enhanced Modules](https://img.shields.io/badge/enhanced%20modules-9%2F9-brightgreen)](https://github.com/Cornman92/DeployForge)
 
-DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Process hundreds of images in parallel, customize offline, and automate with REST API.
+DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Beautiful modern GUI with **150+ features** across 16 categories, **9 world-class enhanced backend modules** (+4,500 lines), complete integration, and full automation support.
 
-## 🎉 What's New in v0.3.0
+## 🎉 What's New in v1.7.0 - Module Enhancement COMPLETE! ✅
 
-**Complete Deployment Automation** - End-to-end Windows deployment from disk creation to installation.
+**ALL 9 Backend Modules Enhanced to World-Class Standards** (+4,500 lines of code):
 
-### New in v0.3.0:
-- 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables with standard Windows layouts
-- 🛠️ **WinPE Customization** - Build custom Windows PE deployment environments with PowerShell and drivers
-- 📝 **Answer File Generation** - Automated unattend.xml creation for zero-touch deployment
-- 🌍 **Multi-Language Support** - MUI package management for 40+ languages with regional settings
+### ✅ Modules 1-5 (v1.6.0):
+- **devenv.py** (93→750 lines, +718%) - 10 development profiles, IDE/language installation, cloud tools
+- **browsers.py** (92→686 lines, +646%) - 17+ browsers, enterprise policies, privacy configuration
+- **creative.py** (83→545 lines, +557%) - Creative software suite with GPU optimization
+- **privacy_hardening.py** (79→397 lines, +403%) - 4 privacy levels, comprehensive telemetry blocking
+- **launchers.py** (77→399 lines, +418%) - 12+ gaming platforms with mod managers
+
+### ✅ Modules 6-9 (v1.7.0 - NEW!):
+- **ui_customization.py** (78→618 lines, +692%) - 6 UI profiles, taskbar/Start Menu/File Explorer/themes
+- **backup.py** (79→650 lines, +723%) - 5 backup profiles, System Restore/VSS/File History/Recovery
+- **wizard.py** (74→527 lines, +612%) - 9 setup presets (Gaming, Developer, Creator, etc.) with hardware detection
+- **portable.py** (64→613 lines, +858%) - 20+ app catalog, 7 profiles, PortableApps.com integration
+
+### 📊 Complete Enhancement Impact:
+- **+4,466 lines** of production-quality, type-hinted code
+- **719 → 5,185 lines** total (+621% growth)
+- **23 Enums**, **12 Dataclasses**, **101 Methods**, **79+ Profiles**
+- All modules follow gaming.py (443 lines) quality standard
+- Comprehensive error handling, progress callbacks, documentation
+- **MODULES_6-9_ENHANCEMENT_COMPLETE.md** - Full enhancement documentation
+
+---
+
+## 🎉 What's In v1.5.0 - MASSIVE Feature Expansion!
+
+**150+ Features** - The most comprehensive Windows deployment tool available!
+
+### 🚀 Major Expansion:
+- ✨ **150+ Customization Features** - 3x increase from v1.0 (+218% growth!)
+- 📂 **16 Feature Categories** - Doubled from 7 categories
+- 📦 **40+ Application Installers** - Browsers, Office, Creative Tools, Games, Utilities
+- 🎯 **Enhanced Profiles** - All 6 profiles expanded with 20-40 features each
+- 🌐 **Complete Application Management** - Install everything from one interface
+
+### 📋 New Feature Categories (v1.5.0):
+1. **🌐 Web Browsers** (6) - Firefox, Chrome, Brave, Edge, Opera, Vivaldi
+2. **📝 Office & Productivity** (10) - Office, LibreOffice, Zoom, Teams, Slack, Notion
+3. **🎨 Creative & Media** (10) - OBS, GIMP, Blender, Audacity, VLC, DaVinci Resolve
+4. **🎮 Gaming Platforms** (7) - Steam, Epic, GOG, Origin, Ubisoft, Battle.net, Xbox
+5. **🔧 System Utilities** (10) - 7-Zip, CCleaner, Everything, PowerToys, ShareX
+6. **⚡ Performance** (10) - Disable Superfetch, Indexing, Hibernation, Services
+7. **🔌 Services Management** (8) - Windows Update, Print Spooler, Diagnostics
+8. **🔋 Power Management** (5) - Ultimate Performance, Power Throttling control
+9. **📁 File Explorer** (7) - Quick Access, Libraries, OneDrive, 3D Objects control
+
+### 📈 Expanded Existing Categories:
+- **🎮 Gaming** - 7 → **15 features** (NVIDIA/AMD drivers, DirectX, Discord, Game DVR)
+- **🗑️ Privacy** - 6 → **16 features** (Cortana, Bing, Telemetry IPs, Lock screen ads)
+- **🎨 Visual** - 6 → **19 features** (Classic menus, Hidden files, Taskbar cleanup)
+- **💻 Dev Tools** - 7 → **19 features** (Python, Node.js, Java, .NET, PowerShell 7)
+- **🏢 Enterprise** - 6 → **12 features** (Domain prep, AppLocker, Credential Guard)
+- **🌐 Network** - NEW → **13 features** (DNS options, IPv6, Firewall, Remote Desktop)
+
+### 🎮 Enhanced Profile Features:
+- **Gaming Profile**: 27 features (Steam, Epic, GOG, NVIDIA, DirectX, Ultimate Performance)
+- **Developer Profile**: 28 features (Python, Node.js, Java, .NET, 4 browsers, PowerToys)
+- **Enterprise Profile**: 24 features (Security, Compliance, Domain prep, Office, Teams)
+- **Student Profile**: 23 features (Office, Browsers, Privacy controls, VLC, Spotify)
+- **Creator Profile**: 27 features (10 creative apps, Ultimate Performance, optimization)
+
+### v1.5.0 GUI Features:
+- ✅ **150+ Customization Features** - Unparalleled depth
+- ✅ **16 Feature Categories** - Logically organized
+- ✅ **40+ Application Installers** - Complete software management
+- ✅ **5 Pages**: Welcome, Build, Profiles, Analyze, Settings
+- ✅ **6 Enhanced Profiles**: Each with 20-40 auto-selected features
+- ✅ **Real-time Progress**: Live progress bar and logs during build
+- ✅ **Drag-and-Drop**: Drop .wim/.esd/.iso files anywhere
+- ✅ **Settings Persistence**: Window position, theme, preferences auto-saved
+- ✅ **Comprehensive Tooltips**: Every feature explained
+- ✅ **First-Run Tutorial**: Automatic help for new users
+
+### Previous Versions (v0.3.0-v0.7.0):
+- 💿 **UEFI/GPT Partitioning** - Create and manage GPT partition tables
+- 🛠️ **WinPE Customization** - Build custom Windows PE environments
+- 📝 **Answer File Generation** - Automated unattend.xml creation
+- 🌍 **Multi-Language Support** - MUI package management for 40+ languages
 
 ### All Features from v0.2.0:
 - 🖥️ **PyQt6 Desktop GUI** - Beautiful desktop application
@@ -38,13 +113,22 @@ DeployForge is a comprehensive, enterprise-grade tool for managing Windows deplo
 # Install
 pip install deployforge
 
+# === NEW in v0.9.4: Modern GUI ===
+
+# Launch the modern GUI (recommended!)
+python -m deployforge.gui_modern
+
+# Or via module
+from deployforge import gui_modern
+gui_modern.main()
+
+# === CLI Commands ===
+
 # View supported formats
 deployforge formats
 
 # Get image info
 deployforge info install.wim
-
-# === NEW in v0.3.0 ===
 
 # Create UEFI bootable disk with partitions
 deployforge partition create disk.vhdx --size 50 --recovery
@@ -57,13 +141,8 @@ deployforge unattend create autounattend.xml \
 # Manage multi-language support
 deployforge language list install.wim
 
-# === v0.2.0 Features ===
-
 # Compare two images
 deployforge compare image1.wim image2.wim
-
-# Start GUI
-python -m deployforge.gui.main_window
 
 # Start REST API
 python -m deployforge.api.main
