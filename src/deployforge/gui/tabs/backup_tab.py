@@ -12,7 +12,9 @@ class BackupTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setup_ui()
+        self.connect_signals()
 
     def setup_ui(self):
         layout = QVBoxLayout(self)
@@ -51,3 +53,45 @@ class BackupTab(QWidget):
         layout.addWidget(self.apply_btn)
 
         layout.addStretch()
+
+    def connect_signals(self):
+        """Connect signals to slots"""
+        self.apply_btn.clicked.connect(self.apply_backup)
+
+    def get_config(self):
+        """Get current configuration from UI"""
+        from deployforge.backup import BackupConfig
+
+        config = BackupConfig()
+        config.enable_system_restore = self.system_restore_cb.isChecked()
+        config.enable_vss = self.vss_cb.isChecked()
+        config.enable_file_history = self.file_history_cb.isChecked()
+        config.enable_recovery_environment = self.recovery_cb.isChecked()
+
+        return config
+
+    def apply_backup(self):
+        """Apply backup configuration using backend integration"""
+        from PyQt6.QtWidgets import QMessageBox
+
+        # Get current image
+        image_path = self.parent.get_current_image()
+        if not image_path:
+            QMessageBox.warning(self, "No Image", "Please open an image first")
+            return
+
+        # Get selected profile or custom config
+        profile = self.profile_combo.currentData()
+        config_dict = self.get_config().to_dict()
+
+        # Start backend operation
+        self.parent.backend_integration.configure_backup(
+            image_path=image_path,
+            profile=profile,
+            config=config_dict,
+            progress_callback=self.parent.on_operation_progress,
+            finished_callback=self.parent.on_operation_finished,
+            error_callback=self.parent.on_operation_error
+        )
+
+        self.parent.log(f"Starting backup configuration with {profile.value} profile...")

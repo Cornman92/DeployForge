@@ -13,6 +13,14 @@ try:
     from PyQt6.QtCore import Qt, QThread, pyqtSignal
     from PyQt6.QtGui import QAction, QIcon
     PYQT_AVAILABLE = True
+
+    # Import enhanced module tabs
+    from deployforge.gui.tabs.ui_customization_tab import UICustomizationTab
+    from deployforge.gui.tabs.backup_tab import BackupTab
+    from deployforge.gui.tabs.wizard_tab import WizardTab
+    from deployforge.gui.tabs.portable_apps_tab import PortableAppsTab
+    from deployforge.gui.backend_integration import BackendIntegration
+
 except ImportError:
     PYQT_AVAILABLE = False
 
@@ -46,6 +54,7 @@ if PYQT_AVAILABLE:
         def __init__(self):
             super().__init__()
             self.current_image = None
+            self.backend_integration = BackendIntegration()
             self.init_ui()
 
         def init_ui(self):
@@ -101,6 +110,19 @@ if PYQT_AVAILABLE:
             # Batch tab
             self.batch_tab = self.create_batch_tab()
             self.tabs.addTab(self.batch_tab, "Batch Operations")
+
+            # Enhanced module tabs
+            self.ui_customization_tab = UICustomizationTab(self)
+            self.tabs.addTab(self.ui_customization_tab, "UI Customization")
+
+            self.backup_tab = BackupTab(self)
+            self.tabs.addTab(self.backup_tab, "Backup & Recovery")
+
+            self.wizard_tab = WizardTab(self)
+            self.tabs.addTab(self.wizard_tab, "Setup Wizard")
+
+            self.portable_apps_tab = PortableAppsTab(self)
+            self.tabs.addTab(self.portable_apps_tab, "Portable Apps")
 
             main_layout.addWidget(self.tabs)
 
@@ -383,6 +405,38 @@ if PYQT_AVAILABLE:
         def log(self, message: str):
             """Add message to log output."""
             self.log_output.append(message)
+
+        def get_current_image(self) -> Optional[Path]:
+            """Get the currently loaded image path."""
+            return self.current_image
+
+        def on_operation_progress(self, message: str):
+            """Handle progress updates from backend operations."""
+            self.log(message)
+            self.progress_bar.setVisible(True)
+
+        def on_operation_finished(self, result: dict):
+            """Handle completion of backend operations."""
+            self.progress_bar.setVisible(False)
+            if result.get('success'):
+                self.log("Operation completed successfully!")
+                QMessageBox.information(self, "Success", "Operation completed successfully!")
+            else:
+                error_msg = result.get('error', 'Unknown error occurred')
+                self.log(f"Operation failed: {error_msg}")
+                QMessageBox.warning(self, "Operation Failed", error_msg)
+
+        def on_operation_error(self, error_msg: str):
+            """Handle errors from backend operations."""
+            self.progress_bar.setVisible(False)
+            self.log(f"Error: {error_msg}")
+            QMessageBox.critical(self, "Error", f"An error occurred:\n{error_msg}")
+
+        def closeEvent(self, event):
+            """Handle window close event."""
+            # Clean up backend integration workers
+            self.backend_integration.cleanup()
+            event.accept()
 
 
 def run_gui():

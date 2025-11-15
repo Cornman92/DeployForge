@@ -15,7 +15,9 @@ class UICustomizationTab(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.parent = parent
         self.setup_ui()
+        self.connect_signals()
 
     def setup_ui(self):
         """Set up the UI components"""
@@ -73,6 +75,10 @@ class UICustomizationTab(QWidget):
 
         layout.addStretch()
 
+    def connect_signals(self):
+        """Connect signals to slots"""
+        self.apply_btn.clicked.connect(self.apply_customization)
+
     def get_config(self):
         """Get current configuration from UI"""
         from deployforge.ui_customization import UICustomizationConfig
@@ -85,3 +91,29 @@ class UICustomizationTab(QWidget):
         config.windows10_context_menu = self.win10_context_cb.isChecked()
 
         return config
+
+    def apply_customization(self):
+        """Apply UI customization using backend integration"""
+        from PyQt6.QtWidgets import QMessageBox
+
+        # Get current image
+        image_path = self.parent.get_current_image()
+        if not image_path:
+            QMessageBox.warning(self, "No Image", "Please open an image first")
+            return
+
+        # Get selected profile or custom config
+        profile = self.profile_combo.currentData()
+        config_dict = self.get_config().to_dict()
+
+        # Start backend operation
+        self.parent.backend_integration.customize_ui(
+            image_path=image_path,
+            profile=profile,
+            config=config_dict,
+            progress_callback=self.parent.on_operation_progress,
+            finished_callback=self.parent.on_operation_finished,
+            error_callback=self.parent.on_operation_error
+        )
+
+        self.parent.log(f"Starting UI customization with {profile.value} profile...")
