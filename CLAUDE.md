@@ -1,8 +1,10 @@
 # CLAUDE.md - AI Assistant Guide for DeployForge
 
-**Version**: 1.7.0
+**Version**: 1.7.0 (Documentation) / 0.3.0 (Release)
 **Last Updated**: 2025-11-15
 **Purpose**: Comprehensive guide for AI assistants working with the DeployForge codebase
+
+> ⚠️ **Version Note**: This document tracks enhancement milestones (v1.7.0). The official PyPI release version is **v0.3.0** (see `pyproject.toml`). Development version in code is v0.6.0 (`__init__.py`).
 
 ---
 
@@ -15,9 +17,11 @@
 5. [Development Workflow](#development-workflow)
 6. [Testing Strategy](#testing-strategy)
 7. [Key Modules & Components](#key-modules--components)
-8. [Common Tasks & Workflows](#common-tasks--workflows)
-9. [Git Workflow & Branching](#git-workflow--branching)
-10. [Important Context](#important-context)
+8. [Advanced Enterprise Modules](#advanced-enterprise-modules)
+9. [Complete Module Index](#complete-module-index)
+10. [Common Tasks & Workflows](#common-tasks--workflows)
+11. [Git Workflow & Branching](#git-workflow--branching)
+12. [Important Context](#important-context)
 
 ---
 
@@ -818,6 +822,1002 @@ with ImageManager(Path('install.wim')) as manager:
 **Purpose**: JSONL-based compliance logging
 
 **Logs**: User, timestamp, operation, parameters, results
+
+---
+
+## Advanced Enterprise Modules
+
+### Overview
+
+DeployForge includes 8 major enterprise modules (5,500+ lines) providing advanced deployment capabilities. These modules support enterprise-scale Windows deployment with automation, testing, and integration features.
+
+### 16. gui_modern.py - The PRIMARY Interface ⭐
+
+**Location**: `src/deployforge/gui_modern.py`
+**Lines**: 3,229 (LARGEST MODULE in the entire codebase)
+**Status**: Production-ready, primary user-facing interface
+**Complexity**: Highest
+**Technology**: PyQt6
+**Stability**: ⚠️ Active development
+
+#### Purpose
+
+Beautiful modern graphical interface with **150+ features** across **16 categories**. This is the **primary user-facing interface** for DeployForge, providing drag-and-drop image loading, comprehensive customization options, and real-time progress monitoring.
+
+#### Architecture - 5-Page Navigation System
+
+The GUI uses a `QStackedWidget` for smooth page transitions:
+
+1. **WelcomePage** - Drag-and-drop image loading, recent files
+2. **BuildPage** - 150+ feature checkboxes in 16 categories
+3. **ProfilesPage** - 6 pre-configured profiles with auto-selection
+4. **AnalyzePage** - Image analysis and comparison tools
+5. **SettingsPage** - Configuration management with persistence
+
+#### Key Classes
+
+```python
+class Theme:
+    """Theme color definitions for Light and Dark modes"""
+    LIGHT = {
+        'background': '#FAFAFA',
+        'surface': '#FFFFFF',
+        'primary': '#0078D4',
+        'text': '#1F1F1F',
+        # ... 10+ color definitions
+    }
+
+    DARK = {
+        'background': '#1E1E1E',
+        'surface': '#252526',
+        'primary': '#0078D4',
+        'text': '#FFFFFF',
+        # ... 10+ color definitions
+    }
+
+class ThemeManager:
+    """Manages application theming and stylesheet generation"""
+
+    def apply_theme(self, theme_name: str) -> None:
+        """Apply theme to entire application"""
+
+    def generate_stylesheet(self) -> str:
+        """Generate QSS stylesheet from theme colors"""
+
+class MainWindow(QMainWindow):
+    """Main application window with sidebar navigation"""
+
+    def __init__(self):
+        """Initialize window, setup UI, load settings"""
+
+    def create_sidebar(self) -> QWidget:
+        """Create left sidebar with page navigation buttons"""
+
+    def switch_page(self, page_index: int) -> None:
+        """Switch to selected page with smooth transition"""
+
+class WelcomePage(QWidget):
+    """Welcome page with drag-and-drop image loading"""
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        """Handle drag enter for .wim/.esd/.iso files"""
+
+    def dropEvent(self, event: QDropEvent):
+        """Handle file drop and load image"""
+
+    def load_image(self, path: Path) -> None:
+        """Load image and switch to Build page"""
+
+class BuildPage(QWidget):
+    """Main feature selection page with 150+ checkboxes"""
+
+    def __init__(self):
+        """Initialize page and setup all 16 feature categories"""
+
+    def _init_gaming_features(self) -> QWidget:
+        """Initialize gaming features section (15 features)"""
+
+    def _init_debloat_features(self) -> QWidget:
+        """Initialize debloat features section (20 features)"""
+
+    def _init_privacy_features(self) -> QWidget:
+        """Initialize privacy features section (16 features)"""
+
+    # ... 13 more _init_*_features() methods for other categories
+
+class ProfilesPage(QWidget):
+    """Pre-configured profile selection page"""
+
+    profiles = {
+        'Gaming': [27 features],
+        'Developer': [28 features],
+        'Enterprise': [24 features],
+        'Student': [23 features],
+        'Creator': [27 features],
+        'Custom': [user-defined]
+    }
+
+    def apply_profile(self, profile_name: str) -> None:
+        """Auto-select features for chosen profile"""
+
+class AnalyzePage(QWidget):
+    """Image analysis and comparison tools"""
+
+    def analyze_image(self, image_path: Path) -> Dict[str, Any]:
+        """Analyze image and show statistics"""
+
+class SettingsPage(QWidget):
+    """Settings management with QSettings persistence"""
+
+    def save_settings(self) -> None:
+        """Save settings to persistent storage"""
+```
+
+#### 16 Feature Categories (150+ Total Features)
+
+| Category | Count | Examples |
+|----------|-------|----------|
+| 🎮 Gaming | 15 | NVIDIA/AMD drivers, DirectX, Game Mode, Discord |
+| 🗑️ Debloat | 20 | Remove Xbox, Teams, OneDrive, Cortana |
+| 🔒 Privacy | 16 | Disable telemetry, tracking, Bing, ads |
+| 🎨 Visual | 19 | Classic menus, dark mode, taskbar tweaks |
+| 💻 Developer | 19 | Python, Node.js, Java, .NET, PowerShell 7 |
+| 🏢 Enterprise | 12 | Security policies, domain prep, AppLocker |
+| 🌐 Browsers | 6 | Firefox, Chrome, Brave, Edge, Opera, Vivaldi |
+| 📝 Office | 10 | Office, LibreOffice, Teams, Zoom, Slack |
+| 🎨 Creative | 10 | OBS, GIMP, Blender, DaVinci Resolve |
+| 🎮 Gaming Platforms | 7 | Steam, Epic, GOG, Origin, Battle.net |
+| 🔧 Utilities | 10 | 7-Zip, PowerToys, Everything, ShareX |
+| ⚡ Performance | 10 | Disable services, indexing, Superfetch |
+| 🔌 Services | 8 | Windows Update, Print Spooler, diagnostics |
+| 🔋 Power | 5 | Ultimate Performance plan, throttling |
+| 📁 File Explorer | 7 | Quick Access, libraries, OneDrive removal |
+| 🌐 Network | 13 | DNS, firewall, IPv6, Remote Desktop |
+
+#### 6 Pre-Configured Profiles
+
+1. **Gaming Profile** (27 features)
+   - Steam, Epic Games, GOG Galaxy
+   - NVIDIA/AMD drivers, DirectX
+   - Ultimate Performance power plan
+   - Game Mode, DVR optimization
+   - Debloat gaming-unfriendly apps
+
+2. **Developer Profile** (28 features)
+   - Python, Node.js, Java, .NET SDK
+   - 4 browsers (Firefox, Chrome, Brave, Edge)
+   - PowerToys, Windows Terminal
+   - WSL2, Hyper-V, Docker support
+   - Git, development tools
+
+3. **Enterprise Profile** (24 features)
+   - Security hardening, firewall rules
+   - Domain join preparation
+   - Office 365, Teams, OneDrive
+   - Compliance and audit logging
+   - AppLocker, Credential Guard
+
+4. **Student Profile** (23 features)
+   - Office suite, browsers
+   - Privacy controls (moderate)
+   - VLC, Spotify, Discord
+   - Efficient power settings
+   - Cloud storage (OneDrive)
+
+5. **Creator Profile** (27 features)
+   - 10 creative applications
+   - GPU optimization
+   - Ultimate Performance
+   - Large file handling
+   - Color management
+
+6. **Custom Profile**
+   - User-defined feature selection
+   - Save/load custom configurations
+
+#### Theme System
+
+**Light Theme**:
+```python
+background: '#FAFAFA'      # Off-white background
+surface: '#FFFFFF'         # Pure white panels
+primary: '#0078D4'         # Microsoft blue
+text: '#1F1F1F'           # Nearly black text
+border: '#E0E0E0'         # Light gray borders
+```
+
+**Dark Theme**:
+```python
+background: '#1E1E1E'      # Dark gray background
+surface: '#252526'         # Slightly lighter panels
+primary: '#0078D4'         # Same blue (consistency)
+text: '#FFFFFF'           # White text
+border: '#3E3E42'         # Dark gray borders
+```
+
+#### Settings Persistence
+
+Uses `QSettings` for automatic persistence:
+```python
+settings = QSettings('DeployForge', 'ModernGUI')
+
+# Automatically saves:
+- Theme preference (Light/Dark)
+- Window geometry and position
+- Recent file list
+- Last used profile
+- Feature selections
+```
+
+#### Drag-and-Drop Implementation
+
+```python
+def dragEnterEvent(self, event: QDragEnterEvent):
+    """Accept .wim, .esd, .iso files"""
+    if event.mimeData().hasUrls():
+        for url in event.mimeData().urls():
+            path = Path(url.toLocalFile())
+            if path.suffix.lower() in ['.wim', '.esd', '.iso']:
+                event.acceptProposedAction()
+                return
+
+def dropEvent(self, event: QDropEvent):
+    """Load dropped image file"""
+    for url in event.mimeData().urls():
+        path = Path(url.toLocalFile())
+        if path.suffix.lower() in ['.wim', '.esd', '.iso']:
+            self.load_image(path)
+            break
+```
+
+#### Modification Guide
+
+**Adding a Feature Checkbox**:
+```python
+# In BuildPage._init_gaming_features()
+self.feature_checkboxes['new_gaming_feature'] = QCheckBox("New Gaming Feature")
+self.feature_checkboxes['new_gaming_feature'].setToolTip(
+    "Description of what this feature does"
+)
+gaming_layout.addWidget(self.feature_checkboxes['new_gaming_feature'])
+```
+
+**Adding a Profile**:
+```python
+# In ProfilesPage.__init__()
+self.profiles['NewProfile'] = [
+    'feature1',
+    'feature2',
+    'feature3'
+]
+
+# Add profile button
+new_profile_btn = self.create_profile_card(
+    "New Profile",
+    "Description",
+    "icon.png",
+    lambda: self.apply_profile('NewProfile')
+)
+```
+
+**Modifying Theme**:
+```python
+# In Theme.LIGHT or Theme.DARK
+'new_color': '#HEXCODE',
+'another_color': '#HEXCODE'
+```
+
+#### Dependencies
+
+- **PyQt6** - GUI framework
+- **deployforge.cli.profiles** - Profile backend
+- **deployforge.cli.analyzer** - Analysis tools
+- **deployforge.config_manager** - Configuration
+
+#### Usage Example
+
+```python
+from deployforge.gui_modern import main
+
+if __name__ == '__main__':
+    main()  # Launch GUI application
+```
+
+**Location**: `src/deployforge/gui_modern.py:1-3229`
+
+---
+
+### 17. testing.py - Automated Testing & Validation
+
+**Lines**: 823 (2nd largest module)
+**Category**: Enterprise Testing
+**Status**: Production-ready
+
+#### Purpose
+
+Comprehensive automated testing and validation for Windows images including integrity checks, VM-based bootability testing, driver signature validation, and performance metrics.
+
+#### Features
+
+- **Image Integrity**: SHA256 checksums, signature validation
+- **VM-Based Testing**: Boot images in Hyper-V, VirtualBox, VMware, QEMU
+- **Driver Validation**: Signature checks, compatibility testing
+- **Compliance Verification**: Update compliance, security baseline checks
+- **Performance Metrics**: Boot time, resource usage, benchmark scores
+- **Automated Reporting**: JSON/HTML test reports with detailed results
+
+#### Supported Hypervisors
+
+- **Hyper-V** (Windows) - Native Windows virtualization
+- **VirtualBox** (Cross-platform) - Free, widely used
+- **VMware** Workstation/Player - Enterprise standard
+- **QEMU/KVM** (Linux) - Open-source, high performance
+
+#### Key Classes
+
+```python
+class TestStatus(Enum):
+    """Test execution status"""
+    PENDING = "pending"
+    RUNNING = "running"
+    PASSED = "passed"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+    WARNING = "warning"
+
+class Hypervisor(Enum):
+    """Supported hypervisors"""
+    HYPER_V = "Hyper-V"
+    VIRTUALBOX = "VirtualBox"
+    VMWARE = "VMware"
+    QEMU = "QEMU"
+
+@dataclass
+class TestResult:
+    """Result of a single test"""
+    test_name: str
+    status: TestStatus
+    duration: float
+    message: str = ""
+    details: Dict[str, Any] = field(default_factory=dict)
+
+class ImageValidator:
+    """Image integrity and structure validation"""
+
+    def validate_integrity(self, image_path: Path) -> TestResult:
+        """Validate file integrity with checksums"""
+
+    def validate_structure(self, image_path: Path) -> TestResult:
+        """Validate WIM/ESD structure and metadata"""
+
+class VMTester:
+    """VM-based bootability testing"""
+
+    def __init__(self, image_path: Path, hypervisor: Hypervisor):
+        """Initialize with image and hypervisor"""
+
+    def create_vm(self) -> str:
+        """Create temporary VM for testing"""
+
+    def test_boot(self, timeout: int = 300) -> TestResult:
+        """Test if image boots successfully"""
+
+    def cleanup_vm(self) -> None:
+        """Remove temporary VM and artifacts"""
+
+class TestRunner:
+    """Orchestrates test execution"""
+
+    def run_all_tests(self, image_path: Path) -> List[TestResult]:
+        """Run complete test suite"""
+
+    def run_selective_tests(self, tests: List[str]) -> List[TestResult]:
+        """Run specific tests only"""
+
+class TestReport:
+    """Generate test reports"""
+
+    def generate_json(self, results: List[TestResult]) -> str:
+        """Generate JSON report"""
+
+    def generate_html(self, results: List[TestResult]) -> str:
+        """Generate HTML report"""
+```
+
+#### Usage Example
+
+```python
+from deployforge.testing import ImageValidator, VMTester, Hypervisor
+from pathlib import Path
+
+# Validate integrity
+validator = ImageValidator()
+integrity_result = validator.validate_integrity(Path('install.wim'))
+structure_result = validator.validate_structure(Path('install.wim'))
+
+# Boot test in VM
+tester = VMTester(Path('install.wim'), Hypervisor.VIRTUALBOX)
+boot_result = tester.test_boot(timeout=300)
+
+if boot_result.status == TestStatus.PASSED:
+    print("Image boots successfully!")
+else:
+    print(f"Boot test failed: {boot_result.message}")
+
+tester.cleanup_vm()
+```
+
+**Location**: `src/deployforge/testing.py:1-823`
+
+---
+
+### 18. integration.py - MDT/SCCM Enterprise Integration
+
+**Lines**: 786 (3rd largest module)
+**Category**: Enterprise Integration
+**Status**: Production-ready
+
+#### Purpose
+
+Integration with Microsoft Deployment Toolkit (MDT) and System Center Configuration Manager (SCCM) for enterprise-scale Windows deployment.
+
+#### MDT Features
+
+- **Deployment Share Management**: Create, configure, update shares
+- **Task Sequence Creation**: Standard/custom task sequences
+- **Application Management**: Import, configure, bundle applications
+- **Driver Package Management**: Import and organize drivers
+- **Boot Image Generation**: Custom WinPE boot images
+- **Selection Profiles**: Filter content for deployments
+
+#### SCCM Features
+
+- **Package Creation**: Application and OS packages
+- **Application Management**: Application deployment
+- **OS Image Deployment**: Distribute images to DPs
+- **Distribution Point Management**: Content distribution
+- **Task Sequence Deployment**: Deploy to collections
+
+#### Key Classes
+
+```python
+class TaskSequenceType(Enum):
+    """MDT/SCCM task sequence types"""
+    STANDARD_CLIENT = "Standard Client Task Sequence"
+    CUSTOM = "Custom Task Sequence"
+    REPLACE_COMPUTER = "Replace Computer"
+    REFRESH_COMPUTER = "Refresh Computer"
+    BARE_METAL = "Bare Metal Deployment"
+
+class MDTManager:
+    """MDT deployment share operations"""
+
+    def create_share(self, path: Path, name: str) -> None:
+        """Create new MDT deployment share"""
+
+    def import_os_image(self, wim_path: Path, name: str) -> str:
+        """Import OS image to deployment share"""
+
+    def import_application(self, app: MDTApplication) -> str:
+        """Import application to deployment share"""
+
+class TaskSequenceBuilder:
+    """Build MDT/SCCM task sequences"""
+
+    def create_standard_client(self, name: str, os_id: str) -> str:
+        """Create standard client deployment task sequence"""
+
+    def add_step(self, sequence_id: str, step_type: str, config: Dict) -> None:
+        """Add step to task sequence"""
+
+class SCCMPackageCreator:
+    """Create SCCM packages"""
+
+    def create_application_package(self, app_path: Path) -> str:
+        """Create SCCM application package"""
+
+    def create_os_package(self, image_path: Path) -> str:
+        """Create SCCM OS image package"""
+```
+
+#### Usage Example
+
+```python
+from deployforge.integration import MDTManager, TaskSequenceBuilder
+from pathlib import Path
+
+# Create MDT deployment share
+mdt = MDTManager()
+mdt.create_share(Path('D:\\DeploymentShare'), 'Production')
+
+# Import OS image
+os_id = mdt.import_os_image(
+    Path('install.wim'),
+    'Windows 11 Enterprise'
+)
+
+# Create task sequence
+builder = TaskSequenceBuilder(mdt)
+ts_id = builder.create_standard_client(
+    name='Win11 Enterprise Deployment',
+    os_id=os_id
+)
+
+# Add custom step
+builder.add_step(ts_id, 'InstallApplication', {
+    'application_name': 'Microsoft Office 365'
+})
+```
+
+**Location**: `src/deployforge/integration.py:1-786`
+
+---
+
+### 19. iac.py - Infrastructure as Code
+
+**Lines**: 770 (4th largest module)
+**Category**: Enterprise Automation
+**Status**: Production-ready
+
+#### Purpose
+
+Complete build automation using YAML/JSON deployment definitions. Enables declarative infrastructure as code for Windows image builds with multi-stage pipelines.
+
+#### Features
+
+- **YAML/JSON Configurations**: Declarative build definitions
+- **Template Variables**: Variable substitution and interpolation
+- **Multi-Stage Builds**: 12 predefined build stages
+- **Schema Validation**: Validate configurations before execution
+- **CLI Integration**: Run builds from command line
+- **Conditional Logic**: If/else conditions in builds
+- **Error Handling**: Comprehensive error recovery
+
+#### Build Stages
+
+1. **init** - Initialize build environment
+2. **partitions** - Create UEFI/GPT partitions
+3. **base** - Apply base configuration and debloat
+4. **drivers** - Inject hardware drivers
+5. **updates** - Apply Windows updates
+6. **applications** - Install applications
+7. **security** - Security hardening
+8. **certificates** - Certificate injection
+9. **gpo** - Group Policy configuration
+10. **languages** - Language pack installation
+11. **customization** - Final tweaks and customization
+12. **finalize** - Cleanup and validation
+
+#### Configuration Example
+
+```yaml
+# deploy.yaml
+version: "1.0"
+name: "Enterprise Windows 11 Build"
+image: "install.wim"
+index: 1
+output: "Win11_Enterprise_Custom.wim"
+
+variables:
+  company: "Acme Corporation"
+  domain: "acme.local"
+  timezone: "Pacific Standard Time"
+
+stages:
+  - name: partitions
+    action: create
+    type: uefi_gpt
+    size: 50GB
+    recovery: true
+
+  - name: base
+    profile: enterprise
+    debloat:
+      - Xbox
+      - Teams
+      - OneDrive
+    privacy: enhanced
+
+  - name: drivers
+    packages:
+      - "drivers/nvidia/*.inf"
+      - "drivers/intel_chipset/*.inf"
+    force_unsigned: false
+
+  - name: updates
+    source: "updates/"
+    latest_cumulative: true
+    dotnet_updates: true
+
+  - name: applications
+    install:
+      - name: "Microsoft Office 365"
+        source: "apps/Office365.exe"
+      - name: "7-Zip"
+        source: "apps/7z-installer.msi"
+
+  - name: security
+    level: high
+    firewall: enabled
+    defender: configured
+    bitlocker_prep: true
+
+  - name: certificates
+    import:
+      - "certs/${company}_root_ca.cer"
+      - "certs/${company}_intermediate.cer"
+
+  - name: gpo
+    apply:
+      - "policies/baseline_security.xml"
+      - "policies/corporate_settings.xml"
+
+  - name: customization
+    registry:
+      - key: "HKLM\\SOFTWARE\\${company}"
+        value: "Deployed"
+        data: "true"
+        type: REG_SZ
+    wallpaper: "branding/wallpaper.jpg"
+    oem_info:
+      manufacturer: "${company}"
+      support_url: "https://support.${domain}"
+
+  - name: finalize
+    validate: true
+    optimize: true
+    cleanup_temp: true
+```
+
+#### Usage Example
+
+```python
+from deployforge.iac import IaCRunner
+from pathlib import Path
+
+# Load and execute IaC configuration
+runner = IaCRunner(Path('deploy.yaml'))
+
+# Validate configuration
+if runner.validate():
+    # Execute all stages
+    result = runner.execute_all_stages()
+
+    # Generate report
+    runner.generate_report(Path('build_report.txt'))
+
+    print(f"Build completed: {result.successful_stages}/{result.total_stages} stages")
+else:
+    print("Configuration validation failed")
+```
+
+**Location**: `src/deployforge/iac.py:1-770`
+
+---
+
+### 20. scheduler.py - Job Scheduling & Queue Management
+
+**Lines**: 716
+**Category**: Enterprise Automation
+**Status**: Production-ready
+
+#### Purpose
+
+Cron-based job scheduling and queue management for automated Windows image builds.
+
+#### Features
+
+- **Cron Scheduling**: Standard cron syntax (e.g., `0 2 * * *`)
+- **Job Queue**: Priority-based queue (LOW, NORMAL, HIGH, URGENT)
+- **Background Execution**: Non-blocking background tasks
+- **Job Tracking**: Real-time status monitoring
+- **Retry Logic**: Exponential backoff for failed jobs
+- **Notifications**: Email and webhook notifications
+- **Persistent Storage**: JSON/SQLite job history
+
+#### Usage Example
+
+```python
+from deployforge.scheduler import JobScheduler, JobPriority
+from pathlib import Path
+
+scheduler = JobScheduler()
+
+# Schedule nightly build at 2 AM
+job = scheduler.schedule_build(
+    image_path=Path('install.wim'),
+    config={'profile': 'enterprise'},
+    schedule='0 2 * * *',  # 2 AM daily
+    priority=JobPriority.HIGH,
+    retry_count=3,
+    notify_email='admin@company.com',
+    notify_webhook='https://hooks.slack.com/...'
+)
+
+print(f"Job scheduled: {job.id}")
+
+# Monitor job status
+status = scheduler.get_job_status(job.id)
+print(f"Status: {status}")
+```
+
+**Location**: `src/deployforge/scheduler.py:1-716`
+
+---
+
+### 21. versioning.py - Version Control for Images
+
+**Lines**: 689
+**Category**: Enterprise Management
+**Status**: Production-ready
+
+#### Purpose
+
+Git-like version control system for Windows images with commit history, branching, and rollback capabilities.
+
+#### Features
+
+- **Version History**: Track all image modifications
+- **Commit/Checkout**: Git-like workflow
+- **Tagging**: Version tags (v1.0.0, production, etc.)
+- **Branching**: Maintain variants (gaming-branch, enterprise-branch)
+- **Diff Engine**: Compare versions and generate changelogs
+- **Rollback**: Restore previous versions
+- **SHA256 Tracking**: Integrity verification
+
+#### Usage Example
+
+```python
+from deployforge.versioning import ImageRepository
+from pathlib import Path
+
+repo = ImageRepository(Path('/images/repo'))
+
+# Initialize repository
+repo.init()
+
+# Commit an image
+commit = repo.commit(
+    image_path=Path('Win11_Custom.wim'),
+    message='Initial Windows 11 customization with gaming optimizations',
+    version='1.0.0',
+    tags=['production', 'baseline', 'Q4-2025']
+)
+
+# Create branch for variant
+repo.create_branch('gaming-variant')
+
+# List history
+history = repo.log(limit=10)
+for commit in history:
+    print(f"{commit.version}: {commit.message}")
+
+# Checkout previous version
+repo.checkout('v1.0.0')
+
+# Diff between versions
+diff = repo.diff('v1.0.0', 'v1.1.0')
+print(f"Changes: {len(diff.files_changed)} files")
+```
+
+**Location**: `src/deployforge/versioning.py:1-689`
+
+---
+
+### 22. gpo.py - Group Policy Objects Management
+
+**Lines**: 658
+**Category**: Enterprise Configuration
+**Status**: Production-ready
+
+#### Purpose
+
+Group Policy Objects (GPO) management and deployment for enterprise Windows images.
+
+#### Features
+
+- GPO creation and modification
+- Policy import/export (XML format)
+- Template-based policies
+- Registry-based GPO settings
+- Administrative templates (ADMX)
+- Compliance checking
+- Policy reporting
+
+**Location**: `src/deployforge/gpo.py:1-658`
+
+---
+
+### 23. certificates.py - Certificate Management
+
+**Lines**: 622
+**Category**: Enterprise Security
+**Status**: Production-ready
+
+#### Purpose
+
+Certificate installation and management for trusted certificate stores in Windows images.
+
+#### Features
+
+- Certificate installation (Root, Intermediate, Personal stores)
+- Trust store management
+- Enterprise CA integration
+- Certificate validation and verification
+- CRL/OCSP configuration
+- Auto-enrollment setup
+
+#### Supported Formats
+
+- .CER (DER/PEM)
+- .PFX/.P12 (password-protected)
+- .CRT
+- .P7B (certificate chains)
+
+**Location**: `src/deployforge/certificates.py:1-622`
+
+---
+
+## Complete Module Index
+
+### All 54 Modules by Category
+
+#### Core Infrastructure (3 modules, ~1,000 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| core/image_manager.py | ~400 | Factory and orchestration |
+| core/base_handler.py | ~200 | Abstract handler interface |
+| core/exceptions.py | ~200 | Custom exception hierarchy |
+
+#### Format Handlers (5 modules, ~2,500 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| handlers/iso_handler.py | ~500 | ISO 9660 optical disc images |
+| handlers/wim_handler.py | ~500 | Windows Imaging Format |
+| handlers/esd_handler.py | ~400 | Electronic Software Download |
+| handlers/ppkg_handler.py | ~400 | Provisioning packages |
+| handlers/vhd_handler.py | ~500 | Virtual Hard Disk (VHD/VHDX) |
+
+#### User Interfaces (4 modules, 4,433 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| **gui_modern.py** | **3,229** | **PRIMARY INTERFACE** - Modern PyQt6 GUI |
+| cli.py | 480 | Command-line interface (Click + Rich) |
+| api/main.py | ~400 | REST API (FastAPI) |
+| gui.py + gui/main_window.py | 491 | Legacy GUI (deprecated) |
+
+#### Enhanced Modules (9 modules, 5,185 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| devenv.py | 749 | Development environments (10 profiles) |
+| browsers.py | 685 | Browser management (17+ browsers) |
+| ui_customization.py | 618 | UI themes (6 profiles) |
+| backup.py | 650 | Backup/recovery (5 profiles) |
+| wizard.py | 527 | Setup wizard (9 presets) |
+| portable.py | 613 | Portable applications (20+ catalog) |
+| creative.py | 545 | Creative software suite |
+| launchers.py | 399 | Gaming platforms (12+) |
+| privacy_hardening.py | 397 | Privacy protection (4 levels) |
+| gaming.py | 443 | Gaming optimization (REFERENCE) |
+
+#### Enterprise Features (12 modules, 6,897 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| **testing.py** | 823 | Automated testing & VM validation |
+| **integration.py** | 786 | MDT/SCCM enterprise integration |
+| **iac.py** | 770 | Infrastructure as Code (YAML/JSON) |
+| partitions.py | 720 | UEFI/GPT partitioning |
+| **scheduler.py** | 716 | Job scheduling & queue management |
+| **versioning.py** | 689 | Git-like version control for images |
+| unattend.py | 675 | Answer file (unattend.xml) generation |
+| **gpo.py** | 658 | Group Policy Objects management |
+| languages.py | 654 | Multi-language (MUI) support |
+| security.py | 642 | Security hardening & compliance |
+| winpe.py | 639 | Windows PE customization |
+| **certificates.py** | 622 | Certificate management & injection |
+
+#### Automation & Integration (5 modules, 3,508 lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| automation.py | 677 | Ansible/Terraform integration |
+| ai.py | 597 | AI-powered features |
+| differential.py | 596 | Differential updates |
+| containers.py | 585 | Container support |
+| cloud.py | 573 | Cloud deployment (AWS/Azure/GCP) |
+
+#### Utility Modules (16+ modules, 4,800+ lines)
+
+| Module | Lines | Purpose |
+|--------|-------|---------|
+| config_manager.py | 569 | Configuration management |
+| encryption.py | 560 | Image encryption (BitLocker) |
+| applications.py | 525 | Application installation |
+| optimizer.py | 482 | General optimization |
+| rollback.py | 465 | Rollback capabilities |
+| features.py | 444 | Feature flag management |
+| network.py | 440 | Network configuration |
+| debloat.py | 419 | Bloatware removal |
+| feature_updates.py | 387 | Windows feature updates |
+| sandbox.py | 361 | Windows Sandbox integration |
+| remote.py | 354 | Remote storage (S3, Azure, HTTP) |
+| comparison.py | 335 | Image comparison & diff |
+| batch.py | 321 | Batch operations (parallel) |
+| registry.py | 301 | Offline registry editing |
+| templates.py | 299 | Template system |
+| drivers.py | 286 | Driver injection (DISM) |
+| performance.py | 228 | Performance monitoring |
+| updates.py | 216 | Windows Update integration |
+| themes.py | 211 | Windows theme management |
+| cache.py | 192 | Caching layer (TTL) |
+| config.py | 186 | YAML configuration |
+| audit.py | 179 | JSONL audit logging |
+| packages.py | 130 | Package management |
+
+### Modules by Size (Top 20)
+
+| Rank | Module | Lines | Category |
+|------|--------|-------|----------|
+| 1 | **gui_modern.py** | **3,229** | **User Interface (PRIMARY)** |
+| 2 | testing.py | 823 | Enterprise |
+| 3 | integration.py | 786 | Enterprise |
+| 4 | iac.py | 770 | Enterprise |
+| 5 | devenv.py | 749 | Enhanced |
+| 6 | partitions.py | 720 | Enterprise |
+| 7 | scheduler.py | 716 | Enterprise |
+| 8 | versioning.py | 689 | Enterprise |
+| 9 | browsers.py | 685 | Enhanced |
+| 10 | automation.py | 677 | Automation |
+| 11 | unattend.py | 675 | Enterprise |
+| 12 | gpo.py | 658 | Enterprise |
+| 13 | languages.py | 654 | Enterprise |
+| 14 | backup.py | 650 | Enhanced |
+| 15 | security.py | 642 | Enterprise |
+| 16 | winpe.py | 639 | Enterprise |
+| 17 | certificates.py | 622 | Enterprise |
+| 18 | ui_customization.py | 618 | Enhanced |
+| 19 | portable.py | 613 | Enhanced |
+| 20 | ai.py | 597 | Automation |
+
+### Module Stability Guide
+
+**🔒 Never Modify Without Deep Understanding**:
+- `core/image_manager.py`
+- `core/base_handler.py`
+- `core/exceptions.py`
+
+**⚠️ Careful Modification Required**:
+- `handlers/*` - Format handlers
+- `gui_modern.py` - Primary interface
+- `cli.py` - Command-line interface
+- `api/main.py` - REST API
+
+**✅ Safe to Modify**:
+- Enhanced modules (9 files)
+- Feature modules
+- Utility modules
+
+**🚀 Actively Developed**:
+- `gui_modern.py` - New features being added
+- Enhanced modules - Continuous improvement
+- Enterprise features - Enterprise adoption
+
+### Quick Module Reference
+
+**For AI Assistants**:
+- **Complete catalog**: See `MODULE_REFERENCE.md`
+- **API endpoints**: See `API_REFERENCE.md`
+- **Code patterns**: Follow `gaming.py` standard
+
+**For Users**:
+- **GUI guide**: See `GUI_GUIDE.md` (to be created)
+- **Enterprise guide**: See `ENTERPRISE_GUIDE.md` (to be created)
+- **Quick start**: See `QUICK_START.md` (to be created)
 
 ---
 
