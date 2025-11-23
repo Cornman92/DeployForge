@@ -1,35 +1,56 @@
 # Contributing to DeployForge
 
-Thank you for considering contributing to DeployForge! This document provides guidelines and instructions for contributing.
+Thank you for considering contributing to DeployForge! We welcome contributions from everyone, whether you're fixing a typo, adding a feature, or improving documentation.
+
+## 📋 Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [How to Contribute](#how-to-contribute)
+- [Development Setup](#development-setup)
+- [Coding Standards](#coding-standards)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Commit Guidelines](#commit-guidelines)
+- [Pull Request Process](#pull-request-process)
+- [Community](#community)
 
 ## Code of Conduct
 
+This project adheres to the Contributor Covenant [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+
+**Quick Summary**:
 - Be respectful and inclusive
 - Provide constructive feedback
 - Focus on what is best for the community
 - Show empathy towards other community members
+- Follow our [Code of Conduct](CODE_OF_CONDUCT.md)
 
 ## How to Contribute
 
 ### Reporting Bugs
 
+We use GitHub issue templates to streamline bug reports:
+
 1. Check if the bug has already been reported in [Issues](https://github.com/Cornman92/DeployForge/issues)
-2. If not, create a new issue with:
-   - Clear title and description
-   - Steps to reproduce
-   - Expected behavior
-   - Actual behavior
-   - System information (OS, Python version, etc.)
-   - Relevant logs or error messages
+2. If not, [create a new bug report](https://github.com/Cornman92/DeployForge/issues/new?template=bug_report.yml) using our template
+3. The template will guide you through providing:
+   - Bug description and reproduction steps
+   - Expected vs actual behavior
+   - System information (OS, Python version, DeployForge version)
+   - Error logs and additional context
+
+**Security Issues**: Please report security vulnerabilities privately according to our [Security Policy](SECURITY.md), not through public issues.
 
 ### Suggesting Features
 
-1. Check if the feature has already been suggested
-2. Create a new issue with:
-   - Clear description of the feature
-   - Use cases and benefits
-   - Possible implementation approach
-   - Any potential drawbacks
+We love feature suggestions! Use our feature request template:
+
+1. Check existing [feature requests](https://github.com/Cornman92/DeployForge/issues?q=is%3Aissue+label%3Aenhancement) and the [roadmap](ROADMAP.md)
+2. [Create a new feature request](https://github.com/Cornman92/DeployForge/issues/new?template=feature_request.yml) using our template
+3. The template will help you describe:
+   - Problem statement and proposed solution
+   - Use case examples and benefits
+   - Implementation willingness (can you contribute?)
 
 ### Submitting Pull Requests
 
@@ -222,11 +243,37 @@ DeployForge/
    ```
 4. Create a GitHub release
 
-## Questions?
+## Getting Help
 
-Feel free to:
-- Open an issue for questions
-- Start a discussion in GitHub Discussions
-- Contact maintainers directly
+### Questions
 
-Thank you for contributing to DeployForge!
+Have a question? Use our [question template](https://github.com/Cornman92/DeployForge/issues/new?template=question.yml) or start a [GitHub Discussion](https://github.com/Cornman92/DeployForge/discussions).
+
+### Resources
+
+- **Documentation**: [README.md](README.md), [CLAUDE.md](CLAUDE.md)
+- **Roadmap**: [ROADMAP.md](ROADMAP.md)
+- **TODO List**: [TODO.md](TODO.md)
+- **Security**: [SECURITY.md](SECURITY.md)
+- **Code of Conduct**: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+
+### Community
+
+- **GitHub Discussions**: Ask questions and share ideas
+- **Issue Tracker**: Report bugs and request features
+- **Pull Requests**: Contribute code
+
+## Recognition
+
+Contributors will be:
+- Listed in release notes
+- Acknowledged in CHANGELOG.md
+- Featured in the project's contributors list
+
+## License
+
+By contributing to DeployForge, you agree that your contributions will be licensed under the [MIT License](LICENSE).
+
+---
+
+Thank you for contributing to DeployForge! Every contribution, no matter how small, makes a difference. 🎉
