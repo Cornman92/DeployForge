@@ -27,7 +27,7 @@ class WIMHandler(BaseImageHandler):
     def __init__(self, image_path: Path):
         """Initialize the WIM handler."""
         super().__init__(image_path)
-        self.is_windows = platform.system() == 'Windows'
+        self.is_windows = platform.system() == "Windows"
         self._temp_dir = None
         self.index = 1  # Default to first image index
 
@@ -35,10 +35,7 @@ class WIMHandler(BaseImageHandler):
         """Check if wimlib-imagex is available."""
         try:
             result = subprocess.run(
-                ['wimlib-imagex', '--version'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["wimlib-imagex", "--version"], capture_output=True, text=True, timeout=5
             )
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -49,12 +46,7 @@ class WIMHandler(BaseImageHandler):
         if not self.is_windows:
             return False
         try:
-            result = subprocess.run(
-                ['dism', '/?'],
-                capture_output=True,
-                text=True,
-                timeout=5
-            )
+            result = subprocess.run(["dism", "/?"], capture_output=True, text=True, timeout=5)
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
@@ -109,11 +101,11 @@ class WIMHandler(BaseImageHandler):
     def _mount_with_dism(self) -> None:
         """Mount WIM using DISM (Windows)."""
         cmd = [
-            'dism',
-            '/Mount-Wim',
-            f'/WimFile:{self.image_path}',
-            f'/Index:{self.index}',
-            f'/MountDir:{self.mount_point}',
+            "dism",
+            "/Mount-Wim",
+            f"/WimFile:{self.image_path}",
+            f"/Index:{self.index}",
+            f"/MountDir:{self.mount_point}",
         ]
 
         logger.debug(f"Running: {' '.join(cmd)}")
@@ -125,8 +117,8 @@ class WIMHandler(BaseImageHandler):
     def _mount_with_wimlib(self) -> None:
         """Mount WIM using wimlib-imagex (Linux/Mac)."""
         cmd = [
-            'wimlib-imagex',
-            'mount',
+            "wimlib-imagex",
+            "mount",
             str(self.image_path),
             str(self.index),
             str(self.mount_point),
@@ -170,11 +162,11 @@ class WIMHandler(BaseImageHandler):
 
     def _unmount_with_dism(self, save_changes: bool) -> None:
         """Unmount WIM using DISM."""
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
         cmd = [
-            'dism',
-            '/Unmount-Wim',
-            f'/MountDir:{self.mount_point}',
+            "dism",
+            "/Unmount-Wim",
+            f"/MountDir:{self.mount_point}",
             commit_flag,
         ]
 
@@ -186,9 +178,9 @@ class WIMHandler(BaseImageHandler):
 
     def _unmount_with_wimlib(self, save_changes: bool) -> None:
         """Unmount WIM using wimlib-imagex."""
-        cmd = ['wimlib-imagex', 'unmount', str(self.mount_point)]
+        cmd = ["wimlib-imagex", "unmount", str(self.mount_point)]
         if save_changes:
-            cmd.append('--commit')
+            cmd.append("--commit")
 
         logger.debug(f"Running: {' '.join(cmd)}")
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -210,18 +202,20 @@ class WIMHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if not target_path.exists():
                 return []
 
             files = []
             for item in target_path.iterdir():
-                files.append({
-                    'name': item.name,
-                    'is_dir': item.is_dir(),
-                    'size': item.stat().st_size if item.is_file() else 0,
-                    'path': str(item.relative_to(self.mount_point)),
-                })
+                files.append(
+                    {
+                        "name": item.name,
+                        "is_dir": item.is_dir(),
+                        "size": item.stat().st_size if item.is_file() else 0,
+                        "path": str(item.relative_to(self.mount_point)),
+                    }
+                )
             return files
 
         except Exception as e:
@@ -244,7 +238,7 @@ class WIMHandler(BaseImageHandler):
             if not source.exists():
                 raise OperationError(f"Source file not found: {source}")
 
-            dest_path = self.mount_point / destination.lstrip('/')
+            dest_path = self.mount_point / destination.lstrip("/")
             dest_path.parent.mkdir(parents=True, exist_ok=True)
 
             shutil.copy2(source, dest_path)
@@ -264,7 +258,7 @@ class WIMHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if target_path.is_file():
                 target_path.unlink()
             elif target_path.is_dir():
@@ -289,7 +283,7 @@ class WIMHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            source_path = self.mount_point / source.lstrip('/')
+            source_path = self.mount_point / source.lstrip("/")
             destination = Path(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -313,11 +307,11 @@ class WIMHandler(BaseImageHandler):
             Dictionary containing WIM metadata
         """
         info = {
-            'path': str(self.image_path),
-            'format': 'WIM',
-            'size': self.image_path.stat().st_size,
-            'mounted': self.is_mounted,
-            'index': self.index,
+            "path": str(self.image_path),
+            "format": "WIM",
+            "size": self.image_path.stat().st_size,
+            "mounted": self.is_mounted,
+            "index": self.index,
         }
 
         try:
@@ -333,19 +327,19 @@ class WIMHandler(BaseImageHandler):
 
     def _get_info_dism(self) -> Dict[str, Any]:
         """Get WIM info using DISM."""
-        cmd = ['dism', '/Get-WimInfo', f'/WimFile:{self.image_path}']
+        cmd = ["dism", "/Get-WimInfo", f"/WimFile:{self.image_path}"]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
             # Parse DISM output
-            return {'dism_output': result.stdout}
+            return {"dism_output": result.stdout}
         return {}
 
     def _get_info_wimlib(self) -> Dict[str, Any]:
         """Get WIM info using wimlib."""
-        cmd = ['wimlib-imagex', 'info', str(self.image_path)]
+        cmd = ["wimlib-imagex", "info", str(self.image_path)]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode == 0:
-            return {'wimlib_output': result.stdout}
+            return {"wimlib_output": result.stdout}
         return {}

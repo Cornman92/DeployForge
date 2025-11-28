@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class PortableProfile(Enum):
     """Predefined portable app profiles"""
+
     DEVELOPMENT = "development"  # Developer tools and utilities
     OFFICE = "office"  # Office productivity apps
     SECURITY = "security"  # Security and privacy tools
@@ -30,6 +31,7 @@ class PortableProfile(Enum):
 
 class PortableCategory(Enum):
     """Categories for portable applications"""
+
     BROWSER = "browser"
     OFFICE_PRODUCTIVITY = "office_productivity"
     DEVELOPER_TOOLS = "developer_tools"
@@ -47,6 +49,7 @@ class PortableCategory(Enum):
 @dataclass
 class PortableAppInfo:
     """Information about a portable application"""
+
     name: str
     category: PortableCategory
     description: str
@@ -87,28 +90,28 @@ class PortableConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'installation': {
-                'root_directory': self.portable_apps_root,
-                'start_menu_shortcuts': self.create_start_menu_shortcuts,
-                'desktop_shortcuts': self.create_desktop_shortcuts,
+            "installation": {
+                "root_directory": self.portable_apps_root,
+                "start_menu_shortcuts": self.create_start_menu_shortcuts,
+                "desktop_shortcuts": self.create_desktop_shortcuts,
             },
-            'categories': {
-                'browsers': self.include_browsers,
-                'office': self.include_office,
-                'media': self.include_media,
-                'utilities': self.include_utilities,
-                'security': self.include_security,
-                'dev_tools': self.include_dev_tools,
+            "categories": {
+                "browsers": self.include_browsers,
+                "office": self.include_office,
+                "media": self.include_media,
+                "utilities": self.include_utilities,
+                "security": self.include_security,
+                "dev_tools": self.include_dev_tools,
             },
-            'updates': {
-                'auto_update': self.auto_update_enabled,
-                'check_on_boot': self.check_updates_on_boot,
+            "updates": {
+                "auto_update": self.auto_update_enabled,
+                "check_on_boot": self.check_updates_on_boot,
             },
-            'integration': {
-                'add_to_path': self.add_to_path,
-                'platform_integration': self.integrate_with_platform,
+            "integration": {
+                "add_to_path": self.add_to_path,
+                "platform_integration": self.integrate_with_platform,
             },
-            'apps': self.selected_apps,
+            "apps": self.selected_apps,
         }
 
 
@@ -118,150 +121,144 @@ class PortableAppManager:
     # Extensive portable app catalog
     APP_CATALOG: Dict[str, PortableAppInfo] = {
         # Browsers
-        'firefox_portable': PortableAppInfo(
-            name='Firefox Portable',
+        "firefox_portable": PortableAppInfo(
+            name="Firefox Portable",
             category=PortableCategory.BROWSER,
-            description='Fast, privacy-focused web browser',
+            description="Fast, privacy-focused web browser",
             size_mb=95,
-            portable_apps_id='FirefoxPortable',
+            portable_apps_id="FirefoxPortable",
         ),
-        'chrome_portable': PortableAppInfo(
-            name='Google Chrome Portable',
+        "chrome_portable": PortableAppInfo(
+            name="Google Chrome Portable",
             category=PortableCategory.BROWSER,
-            description='Fast, simple web browser from Google',
+            description="Fast, simple web browser from Google",
             size_mb=110,
         ),
-        'brave_portable': PortableAppInfo(
-            name='Brave Portable',
+        "brave_portable": PortableAppInfo(
+            name="Brave Portable",
             category=PortableCategory.BROWSER,
-            description='Privacy-focused browser with ad blocking',
+            description="Privacy-focused browser with ad blocking",
             size_mb=120,
         ),
-
         # Office & Productivity
-        'libreoffice_portable': PortableAppInfo(
-            name='LibreOffice Portable',
+        "libreoffice_portable": PortableAppInfo(
+            name="LibreOffice Portable",
             category=PortableCategory.OFFICE_PRODUCTIVITY,
-            description='Full office suite (Writer, Calc, Impress)',
+            description="Full office suite (Writer, Calc, Impress)",
             size_mb=350,
-            portable_apps_id='LibreOfficePortable',
+            portable_apps_id="LibreOfficePortable",
         ),
-        'abiword_portable': PortableAppInfo(
-            name='AbiWord Portable',
+        "abiword_portable": PortableAppInfo(
+            name="AbiWord Portable",
             category=PortableCategory.OFFICE_PRODUCTIVITY,
-            description='Lightweight word processor',
+            description="Lightweight word processor",
             size_mb=15,
-            portable_apps_id='AbiWordPortable',
+            portable_apps_id="AbiWordPortable",
         ),
-        'sumatra_pdf_portable': PortableAppInfo(
-            name='Sumatra PDF Portable',
+        "sumatra_pdf_portable": PortableAppInfo(
+            name="Sumatra PDF Portable",
             category=PortableCategory.PDF_READER,
-            description='Lightweight PDF reader',
+            description="Lightweight PDF reader",
             size_mb=12,
-            portable_apps_id='SumatraPDFPortable',
+            portable_apps_id="SumatraPDFPortable",
         ),
-
         # Developer Tools
-        'notepadpp_portable': PortableAppInfo(
-            name='Notepad++ Portable',
+        "notepadpp_portable": PortableAppInfo(
+            name="Notepad++ Portable",
             category=PortableCategory.TEXT_EDITOR,
-            description='Advanced text and code editor',
+            description="Advanced text and code editor",
             size_mb=15,
-            portable_apps_id='Notepad++Portable',
+            portable_apps_id="Notepad++Portable",
         ),
-        'vscode_portable': PortableAppInfo(
-            name='VS Code Portable',
+        "vscode_portable": PortableAppInfo(
+            name="VS Code Portable",
             category=PortableCategory.DEVELOPER_TOOLS,
-            description='Powerful code editor from Microsoft',
+            description="Powerful code editor from Microsoft",
             size_mb=250,
         ),
-        'git_portable': PortableAppInfo(
-            name='Git Portable',
+        "git_portable": PortableAppInfo(
+            name="Git Portable",
             category=PortableCategory.DEVELOPER_TOOLS,
-            description='Distributed version control system',
+            description="Distributed version control system",
             size_mb=45,
-            portable_apps_id='GitPortable',
+            portable_apps_id="GitPortable",
         ),
-        'python_portable': PortableAppInfo(
-            name='Python Portable',
+        "python_portable": PortableAppInfo(
+            name="Python Portable",
             category=PortableCategory.DEVELOPER_TOOLS,
-            description='Python programming language',
+            description="Python programming language",
             size_mb=80,
         ),
-
         # Media
-        'vlc_portable': PortableAppInfo(
-            name='VLC Media Player Portable',
+        "vlc_portable": PortableAppInfo(
+            name="VLC Media Player Portable",
             category=PortableCategory.MEDIA_PLAYER,
-            description='Universal media player',
+            description="Universal media player",
             size_mb=40,
-            portable_apps_id='VLCPortable',
+            portable_apps_id="VLCPortable",
         ),
-        'audacity_portable': PortableAppInfo(
-            name='Audacity Portable',
+        "audacity_portable": PortableAppInfo(
+            name="Audacity Portable",
             category=PortableCategory.MEDIA_PLAYER,
-            description='Audio editor and recorder',
+            description="Audio editor and recorder",
             size_mb=35,
-            portable_apps_id='AudacityPortable',
+            portable_apps_id="AudacityPortable",
         ),
-        'gimp_portable': PortableAppInfo(
-            name='GIMP Portable',
+        "gimp_portable": PortableAppInfo(
+            name="GIMP Portable",
             category=PortableCategory.IMAGE_EDITOR,
-            description='Advanced image editor',
+            description="Advanced image editor",
             size_mb=200,
-            portable_apps_id='GIMPPortable',
+            portable_apps_id="GIMPPortable",
         ),
-
         # Utilities
-        '7zip_portable': PortableAppInfo(
-            name='7-Zip Portable',
+        "7zip_portable": PortableAppInfo(
+            name="7-Zip Portable",
             category=PortableCategory.ARCHIVER,
-            description='File archiver with high compression',
+            description="File archiver with high compression",
             size_mb=2,
-            portable_apps_id='7-ZipPortable',
+            portable_apps_id="7-ZipPortable",
         ),
-        'everything_portable': PortableAppInfo(
-            name='Everything Portable',
+        "everything_portable": PortableAppInfo(
+            name="Everything Portable",
             category=PortableCategory.UTILITY,
-            description='Instant file search engine',
+            description="Instant file search engine",
             size_mb=5,
         ),
-        'ccleaner_portable': PortableAppInfo(
-            name='CCleaner Portable',
+        "ccleaner_portable": PortableAppInfo(
+            name="CCleaner Portable",
             category=PortableCategory.UTILITY,
-            description='System cleaning and optimization',
+            description="System cleaning and optimization",
             size_mb=30,
         ),
-
         # Security
-        'keepass_portable': PortableAppInfo(
-            name='KeePass Portable',
+        "keepass_portable": PortableAppInfo(
+            name="KeePass Portable",
             category=PortableCategory.SECURITY,
-            description='Password manager',
+            description="Password manager",
             size_mb=5,
-            portable_apps_id='KeePassPortable',
+            portable_apps_id="KeePassPortable",
         ),
-        'veracrypt_portable': PortableAppInfo(
-            name='VeraCrypt Portable',
+        "veracrypt_portable": PortableAppInfo(
+            name="VeraCrypt Portable",
             category=PortableCategory.SECURITY,
-            description='Disk encryption software',
+            description="Disk encryption software",
             size_mb=25,
         ),
-
         # Communication
-        'thunderbird_portable': PortableAppInfo(
-            name='Thunderbird Portable',
+        "thunderbird_portable": PortableAppInfo(
+            name="Thunderbird Portable",
             category=PortableCategory.COMMUNICATION,
-            description='Email client',
+            description="Email client",
             size_mb=70,
-            portable_apps_id='ThunderbirdPortable',
+            portable_apps_id="ThunderbirdPortable",
         ),
-        'pidgin_portable': PortableAppInfo(
-            name='Pidgin Portable',
+        "pidgin_portable": PortableAppInfo(
+            name="Pidgin Portable",
             category=PortableCategory.COMMUNICATION,
-            description='Multi-protocol instant messenger',
+            description="Multi-protocol instant messenger",
             size_mb=20,
-            portable_apps_id='PidginPortable',
+            portable_apps_id="PidginPortable",
         ),
     }
 
@@ -282,22 +279,32 @@ class PortableAppManager:
         if not self.image_path.exists():
             raise FileNotFoundError(f"Image not found: {self.image_path}")
 
-    def mount(self, mount_point: Optional[Path] = None, progress_callback: Optional[Callable[[str], None]] = None) -> Path:
+    def mount(
+        self,
+        mount_point: Optional[Path] = None,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> Path:
         """Mount Windows image"""
         if progress_callback:
             progress_callback("Mounting image for portable apps...")
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_port_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_port_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         try:
             subprocess.run(
-                ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                 f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-                check=True, capture_output=True
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{self.image_path}",
+                    f"/Index:{self.index}",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                capture_output=True,
             )
             self._mounted = True
             logger.info(f"Image mounted at {mount_point}")
@@ -307,7 +314,9 @@ class PortableAppManager:
 
         return mount_point
 
-    def unmount(self, save_changes: bool = True, progress_callback: Optional[Callable[[str], None]] = None):
+    def unmount(
+        self, save_changes: bool = True, progress_callback: Optional[Callable[[str], None]] = None
+    ):
         """Unmount Windows image"""
         if not self._mounted:
             raise RuntimeError("Image is not mounted")
@@ -315,12 +324,13 @@ class PortableAppManager:
         if progress_callback:
             progress_callback("Unmounting image...")
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
 
         try:
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-                check=True, capture_output=True
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+                check=True,
+                capture_output=True,
             )
             self._mounted = False
             logger.info("Image unmounted successfully")
@@ -328,7 +338,9 @@ class PortableAppManager:
             logger.error(f"Failed to unmount image: {e}")
             raise
 
-    def apply_profile(self, profile: PortableProfile, progress_callback: Optional[Callable[[str], None]] = None):
+    def apply_profile(
+        self, profile: PortableProfile, progress_callback: Optional[Callable[[str], None]] = None
+    ):
         """Apply predefined portable app profile"""
         if not self._mounted:
             raise RuntimeError("Image must be mounted first")
@@ -340,38 +352,53 @@ class PortableAppManager:
             self.config.include_dev_tools = True
             self.config.include_utilities = True
             self.config.selected_apps = [
-                'notepadpp_portable', 'vscode_portable', 'git_portable',
-                'python_portable', '7zip_portable', 'everything_portable'
+                "notepadpp_portable",
+                "vscode_portable",
+                "git_portable",
+                "python_portable",
+                "7zip_portable",
+                "everything_portable",
             ]
 
         elif profile == PortableProfile.OFFICE:
             self.config.include_office = True
             self.config.include_browsers = True
             self.config.selected_apps = [
-                'libreoffice_portable', 'sumatra_pdf_portable',
-                'firefox_portable', 'thunderbird_portable', '7zip_portable'
+                "libreoffice_portable",
+                "sumatra_pdf_portable",
+                "firefox_portable",
+                "thunderbird_portable",
+                "7zip_portable",
             ]
 
         elif profile == PortableProfile.SECURITY:
             self.config.include_security = True
             self.config.include_utilities = True
             self.config.selected_apps = [
-                'keepass_portable', 'veracrypt_portable', 'brave_portable',
-                '7zip_portable', 'ccleaner_portable'
+                "keepass_portable",
+                "veracrypt_portable",
+                "brave_portable",
+                "7zip_portable",
+                "ccleaner_portable",
             ]
 
         elif profile == PortableProfile.MEDIA:
             self.config.include_media = True
             self.config.selected_apps = [
-                'vlc_portable', 'audacity_portable', 'gimp_portable',
-                '7zip_portable'
+                "vlc_portable",
+                "audacity_portable",
+                "gimp_portable",
+                "7zip_portable",
             ]
 
         elif profile == PortableProfile.UTILITIES:
             self.config.include_utilities = True
             self.config.selected_apps = [
-                '7zip_portable', 'everything_portable', 'ccleaner_portable',
-                'sumatra_pdf_portable', 'notepadpp_portable'
+                "7zip_portable",
+                "everything_portable",
+                "ccleaner_portable",
+                "sumatra_pdf_portable",
+                "notepadpp_portable",
             ]
 
         elif profile == PortableProfile.COMPLETE:
@@ -385,7 +412,10 @@ class PortableAppManager:
 
         elif profile == PortableProfile.MINIMAL:
             self.config.selected_apps = [
-                'firefox_portable', 'sumatra_pdf_portable', '7zip_portable', 'notepadpp_portable'
+                "firefox_portable",
+                "sumatra_pdf_portable",
+                "7zip_portable",
+                "notepadpp_portable",
             ]
 
         # Apply configuration
@@ -448,7 +478,7 @@ class PortableAppManager:
 
                 # Create info file
                 info_file = app_dir / "app_info.txt"
-                with open(info_file, 'w') as f:
+                with open(info_file, "w") as f:
                     f.write(f"Name: {app_info.name}\n")
                     f.write(f"Category: {app_info.category.value}\n")
                     f.write(f"Description: {app_info.description}\n")
@@ -458,10 +488,7 @@ class PortableAppManager:
 
     def get_apps_by_category(self, category: PortableCategory) -> List[PortableAppInfo]:
         """Get all apps in a specific category"""
-        return [
-            app_info for app_info in self.APP_CATALOG.values()
-            if app_info.category == category
-        ]
+        return [app_info for app_info in self.APP_CATALOG.values() if app_info.category == category]
 
     def list_available_apps(self) -> Dict[str, List[str]]:
         """List all available apps by category"""
@@ -502,7 +529,7 @@ if (Test-Path $portableRoot) {{
 """
 
         script_path = scripts_dir / "launch_portable_apps.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Created portable apps launcher script")
@@ -518,7 +545,7 @@ if (Test-Path $portableRoot) {{
 
         # Create platform info
         info_file = platform_dir / "platform_info.txt"
-        with open(info_file, 'w') as f:
+        with open(info_file, "w") as f:
             f.write("PortableApps.com Platform\n")
             f.write("Unified launcher and updater for portable apps\n")
             f.write("Download from: https://portableapps.com/download\n")
@@ -548,7 +575,7 @@ if (Test-Path "$portableRoot\\PortableAppsPlatform") {
 """
 
         script_path = scripts_dir / "update_portable_apps.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Created portable apps auto-update script")
@@ -558,28 +585,30 @@ if (Test-Path "$portableRoot\\PortableAppsPlatform") {
         import json
 
         app_list = {
-            'profile': 'custom',
-            'total_apps': len(self.config.selected_apps),
-            'total_size_mb': sum(
+            "profile": "custom",
+            "total_apps": len(self.config.selected_apps),
+            "total_size_mb": sum(
                 self.APP_CATALOG[app_id].size_mb
                 for app_id in self.config.selected_apps
                 if app_id in self.APP_CATALOG
             ),
-            'apps': []
+            "apps": [],
         }
 
         for app_id in self.config.selected_apps:
             if app_id in self.APP_CATALOG:
                 app_info = self.APP_CATALOG[app_id]
-                app_list['apps'].append({
-                    'id': app_id,
-                    'name': app_info.name,
-                    'category': app_info.category.value,
-                    'size_mb': app_info.size_mb,
-                    'description': app_info.description,
-                })
+                app_list["apps"].append(
+                    {
+                        "id": app_id,
+                        "name": app_info.name,
+                        "category": app_info.category.value,
+                        "size_mb": app_info.size_mb,
+                        "description": app_info.description,
+                    }
+                )
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(app_list, f, indent=2)
 
         logger.info(f"Exported app list to {output_path}")
@@ -589,7 +618,7 @@ def install_portable_apps(
     image_path: Path,
     profile: PortableProfile = PortableProfile.UTILITIES,
     custom_apps: Optional[List[str]] = None,
-    progress_callback: Optional[Callable[[str], None]] = None
+    progress_callback: Optional[Callable[[str], None]] = None,
 ):
     """
     Quick portable apps installation

@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class BackupProfile(Enum):
     """Predefined backup configuration profiles"""
+
     AGGRESSIVE = "aggressive"  # Maximum protection with frequent backups
     MODERATE = "moderate"  # Balanced backup strategy
     MINIMAL = "minimal"  # Essential backups only
@@ -27,6 +28,7 @@ class BackupProfile(Enum):
 
 class BackupType(Enum):
     """Types of backup operations"""
+
     FILE_HISTORY = "file_history"
     SYSTEM_IMAGE = "system_image"
     SYSTEM_RESTORE = "system_restore"
@@ -36,6 +38,7 @@ class BackupType(Enum):
 
 class RecoveryMode(Enum):
     """Recovery environment modes"""
+
     FULL = "full"  # Complete recovery environment
     MINIMAL = "minimal"  # Minimal recovery tools
     CUSTOM = "custom"  # Custom recovery configuration
@@ -91,47 +94,47 @@ class BackupConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
-            'file_history': {
-                'enabled': self.enable_file_history,
-                'frequency_minutes': self.file_history_frequency,
-                'retention_days': self.file_history_retention,
-                'versions': self.file_history_versions,
+            "file_history": {
+                "enabled": self.enable_file_history,
+                "frequency_minutes": self.file_history_frequency,
+                "retention_days": self.file_history_retention,
+                "versions": self.file_history_versions,
             },
-            'system_restore': {
-                'enabled': self.enable_system_restore,
-                'disk_usage_percent': self.system_restore_disk_usage,
-                'restore_point_on_install': self.create_restore_point_on_install,
-                'restore_point_on_boot': self.create_restore_point_on_boot,
+            "system_restore": {
+                "enabled": self.enable_system_restore,
+                "disk_usage_percent": self.system_restore_disk_usage,
+                "restore_point_on_install": self.create_restore_point_on_install,
+                "restore_point_on_boot": self.create_restore_point_on_boot,
             },
-            'vss': {
-                'enabled': self.enable_vss,
-                'max_storage_percent': self.vss_max_storage,
-                'schedule': self.vss_schedule,
+            "vss": {
+                "enabled": self.enable_vss,
+                "max_storage_percent": self.vss_max_storage,
+                "schedule": self.vss_schedule,
             },
-            'system_image': {
-                'enabled': self.enable_system_image,
-                'schedule': self.system_image_schedule,
-                'retention': self.system_image_retention,
+            "system_image": {
+                "enabled": self.enable_system_image,
+                "schedule": self.system_image_schedule,
+                "retention": self.system_image_retention,
             },
-            'recovery': {
-                'enabled': self.enable_recovery_environment,
-                'mode': self.recovery_mode.value,
-                'startup_repair': self.include_startup_repair,
-                'system_restore': self.include_system_restore,
-                'command_prompt': self.include_command_prompt,
-                'image_recovery': self.include_system_image_recovery,
+            "recovery": {
+                "enabled": self.enable_recovery_environment,
+                "mode": self.recovery_mode.value,
+                "startup_repair": self.include_startup_repair,
+                "system_restore": self.include_system_restore,
+                "command_prompt": self.include_command_prompt,
+                "image_recovery": self.include_system_image_recovery,
             },
-            'cloud': {
-                'onedrive_backup': self.enable_onedrive_backup,
-                'desktop': self.backup_desktop,
-                'documents': self.backup_documents,
-                'pictures': self.backup_pictures,
+            "cloud": {
+                "onedrive_backup": self.enable_onedrive_backup,
+                "desktop": self.backup_desktop,
+                "documents": self.backup_documents,
+                "pictures": self.backup_pictures,
             },
-            'advanced': {
-                'bootable_recovery': self.create_bootable_recovery,
-                'compression': self.compression_enabled,
-                'encryption': self.encryption_enabled,
-            }
+            "advanced": {
+                "bootable_recovery": self.create_bootable_recovery,
+                "compression": self.compression_enabled,
+                "encryption": self.encryption_enabled,
+            },
         }
 
 
@@ -155,22 +158,32 @@ class BackupIntegrator:
         if not self.image_path.exists():
             raise FileNotFoundError(f"Image not found: {self.image_path}")
 
-    def mount(self, mount_point: Optional[Path] = None, progress_callback: Optional[Callable[[str], None]] = None) -> Path:
+    def mount(
+        self,
+        mount_point: Optional[Path] = None,
+        progress_callback: Optional[Callable[[str], None]] = None,
+    ) -> Path:
         """Mount Windows image"""
         if progress_callback:
             progress_callback("Mounting image for backup configuration...")
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_backup_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_backup_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         try:
             subprocess.run(
-                ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                 f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-                check=True, capture_output=True
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{self.image_path}",
+                    f"/Index:{self.index}",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                capture_output=True,
             )
             self._mounted = True
             logger.info(f"Image mounted at {mount_point}")
@@ -180,7 +193,9 @@ class BackupIntegrator:
 
         return mount_point
 
-    def unmount(self, save_changes: bool = True, progress_callback: Optional[Callable[[str], None]] = None):
+    def unmount(
+        self, save_changes: bool = True, progress_callback: Optional[Callable[[str], None]] = None
+    ):
         """Unmount Windows image"""
         if not self._mounted:
             raise RuntimeError("Image is not mounted")
@@ -188,12 +203,13 @@ class BackupIntegrator:
         if progress_callback:
             progress_callback("Unmounting image...")
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
 
         try:
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-                check=True, capture_output=True
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+                check=True,
+                capture_output=True,
             )
             self._mounted = False
             logger.info("Image unmounted successfully")
@@ -201,7 +217,9 @@ class BackupIntegrator:
             logger.error(f"Failed to unmount image: {e}")
             raise
 
-    def apply_profile(self, profile: BackupProfile, progress_callback: Optional[Callable[[str], None]] = None):
+    def apply_profile(
+        self, profile: BackupProfile, progress_callback: Optional[Callable[[str], None]] = None
+    ):
         """Apply predefined backup profile"""
         if not self._mounted:
             raise RuntimeError("Image must be mounted first")
@@ -303,24 +321,52 @@ class BackupIntegrator:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable System Restore
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore',
-                '/v', 'DisableSR', '/t', 'REG_DWORD', '/d', '0', '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore",
+                    "/v",
+                    "DisableSR",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Set disk usage
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore',
-                '/v', 'DiskPercent', '/t', 'REG_DWORD', '/d', str(self.config.system_restore_disk_usage), '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Microsoft\\Windows NT\\CurrentVersion\\SystemRestore",
+                    "/v",
+                    "DiskPercent",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    str(self.config.system_restore_disk_usage),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
-            logger.info(f"System Restore configured: {self.config.system_restore_disk_usage}% disk usage")
+            logger.info(
+                f"System Restore configured: {self.config.system_restore_disk_usage}% disk usage"
+            )
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_vss(self):
         """Configure Volume Shadow Copy Service"""
@@ -331,18 +377,32 @@ class BackupIntegrator:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable VSS
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\VSS',
-                '/v', 'Start', '/t', 'REG_DWORD', '/d', '2', '/f'  # Automatic
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\VSS",
+                    "/v",
+                    "Start",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "2",
+                    "/f",  # Automatic
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"VSS configured: {self.config.vss_schedule} schedule")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def create_restore_point_on_boot(self):
         """Create restore point on first boot"""
@@ -363,7 +423,7 @@ try {
 """
 
         script_path = scripts_dir / "create_restore_point.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Restore point creation script configured")
@@ -398,7 +458,7 @@ try {{
 """
 
         script_path = scripts_dir / "configure_file_history.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info(f"File History configured: {backup_path}")
@@ -412,18 +472,32 @@ try {{
         hive_key = "HKLM\\TEMP_USER"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable File History
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\FileHistory',
-                '/v', 'Disabled', '/t', 'REG_DWORD', '/d', '0', '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\FileHistory",
+                    "/v",
+                    "Disabled",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("File History defaults configured")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_recovery_environment(self):
         """Configure Windows Recovery Environment"""
@@ -449,7 +523,7 @@ try {
 """
 
         script_path = scripts_dir / "configure_recovery.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info(f"Recovery environment configured: {self.config.recovery_mode.value}")
@@ -463,7 +537,9 @@ try {
         hive_key = "HKLM\\TEMP_USER"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable OneDrive folder backup
             if self.config.enable_onedrive_backup:
@@ -476,15 +552,29 @@ try {
                     folders.append("Pictures")
 
                 for folder in folders:
-                    subprocess.run([
-                        'reg', 'add', f'{hive_key}\\Software\\Microsoft\\OneDrive\\Accounts\\Business1',
-                        '/v', f'{folder}FolderBackup', '/t', 'REG_DWORD', '/d', '1', '/f'
-                    ], check=True, capture_output=True)
+                    subprocess.run(
+                        [
+                            "reg",
+                            "add",
+                            f"{hive_key}\\Software\\Microsoft\\OneDrive\\Accounts\\Business1",
+                            "/v",
+                            f"{folder}FolderBackup",
+                            "/t",
+                            "REG_DWORD",
+                            "/d",
+                            "1",
+                            "/f",
+                        ],
+                        check=True,
+                        capture_output=True,
+                    )
 
-            logger.info(f"OneDrive backup configured for: {', '.join(folders) if folders else 'none'}")
+            logger.info(
+                f"OneDrive backup configured for: {', '.join(folders) if folders else 'none'}"
+            )
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def create_backup_schedule(self, backup_type: BackupType, schedule: str = "weekly"):
         """Create scheduled task for backup operations"""
@@ -518,7 +608,7 @@ Register-ScheduledTask -TaskName "{task_name}" -Trigger $trigger -Action $action
 """
 
         script_path = scripts_dir / f"schedule_{backup_type.value}.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info(f"Backup schedule created: {backup_type.value} - {schedule}")
@@ -532,18 +622,32 @@ Register-ScheduledTask -TaskName "{task_name}" -Trigger $trigger -Action $action
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable backup compression
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Microsoft\\Windows\\CurrentVersion\\WindowsBackup',
-                '/v', 'CompressBackup', '/t', 'REG_DWORD', '/d', '1', '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Microsoft\\Windows\\CurrentVersion\\WindowsBackup",
+                    "/v",
+                    "CompressBackup",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Backup compression enabled")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_startup_recovery(self):
         """Configure advanced startup recovery options"""
@@ -571,7 +675,7 @@ try {
 """
 
         script_path = scripts_dir / "configure_startup_recovery.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Startup recovery options configured")
@@ -615,7 +719,7 @@ Write-Host "`nBackup verification complete" -ForegroundColor Cyan
 """
 
         script_path = scripts_dir / "verify_backup_config.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Backup verification script created")
@@ -625,7 +729,7 @@ def configure_backup(
     image_path: Path,
     profile: BackupProfile = BackupProfile.MODERATE,
     backup_path: Optional[Path] = None,
-    progress_callback: Optional[Callable[[str], None]] = None
+    progress_callback: Optional[Callable[[str], None]] = None,
 ):
     """
     Quick backup configuration with profile

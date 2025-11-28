@@ -51,23 +51,35 @@ class ThemeManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_theme_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_theme_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-                    check=True, capture_output=True
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
+                    check=True,
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-                    check=True, capture_output=True
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
+                    check=True,
+                    capture_output=True,
                 )
 
             self._mounted = True
@@ -84,10 +96,11 @@ class ThemeManager:
             return
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-                check=True, capture_output=True
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+                check=True,
+                capture_output=True,
             )
             self._mounted = False
             logger.info("Image unmounted")
@@ -105,14 +118,14 @@ class ThemeManager:
         wallpapers_dest.mkdir(parents=True, exist_ok=True)
 
         if wallpapers_path.is_dir():
-            for wallpaper in wallpapers_path.glob('*.jpg'):
+            for wallpaper in wallpapers_path.glob("*.jpg"):
                 shutil.copy2(wallpaper, wallpapers_dest / wallpaper.name)
-            for wallpaper in wallpapers_path.glob('*.png'):
+            for wallpaper in wallpapers_path.glob("*.png"):
                 shutil.copy2(wallpaper, wallpapers_dest / wallpaper.name)
 
         logger.info(f"Installed wallpapers to {wallpapers_dest}")
 
-    def set_default_theme(self, theme: str = 'dark'):
+    def set_default_theme(self, theme: str = "dark"):
         """Set default theme (dark/light)"""
         if not self._mounted:
             raise RuntimeError("Image must be mounted first")
@@ -121,32 +134,52 @@ class ThemeManager:
         hive_key = "HKLM\\TEMP_USER"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Set theme
-            theme_value = '0' if theme == 'dark' else '1'
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize',
-                '/v', 'AppsUseLightTheme',
-                '/t', 'REG_DWORD',
-                '/d', theme_value,
-                '/f'
-            ], check=True, capture_output=True)
+            theme_value = "0" if theme == "dark" else "1"
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    "/v",
+                    "AppsUseLightTheme",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    theme_value,
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize',
-                '/v', 'SystemUsesLightTheme',
-                '/t', 'REG_DWORD',
-                '/d', theme_value,
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                    "/v",
+                    "SystemUsesLightTheme",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    theme_value,
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"Set default theme to {theme}")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
-    def customize_taskbar(self, position: str = 'center', size: str = 'default'):
+    def customize_taskbar(self, position: str = "center", size: str = "default"):
         """
         Customize taskbar.
 
@@ -161,28 +194,37 @@ class ThemeManager:
         hive_key = "HKLM\\TEMP_USER"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Taskbar alignment (Windows 11)
-            alignment_value = '1' if position == 'center' else '0'
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced',
-                '/v', 'TaskbarAl',
-                '/t', 'REG_DWORD',
-                '/d', alignment_value,
-                '/f'
-            ], check=True, capture_output=True)
+            alignment_value = "1" if position == "center" else "0"
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced",
+                    "/v",
+                    "TaskbarAl",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    alignment_value,
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"Taskbar configured: {position}")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
 
 def apply_custom_theme(
-    image_path: Path,
-    theme: str = 'dark',
-    wallpapers: Optional[Path] = None
+    image_path: Path, theme: str = "dark", wallpapers: Optional[Path] = None
 ) -> ThemeManager:
     """
     Quick theme application.
@@ -202,7 +244,7 @@ def apply_custom_theme(
     if wallpapers:
         theme_mgr.install_wallpaper_pack(wallpapers)
 
-    theme_mgr.customize_taskbar(position='center')
+    theme_mgr.customize_taskbar(position="center")
 
     theme_mgr.unmount(save_changes=True)
 

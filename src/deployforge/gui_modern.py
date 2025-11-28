@@ -16,21 +16,54 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from datetime import datetime
 from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QStackedWidget, QPushButton, QLabel, QFrame, QScrollArea,
-    QSplitter, QToolButton, QButtonGroup, QMessageBox, QProgressBar,
-    QStatusBar, QMenuBar, QMenu, QToolBar, QFileDialog, QTextEdit,
-    QCheckBox, QComboBox, QSpinBox, QGroupBox, QGridLayout, QRadioButton,
-    QSlider, QLineEdit
+    QApplication,
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QStackedWidget,
+    QPushButton,
+    QLabel,
+    QFrame,
+    QScrollArea,
+    QSplitter,
+    QToolButton,
+    QButtonGroup,
+    QMessageBox,
+    QProgressBar,
+    QStatusBar,
+    QMenuBar,
+    QMenu,
+    QToolBar,
+    QFileDialog,
+    QTextEdit,
+    QCheckBox,
+    QComboBox,
+    QSpinBox,
+    QGroupBox,
+    QGridLayout,
+    QRadioButton,
+    QSlider,
+    QLineEdit,
 )
 from PyQt6.QtCore import Qt, QSize, pyqtSignal, QThread, QTimer, pyqtSlot, QSettings, QMimeData
-from PyQt6.QtGui import QIcon, QFont, QPixmap, QAction, QPalette, QColor, QDragEnterEvent, QDropEvent
+from PyQt6.QtGui import (
+    QIcon,
+    QFont,
+    QPixmap,
+    QAction,
+    QPalette,
+    QColor,
+    QDragEnterEvent,
+    QDropEvent,
+)
 
 # Import DeployForge backend modules
 try:
     from deployforge.cli.profiles import ProfileManager, apply_profile
     from deployforge.cli.analyzer import ImageAnalyzer
     from deployforge.config_manager import ConfigurationManager
+
     BACKEND_AVAILABLE = True
 except ImportError as e:
     logging.warning(f"Backend modules not available: {e}")
@@ -44,62 +77,62 @@ class Theme:
     """Theme color definitions."""
 
     LIGHT = {
-        'name': 'Light',
-        'background': '#FAFAFA',
-        'surface': '#FFFFFF',
-        'surface_variant': '#F9F9F9',
-        'primary': '#0078D4',
-        'primary_hover': '#106EBE',
-        'primary_pressed': '#005A9E',
-        'text': '#1F1F1F',
-        'text_secondary': '#666666',
-        'border': '#E0E0E0',
-        'border_hover': '#B3B3B3',
-        'button_bg': '#F3F3F3',
-        'button_hover': '#E5E5E5',
-        'button_pressed': '#D6D6D6',
-        'success': '#107C10',
-        'error': '#C50F1F',
-        'warning': '#FFB900',
-        'sidebar': '#FFFFFF',
-        'sidebar_selected': '#E5F3FF',
-        'sidebar_hover': '#F3F3F3',
+        "name": "Light",
+        "background": "#FAFAFA",
+        "surface": "#FFFFFF",
+        "surface_variant": "#F9F9F9",
+        "primary": "#0078D4",
+        "primary_hover": "#106EBE",
+        "primary_pressed": "#005A9E",
+        "text": "#1F1F1F",
+        "text_secondary": "#666666",
+        "border": "#E0E0E0",
+        "border_hover": "#B3B3B3",
+        "button_bg": "#F3F3F3",
+        "button_hover": "#E5E5E5",
+        "button_pressed": "#D6D6D6",
+        "success": "#107C10",
+        "error": "#C50F1F",
+        "warning": "#FFB900",
+        "sidebar": "#FFFFFF",
+        "sidebar_selected": "#E5F3FF",
+        "sidebar_hover": "#F3F3F3",
     }
 
     DARK = {
-        'name': 'Dark',
-        'background': '#1E1E1E',
-        'surface': '#252526',
-        'surface_variant': '#2D2D30',
-        'primary': '#0078D4',
-        'primary_hover': '#1890F6',
-        'primary_pressed': '#005A9E',
-        'text': '#FFFFFF',
-        'text_secondary': '#CCCCCC',
-        'border': '#3E3E42',
-        'border_hover': '#555555',
-        'button_bg': '#3E3E42',
-        'button_hover': '#4E4E52',
-        'button_pressed': '#5E5E62',
-        'success': '#4EC9B0',
-        'error': '#F48771',
-        'warning': '#FFCC00',
-        'sidebar': '#2D2D30',
-        'sidebar_selected': '#094771',
-        'sidebar_hover': '#3E3E42',
+        "name": "Dark",
+        "background": "#1E1E1E",
+        "surface": "#252526",
+        "surface_variant": "#2D2D30",
+        "primary": "#0078D4",
+        "primary_hover": "#1890F6",
+        "primary_pressed": "#005A9E",
+        "text": "#FFFFFF",
+        "text_secondary": "#CCCCCC",
+        "border": "#3E3E42",
+        "border_hover": "#555555",
+        "button_bg": "#3E3E42",
+        "button_hover": "#4E4E52",
+        "button_pressed": "#5E5E62",
+        "success": "#4EC9B0",
+        "error": "#F48771",
+        "warning": "#FFCC00",
+        "sidebar": "#2D2D30",
+        "sidebar_selected": "#094771",
+        "sidebar_hover": "#3E3E42",
     }
 
     @staticmethod
-    def get(theme_name: str = 'Light') -> dict:
+    def get(theme_name: str = "Light") -> dict:
         """Get theme colors by name."""
-        return Theme.DARK if theme_name == 'Dark' else Theme.LIGHT
+        return Theme.DARK if theme_name == "Dark" else Theme.LIGHT
 
 
 class ThemeManager:
     """Manages application theme."""
 
     def __init__(self):
-        self.current_theme = 'Light'
+        self.current_theme = "Light"
         self.callbacks = []
 
     def set_theme(self, theme_name: str):
@@ -120,6 +153,7 @@ class ThemeManager:
     def on_theme_changed(self, callback):
         """Register callback for theme changes."""
         self.callbacks.append(callback)
+
 
 # Global theme manager
 theme_manager = ThemeManager()
@@ -150,7 +184,8 @@ class ModernButton(QPushButton):
         colors = theme_manager.get_colors()
 
         if self.is_primary:
-            self.setStyleSheet(f"""
+            self.setStyleSheet(
+                f"""
                 QPushButton {{
                     background-color: {colors['primary']};
                     color: white;
@@ -165,9 +200,11 @@ class ModernButton(QPushButton):
                 QPushButton:pressed {{
                     background-color: {colors['primary_pressed']};
                 }}
-            """)
+            """
+            )
         else:
-            self.setStyleSheet(f"""
+            self.setStyleSheet(
+                f"""
                 QPushButton {{
                     background-color: {colors['button_bg']};
                     color: {colors['text']};
@@ -182,7 +219,8 @@ class ModernButton(QPushButton):
                 QPushButton:pressed {{
                     background-color: {colors['button_pressed']};
                 }}
-            """)
+            """
+            )
 
 
 class SidebarButton(QToolButton):
@@ -202,7 +240,8 @@ class SidebarButton(QToolButton):
             self.setIcon(QIcon.fromTheme(icon_name))
             self.setIconSize(QSize(24, 24))
 
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QToolButton {
                 background-color: transparent;
                 border: none;
@@ -220,7 +259,8 @@ class SidebarButton(QToolButton):
                 color: #0078D4;
                 font-weight: 600;
             }
-        """)
+        """
+        )
 
 
 class ModernCard(QFrame):
@@ -230,14 +270,16 @@ class ModernCard(QFrame):
         super().__init__()
 
         self.setFrameShape(QFrame.Shape.StyledPanel)
-        self.setStyleSheet("""
+        self.setStyleSheet(
+            """
             QFrame {
                 background-color: white;
                 border: 1px solid #E0E0E0;
                 border-radius: 8px;
                 padding: 16px;
             }
-        """)
+        """
+        )
 
         layout = QVBoxLayout(self)
 
@@ -339,7 +381,9 @@ class SetupWizard(QWidget):
         # File selector
         file_layout = QHBoxLayout()
         self.wizard_image_path = QLabel("No image selected")
-        self.wizard_image_path.setStyleSheet("padding: 8px; background-color: #F3F3F3; border-radius: 4px;")
+        self.wizard_image_path.setStyleSheet(
+            "padding: 8px; background-color: #F3F3F3; border-radius: 4px;"
+        )
         file_layout.addWidget(self.wizard_image_path, 1)
 
         btn_browse = ModernButton("Browse...")
@@ -402,15 +446,12 @@ class SetupWizard(QWidget):
     def browse_wizard_image(self):
         """Browse for image in wizard."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Windows Image",
-            "",
-            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+            self, "Select Windows Image", "", "Windows Images (*.wim *.esd *.iso);;All Files (*)"
         )
 
         if file_path:
             self.wizard_image_path.setText(file_path)
-            self.config['image_path'] = file_path
+            self.config["image_path"] = file_path
 
     def go_next(self):
         """Go to next step."""
@@ -419,7 +460,7 @@ class SetupWizard(QWidget):
             return
 
         # Validate current step
-        if self.current_step == 1 and not self.config.get('image_path'):
+        if self.current_step == 1 and not self.config.get("image_path"):
             QMessageBox.warning(self, "Image Required", "Please select a Windows image first.")
             return
 
@@ -454,7 +495,7 @@ class SetupWizard(QWidget):
         profile_id = selected_radio.property("profile_id") if selected_radio else "gamer"
         profile_name = selected_radio.text() if selected_radio else "Gaming"
 
-        self.config['profile'] = profile_id
+        self.config["profile"] = profile_id
 
         review_text = f"""
 <b>Configuration Summary:</b><br><br>
@@ -517,13 +558,19 @@ class WelcomePage(QWidget):
         quick_layout.addSpacing(8)
 
         btn_gaming = ModernButton("🎮 Build Gaming Image")
-        btn_gaming.setToolTip("Create a gaming-optimized image with performance tweaks and low latency")
+        btn_gaming.setToolTip(
+            "Create a gaming-optimized image with performance tweaks and low latency"
+        )
         btn_developer = ModernButton("💻 Build Developer Image")
         btn_developer.setToolTip("Create a development image with WSL2, Docker, Git, and VS Code")
         btn_enterprise = ModernButton("🏢 Build Enterprise Image")
-        btn_enterprise.setToolTip("Create a secure enterprise image with CIS benchmarks and BitLocker")
+        btn_enterprise.setToolTip(
+            "Create a secure enterprise image with CIS benchmarks and BitLocker"
+        )
         btn_custom = ModernButton("🔧 Custom Build")
-        btn_custom.setToolTip("Create a fully customized image with manual control over all options")
+        btn_custom.setToolTip(
+            "Create a fully customized image with manual control over all options"
+        )
 
         quick_layout.addWidget(btn_gaming)
         quick_layout.addWidget(btn_developer)
@@ -556,7 +603,7 @@ class WelcomePage(QWidget):
             f"Configuration saved!\n\n"
             f"Image: {Path(config.get('image_path', '')).name}\n"
             f"Profile: {config.get('profile', 'gamer')}\n\n"
-            f"Go to the Build page to customize further or build now."
+            f"Go to the Build page to customize further or build now.",
         )
 
 
@@ -616,16 +663,19 @@ class ProfileCard(QFrame):
     def update_style(self):
         """Update visual style based on selection state."""
         if self.is_selected:
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 QFrame {
                     background-color: #E5F3FF;
                     border: 2px solid #0078D4;
                     border-radius: 6px;
                     padding: 12px;
                 }
-            """)
+            """
+            )
         else:
-            self.setStyleSheet("""
+            self.setStyleSheet(
+                """
                 QFrame {
                     background-color: #F9F9F9;
                     border: 1px solid #E0E0E0;
@@ -636,7 +686,8 @@ class ProfileCard(QFrame):
                     background-color: #F3F3F3;
                     border-color: #0078D4;
                 }
-            """)
+            """
+            )
 
 
 class AdvancedOptionsPanel(QWidget):
@@ -657,14 +708,16 @@ class AdvancedOptionsPanel(QWidget):
         # Options container (initially hidden)
         self.options_container = QFrame()
         self.options_container.setVisible(False)
-        self.options_container.setStyleSheet("""
+        self.options_container.setStyleSheet(
+            """
             QFrame {
                 background-color: white;
                 border: 1px solid #E0E0E0;
                 border-radius: 6px;
                 padding: 16px;
             }
-        """)
+        """
+        )
 
         options_layout = QVBoxLayout(self.options_container)
 
@@ -698,7 +751,6 @@ class AdvancedOptionsPanel(QWidget):
             "directx_runtime": "Install DirectX runtime libraries",
             "vcredist_all": "Install all Visual C++ redistributables",
             "discord_gaming": "Install Discord for voice chat",
-
             # Debloating & Privacy
             "debloat_aggressive": "Remove maximum bloatware and unnecessary Windows components",
             "debloat_moderate": "Remove common bloatware while keeping useful features",
@@ -716,7 +768,6 @@ class AdvancedOptionsPanel(QWidget):
             "disable_windows_feedback": "Disable Windows feedback prompts",
             "disable_suggestions": "Disable app suggestions and tips",
             "disable_lock_screen_ads": "Remove ads from lock screen",
-
             # Visual Customization
             "dark_theme": "Apply dark theme across Windows UI",
             "light_theme": "Apply light theme across Windows UI",
@@ -737,7 +788,6 @@ class AdvancedOptionsPanel(QWidget):
             "remove_chat": "Remove Chat icon from taskbar",
             "compact_mode": "Enable compact UI mode",
             "custom_accent_color": "Set custom accent color",
-
             # Developer Tools
             "wsl2": "Enable Windows Subsystem for Linux 2 for running Linux environments",
             "hyperv": "Enable Hyper-V virtualization platform",
@@ -758,7 +808,6 @@ class AdvancedOptionsPanel(QWidget):
             "postman": "Install Postman API testing tool",
             "github_desktop": "Install GitHub Desktop",
             "putty": "Install PuTTY SSH client",
-
             # Enterprise Features
             "bitlocker": "Configure BitLocker drive encryption",
             "cis_benchmark": "Apply CIS (Center for Internet Security) benchmarks",
@@ -772,7 +821,6 @@ class AdvancedOptionsPanel(QWidget):
             "credential_guard": "Enable Windows Defender Credential Guard",
             "attack_surface_reduction": "Enable Attack Surface Reduction rules",
             "exploit_protection": "Configure Exploit Protection settings",
-
             # Applications - Browsers
             "browsers": "Install alternative browsers (Firefox, Brave)",
             "firefox": "Install Mozilla Firefox",
@@ -781,7 +829,6 @@ class AdvancedOptionsPanel(QWidget):
             "edge_chromium": "Install/Update Microsoft Edge Chromium",
             "opera": "Install Opera Browser",
             "vivaldi": "Install Vivaldi Browser",
-
             # Applications - Office & Productivity
             "office": "Install Microsoft Office suite",
             "libreoffice": "Install LibreOffice suite",
@@ -793,7 +840,6 @@ class AdvancedOptionsPanel(QWidget):
             "notion": "Install Notion",
             "onenote": "Install Microsoft OneNote",
             "evernote": "Install Evernote",
-
             # Applications - Creative Tools
             "creative_suite": "Install creative tools (OBS, GIMP, Audacity, Blender)",
             "obs_studio": "Install OBS Studio for streaming",
@@ -806,7 +852,6 @@ class AdvancedOptionsPanel(QWidget):
             "vlc": "Install VLC Media Player",
             "spotify": "Install Spotify music player",
             "davinci_resolve": "Install DaVinci Resolve video editor",
-
             # Applications - Gaming
             "gaming_launchers": "Install gaming platforms (Steam, Epic Games, GOG)",
             "steam": "Install Steam gaming platform",
@@ -816,7 +861,6 @@ class AdvancedOptionsPanel(QWidget):
             "ubisoft_connect": "Install Ubisoft Connect",
             "battle_net": "Install Battle.net (Blizzard)",
             "xbox_app": "Install Xbox App",
-
             # Applications - Utilities
             "winget_packages": "Configure Windows Package Manager (winget)",
             "7zip": "Install 7-Zip file archiver",
@@ -828,7 +872,6 @@ class AdvancedOptionsPanel(QWidget):
             "powertoys": "Install Microsoft PowerToys",
             "qbittorrent": "Install qBittorrent",
             "windirstat": "Install WinDirStat disk usage analyzer",
-
             # System Optimization - Performance
             "performance_optimize": "Apply comprehensive performance optimizations",
             "network_optimize": "Optimize network stack for maximum throughput",
@@ -844,7 +887,6 @@ class AdvancedOptionsPanel(QWidget):
             "disable_reserved_storage": "Disable Windows reserved storage",
             "trim_ssd": "Enable TRIM for SSD optimization",
             "disable_defrag_schedule": "Disable automatic defragmentation",
-
             # System Optimization - Services
             "disable_windows_update": "Disable Windows Update service",
             "disable_print_spooler": "Disable Print Spooler service",
@@ -854,7 +896,6 @@ class AdvancedOptionsPanel(QWidget):
             "disable_diagnostics": "Disable diagnostic services",
             "disable_error_reporting": "Disable Windows Error Reporting",
             "disable_remote_registry": "Disable Remote Registry service",
-
             # Network & Security
             "dns_cloudflare": "Use Cloudflare DNS (1.1.1.1)",
             "dns_google": "Use Google DNS (8.8.8.8)",
@@ -868,14 +909,12 @@ class AdvancedOptionsPanel(QWidget):
             "uac_level": "Configure UAC level",
             "windows_hello": "Enable Windows Hello biometrics",
             "remote_desktop": "Enable Remote Desktop",
-
             # Power Management
             "ultimate_performance": "Enable Ultimate Performance power plan",
             "high_performance": "Set High Performance power plan",
             "disable_usb_suspend": "Disable USB selective suspend",
             "disable_power_throttling": "Disable power throttling",
             "pcie_link_state": "Disable PCIe Link State Power Management",
-
             # Explorer Customization
             "quick_access_disable": "Disable Quick Access in Explorer",
             "this_pc_default": "Open This PC by default in Explorer",
@@ -887,208 +926,256 @@ class AdvancedOptionsPanel(QWidget):
         }
 
         categories = [
-            ("🎮 Gaming Optimizations", [
-                ("gaming_competitive", "Competitive Gaming Profile"),
-                ("gaming_balanced", "Balanced Gaming Profile"),
-                ("gaming_quality", "Quality Gaming Profile"),
-                ("gaming_streaming", "Streaming Gaming Profile"),
-                ("network_latency", "Network Latency Reduction"),
-                ("game_mode", "Enable Game Mode"),
-                ("gpu_scheduling", "GPU Hardware Scheduling"),
-                ("game_dvr", "Disable Game DVR"),
-                ("fullscreen_optimizations", "Disable Fullscreen Optimizations"),
-                ("game_bar", "Configure Xbox Game Bar"),
-                ("nvidia_drivers", "Install NVIDIA Drivers"),
-                ("amd_drivers", "Install AMD Drivers"),
-                ("directx_runtime", "Install DirectX Runtime"),
-                ("vcredist_all", "Install All VC++ Redistributables"),
-                ("discord_gaming", "Install Discord"),
-            ]),
-            ("🗑️ Debloating & Privacy", [
-                ("debloat_aggressive", "Aggressive Debloating"),
-                ("debloat_moderate", "Moderate Debloating"),
-                ("debloat_minimal", "Minimal Debloating"),
-                ("privacy_hardening", "Privacy Hardening"),
-                ("disable_telemetry", "Disable Telemetry"),
-                ("dns_over_https", "DNS over HTTPS"),
-                ("disable_cortana", "Disable Cortana"),
-                ("disable_bing_search", "Disable Bing Search"),
-                ("disable_advertising_id", "Disable Advertising ID"),
-                ("disable_activity_history", "Disable Activity History"),
-                ("disable_location", "Disable Location Services"),
-                ("disable_background_apps", "Disable Background Apps"),
-                ("block_telemetry_ips", "Block Telemetry IPs"),
-                ("disable_windows_feedback", "Disable Windows Feedback"),
-                ("disable_suggestions", "Disable App Suggestions"),
-                ("disable_lock_screen_ads", "Remove Lock Screen Ads"),
-            ]),
-            ("🎨 Visual Customization", [
-                ("dark_theme", "Dark Theme"),
-                ("light_theme", "Light Theme"),
-                ("custom_wallpaper", "Custom Wallpaper"),
-                ("taskbar_left", "Taskbar on Left"),
-                ("taskbar_center", "Taskbar Centered"),
-                ("modern_ui", "Modern UI Tweaks"),
-                ("classic_context_menu", "Classic Context Menu (Win11)"),
-                ("classic_explorer", "Classic Explorer Ribbon"),
-                ("show_file_extensions", "Show File Extensions"),
-                ("show_hidden_files", "Show Hidden Files"),
-                ("colored_titlebar", "Colored Title Bars"),
-                ("transparency_effects", "Transparency Effects"),
-                ("disable_animations", "Disable Animations"),
-                ("remove_taskbar_search", "Remove Taskbar Search Box"),
-                ("remove_task_view", "Remove Task View Button"),
-                ("remove_widgets", "Remove Widgets Button"),
-                ("remove_chat", "Remove Chat Icon"),
-                ("compact_mode", "Compact UI Mode"),
-                ("custom_accent_color", "Custom Accent Color"),
-            ]),
-            ("💻 Developer Tools", [
-                ("wsl2", "Enable WSL2"),
-                ("hyperv", "Enable Hyper-V"),
-                ("sandbox", "Enable Windows Sandbox"),
-                ("dev_mode", "Developer Mode"),
-                ("docker", "Docker Desktop"),
-                ("git", "Git for Windows"),
-                ("vscode", "VS Code"),
-                ("python", "Python 3"),
-                ("nodejs", "Node.js & npm"),
-                ("java_jdk", "Java Development Kit"),
-                ("dotnet_sdk", ".NET SDK"),
-                ("powershell_7", "PowerShell 7"),
-                ("windows_terminal", "Windows Terminal"),
-                ("sysinternals", "Sysinternals Suite"),
-                ("notepad_plusplus", "Notepad++"),
-                ("sublime_text", "Sublime Text"),
-                ("postman", "Postman"),
-                ("github_desktop", "GitHub Desktop"),
-                ("putty", "PuTTY SSH Client"),
-            ]),
-            ("🏢 Enterprise & Security", [
-                ("bitlocker", "BitLocker Encryption"),
-                ("cis_benchmark", "CIS Benchmark"),
-                ("disa_stig", "DISA STIG Compliance"),
-                ("gpo_hardening", "Group Policy Hardening"),
-                ("certificate_enrollment", "Certificate Auto-Enrollment"),
-                ("mdt_integration", "MDT Integration"),
-                ("domain_join_prep", "Domain Join Preparation"),
-                ("kms_activation", "KMS Activation Setup"),
-                ("applocker", "AppLocker Policies"),
-                ("credential_guard", "Credential Guard"),
-                ("attack_surface_reduction", "Attack Surface Reduction"),
-                ("exploit_protection", "Exploit Protection"),
-            ]),
-            ("🌐 Web Browsers", [
-                ("firefox", "Mozilla Firefox"),
-                ("chrome", "Google Chrome"),
-                ("brave", "Brave Browser"),
-                ("edge_chromium", "Microsoft Edge Chromium"),
-                ("opera", "Opera Browser"),
-                ("vivaldi", "Vivaldi Browser"),
-            ]),
-            ("📝 Office & Productivity", [
-                ("office", "Microsoft Office"),
-                ("libreoffice", "LibreOffice"),
-                ("adobe_reader", "Adobe Acrobat Reader"),
-                ("foxit_reader", "Foxit PDF Reader"),
-                ("zoom", "Zoom"),
-                ("teams", "Microsoft Teams"),
-                ("slack", "Slack"),
-                ("notion", "Notion"),
-                ("onenote", "Microsoft OneNote"),
-                ("evernote", "Evernote"),
-            ]),
-            ("🎨 Creative & Media Tools", [
-                ("obs_studio", "OBS Studio"),
-                ("gimp", "GIMP Image Editor"),
-                ("inkscape", "Inkscape Vector Graphics"),
-                ("krita", "Krita Digital Painting"),
-                ("blender", "Blender 3D Suite"),
-                ("audacity", "Audacity Audio Editor"),
-                ("handbrake", "HandBrake Video Transcoder"),
-                ("vlc", "VLC Media Player"),
-                ("spotify", "Spotify"),
-                ("davinci_resolve", "DaVinci Resolve"),
-            ]),
-            ("🎮 Gaming Platforms", [
-                ("steam", "Steam"),
-                ("epic_games", "Epic Games Launcher"),
-                ("gog_galaxy", "GOG Galaxy"),
-                ("origin", "Origin (EA)"),
-                ("ubisoft_connect", "Ubisoft Connect"),
-                ("battle_net", "Battle.net (Blizzard)"),
-                ("xbox_app", "Xbox App"),
-            ]),
-            ("🔧 System Utilities", [
-                ("winget_packages", "WinGet Package Manager"),
-                ("7zip", "7-Zip"),
-                ("winrar", "WinRAR"),
-                ("ccleaner", "CCleaner"),
-                ("everything_search", "Everything Search"),
-                ("greenshot", "Greenshot"),
-                ("sharex", "ShareX"),
-                ("powertoys", "Microsoft PowerToys"),
-                ("qbittorrent", "qBittorrent"),
-                ("windirstat", "WinDirStat"),
-            ]),
-            ("⚡ Performance Optimization", [
-                ("performance_optimize", "Performance Optimization"),
-                ("disable_superfetch", "Disable Superfetch/Prefetch"),
-                ("disable_indexing", "Disable Search Indexing"),
-                ("disable_hibernation", "Disable Hibernation"),
-                ("disable_fast_startup", "Disable Fast Startup"),
-                ("disable_system_restore", "Disable System Restore"),
-                ("ntfs_compression", "Enable NTFS Compression"),
-                ("disable_reserved_storage", "Disable Reserved Storage"),
-                ("trim_ssd", "Enable SSD TRIM"),
-                ("disable_defrag_schedule", "Disable Auto Defragmentation"),
-            ]),
-            ("🔌 Services Management", [
-                ("disable_windows_update", "Disable Windows Update"),
-                ("disable_print_spooler", "Disable Print Spooler"),
-                ("disable_bluetooth", "Disable Bluetooth"),
-                ("disable_windows_search", "Disable Windows Search Service"),
-                ("disable_superfetch_service", "Disable SysMain Service"),
-                ("disable_diagnostics", "Disable Diagnostic Services"),
-                ("disable_error_reporting", "Disable Error Reporting"),
-                ("disable_remote_registry", "Disable Remote Registry"),
-            ]),
-            ("🌐 Network Configuration", [
-                ("network_optimize", "Network Optimization"),
-                ("dns_cloudflare", "Cloudflare DNS (1.1.1.1)"),
-                ("dns_google", "Google DNS (8.8.8.8)"),
-                ("dns_quad9", "Quad9 DNS (9.9.9.9)"),
-                ("disable_ipv6", "Disable IPv6"),
-                ("enable_network_discovery", "Enable Network Discovery"),
-                ("smb1_disable", "Disable SMBv1 Protocol"),
-                ("firewall_hardening", "Firewall Hardening"),
-                ("defender_optimize", "Optimize Windows Defender"),
-                ("smartscreen_disable", "Disable SmartScreen"),
-                ("uac_level", "Configure UAC Level"),
-                ("windows_hello", "Enable Windows Hello"),
-                ("remote_desktop", "Enable Remote Desktop"),
-            ]),
-            ("🔋 Power Management", [
-                ("ultimate_performance", "Ultimate Performance Plan"),
-                ("high_performance", "High Performance Plan"),
-                ("disable_usb_suspend", "Disable USB Suspend"),
-                ("disable_power_throttling", "Disable Power Throttling"),
-                ("pcie_link_state", "Disable PCIe Power Management"),
-            ]),
-            ("📁 File Explorer", [
-                ("quick_access_disable", "Disable Quick Access"),
-                ("this_pc_default", "Open This PC by Default"),
-                ("show_libraries", "Show Libraries"),
-                ("3d_objects_remove", "Remove 3D Objects Folder"),
-                ("onedrive_remove", "Uninstall OneDrive"),
-                ("preview_pane", "Enable Preview Pane"),
-                ("details_pane", "Enable Details Pane"),
-            ]),
-            ("💾 Storage & RAM", [
-                ("storage_optimize", "Storage Optimization"),
-                ("ram_optimize", "RAM Optimization"),
-                ("startup_optimize", "Startup Optimization"),
-            ]),
+            (
+                "🎮 Gaming Optimizations",
+                [
+                    ("gaming_competitive", "Competitive Gaming Profile"),
+                    ("gaming_balanced", "Balanced Gaming Profile"),
+                    ("gaming_quality", "Quality Gaming Profile"),
+                    ("gaming_streaming", "Streaming Gaming Profile"),
+                    ("network_latency", "Network Latency Reduction"),
+                    ("game_mode", "Enable Game Mode"),
+                    ("gpu_scheduling", "GPU Hardware Scheduling"),
+                    ("game_dvr", "Disable Game DVR"),
+                    ("fullscreen_optimizations", "Disable Fullscreen Optimizations"),
+                    ("game_bar", "Configure Xbox Game Bar"),
+                    ("nvidia_drivers", "Install NVIDIA Drivers"),
+                    ("amd_drivers", "Install AMD Drivers"),
+                    ("directx_runtime", "Install DirectX Runtime"),
+                    ("vcredist_all", "Install All VC++ Redistributables"),
+                    ("discord_gaming", "Install Discord"),
+                ],
+            ),
+            (
+                "🗑️ Debloating & Privacy",
+                [
+                    ("debloat_aggressive", "Aggressive Debloating"),
+                    ("debloat_moderate", "Moderate Debloating"),
+                    ("debloat_minimal", "Minimal Debloating"),
+                    ("privacy_hardening", "Privacy Hardening"),
+                    ("disable_telemetry", "Disable Telemetry"),
+                    ("dns_over_https", "DNS over HTTPS"),
+                    ("disable_cortana", "Disable Cortana"),
+                    ("disable_bing_search", "Disable Bing Search"),
+                    ("disable_advertising_id", "Disable Advertising ID"),
+                    ("disable_activity_history", "Disable Activity History"),
+                    ("disable_location", "Disable Location Services"),
+                    ("disable_background_apps", "Disable Background Apps"),
+                    ("block_telemetry_ips", "Block Telemetry IPs"),
+                    ("disable_windows_feedback", "Disable Windows Feedback"),
+                    ("disable_suggestions", "Disable App Suggestions"),
+                    ("disable_lock_screen_ads", "Remove Lock Screen Ads"),
+                ],
+            ),
+            (
+                "🎨 Visual Customization",
+                [
+                    ("dark_theme", "Dark Theme"),
+                    ("light_theme", "Light Theme"),
+                    ("custom_wallpaper", "Custom Wallpaper"),
+                    ("taskbar_left", "Taskbar on Left"),
+                    ("taskbar_center", "Taskbar Centered"),
+                    ("modern_ui", "Modern UI Tweaks"),
+                    ("classic_context_menu", "Classic Context Menu (Win11)"),
+                    ("classic_explorer", "Classic Explorer Ribbon"),
+                    ("show_file_extensions", "Show File Extensions"),
+                    ("show_hidden_files", "Show Hidden Files"),
+                    ("colored_titlebar", "Colored Title Bars"),
+                    ("transparency_effects", "Transparency Effects"),
+                    ("disable_animations", "Disable Animations"),
+                    ("remove_taskbar_search", "Remove Taskbar Search Box"),
+                    ("remove_task_view", "Remove Task View Button"),
+                    ("remove_widgets", "Remove Widgets Button"),
+                    ("remove_chat", "Remove Chat Icon"),
+                    ("compact_mode", "Compact UI Mode"),
+                    ("custom_accent_color", "Custom Accent Color"),
+                ],
+            ),
+            (
+                "💻 Developer Tools",
+                [
+                    ("wsl2", "Enable WSL2"),
+                    ("hyperv", "Enable Hyper-V"),
+                    ("sandbox", "Enable Windows Sandbox"),
+                    ("dev_mode", "Developer Mode"),
+                    ("docker", "Docker Desktop"),
+                    ("git", "Git for Windows"),
+                    ("vscode", "VS Code"),
+                    ("python", "Python 3"),
+                    ("nodejs", "Node.js & npm"),
+                    ("java_jdk", "Java Development Kit"),
+                    ("dotnet_sdk", ".NET SDK"),
+                    ("powershell_7", "PowerShell 7"),
+                    ("windows_terminal", "Windows Terminal"),
+                    ("sysinternals", "Sysinternals Suite"),
+                    ("notepad_plusplus", "Notepad++"),
+                    ("sublime_text", "Sublime Text"),
+                    ("postman", "Postman"),
+                    ("github_desktop", "GitHub Desktop"),
+                    ("putty", "PuTTY SSH Client"),
+                ],
+            ),
+            (
+                "🏢 Enterprise & Security",
+                [
+                    ("bitlocker", "BitLocker Encryption"),
+                    ("cis_benchmark", "CIS Benchmark"),
+                    ("disa_stig", "DISA STIG Compliance"),
+                    ("gpo_hardening", "Group Policy Hardening"),
+                    ("certificate_enrollment", "Certificate Auto-Enrollment"),
+                    ("mdt_integration", "MDT Integration"),
+                    ("domain_join_prep", "Domain Join Preparation"),
+                    ("kms_activation", "KMS Activation Setup"),
+                    ("applocker", "AppLocker Policies"),
+                    ("credential_guard", "Credential Guard"),
+                    ("attack_surface_reduction", "Attack Surface Reduction"),
+                    ("exploit_protection", "Exploit Protection"),
+                ],
+            ),
+            (
+                "🌐 Web Browsers",
+                [
+                    ("firefox", "Mozilla Firefox"),
+                    ("chrome", "Google Chrome"),
+                    ("brave", "Brave Browser"),
+                    ("edge_chromium", "Microsoft Edge Chromium"),
+                    ("opera", "Opera Browser"),
+                    ("vivaldi", "Vivaldi Browser"),
+                ],
+            ),
+            (
+                "📝 Office & Productivity",
+                [
+                    ("office", "Microsoft Office"),
+                    ("libreoffice", "LibreOffice"),
+                    ("adobe_reader", "Adobe Acrobat Reader"),
+                    ("foxit_reader", "Foxit PDF Reader"),
+                    ("zoom", "Zoom"),
+                    ("teams", "Microsoft Teams"),
+                    ("slack", "Slack"),
+                    ("notion", "Notion"),
+                    ("onenote", "Microsoft OneNote"),
+                    ("evernote", "Evernote"),
+                ],
+            ),
+            (
+                "🎨 Creative & Media Tools",
+                [
+                    ("obs_studio", "OBS Studio"),
+                    ("gimp", "GIMP Image Editor"),
+                    ("inkscape", "Inkscape Vector Graphics"),
+                    ("krita", "Krita Digital Painting"),
+                    ("blender", "Blender 3D Suite"),
+                    ("audacity", "Audacity Audio Editor"),
+                    ("handbrake", "HandBrake Video Transcoder"),
+                    ("vlc", "VLC Media Player"),
+                    ("spotify", "Spotify"),
+                    ("davinci_resolve", "DaVinci Resolve"),
+                ],
+            ),
+            (
+                "🎮 Gaming Platforms",
+                [
+                    ("steam", "Steam"),
+                    ("epic_games", "Epic Games Launcher"),
+                    ("gog_galaxy", "GOG Galaxy"),
+                    ("origin", "Origin (EA)"),
+                    ("ubisoft_connect", "Ubisoft Connect"),
+                    ("battle_net", "Battle.net (Blizzard)"),
+                    ("xbox_app", "Xbox App"),
+                ],
+            ),
+            (
+                "🔧 System Utilities",
+                [
+                    ("winget_packages", "WinGet Package Manager"),
+                    ("7zip", "7-Zip"),
+                    ("winrar", "WinRAR"),
+                    ("ccleaner", "CCleaner"),
+                    ("everything_search", "Everything Search"),
+                    ("greenshot", "Greenshot"),
+                    ("sharex", "ShareX"),
+                    ("powertoys", "Microsoft PowerToys"),
+                    ("qbittorrent", "qBittorrent"),
+                    ("windirstat", "WinDirStat"),
+                ],
+            ),
+            (
+                "⚡ Performance Optimization",
+                [
+                    ("performance_optimize", "Performance Optimization"),
+                    ("disable_superfetch", "Disable Superfetch/Prefetch"),
+                    ("disable_indexing", "Disable Search Indexing"),
+                    ("disable_hibernation", "Disable Hibernation"),
+                    ("disable_fast_startup", "Disable Fast Startup"),
+                    ("disable_system_restore", "Disable System Restore"),
+                    ("ntfs_compression", "Enable NTFS Compression"),
+                    ("disable_reserved_storage", "Disable Reserved Storage"),
+                    ("trim_ssd", "Enable SSD TRIM"),
+                    ("disable_defrag_schedule", "Disable Auto Defragmentation"),
+                ],
+            ),
+            (
+                "🔌 Services Management",
+                [
+                    ("disable_windows_update", "Disable Windows Update"),
+                    ("disable_print_spooler", "Disable Print Spooler"),
+                    ("disable_bluetooth", "Disable Bluetooth"),
+                    ("disable_windows_search", "Disable Windows Search Service"),
+                    ("disable_superfetch_service", "Disable SysMain Service"),
+                    ("disable_diagnostics", "Disable Diagnostic Services"),
+                    ("disable_error_reporting", "Disable Error Reporting"),
+                    ("disable_remote_registry", "Disable Remote Registry"),
+                ],
+            ),
+            (
+                "🌐 Network Configuration",
+                [
+                    ("network_optimize", "Network Optimization"),
+                    ("dns_cloudflare", "Cloudflare DNS (1.1.1.1)"),
+                    ("dns_google", "Google DNS (8.8.8.8)"),
+                    ("dns_quad9", "Quad9 DNS (9.9.9.9)"),
+                    ("disable_ipv6", "Disable IPv6"),
+                    ("enable_network_discovery", "Enable Network Discovery"),
+                    ("smb1_disable", "Disable SMBv1 Protocol"),
+                    ("firewall_hardening", "Firewall Hardening"),
+                    ("defender_optimize", "Optimize Windows Defender"),
+                    ("smartscreen_disable", "Disable SmartScreen"),
+                    ("uac_level", "Configure UAC Level"),
+                    ("windows_hello", "Enable Windows Hello"),
+                    ("remote_desktop", "Enable Remote Desktop"),
+                ],
+            ),
+            (
+                "🔋 Power Management",
+                [
+                    ("ultimate_performance", "Ultimate Performance Plan"),
+                    ("high_performance", "High Performance Plan"),
+                    ("disable_usb_suspend", "Disable USB Suspend"),
+                    ("disable_power_throttling", "Disable Power Throttling"),
+                    ("pcie_link_state", "Disable PCIe Power Management"),
+                ],
+            ),
+            (
+                "📁 File Explorer",
+                [
+                    ("quick_access_disable", "Disable Quick Access"),
+                    ("this_pc_default", "Open This PC by Default"),
+                    ("show_libraries", "Show Libraries"),
+                    ("3d_objects_remove", "Remove 3D Objects Folder"),
+                    ("onedrive_remove", "Uninstall OneDrive"),
+                    ("preview_pane", "Enable Preview Pane"),
+                    ("details_pane", "Enable Details Pane"),
+                ],
+            ),
+            (
+                "💾 Storage & RAM",
+                [
+                    ("storage_optimize", "Storage Optimization"),
+                    ("ram_optimize", "RAM Optimization"),
+                    ("startup_optimize", "Startup Optimization"),
+                ],
+            ),
         ]
 
         for category_name, features in categories:
@@ -1138,110 +1225,219 @@ class AdvancedOptionsPanel(QWidget):
 
         # Profile-specific selections (expanded with 150+ features)
         profile_features = {
-            'gamer': [
+            "gamer": [
                 # Gaming optimizations
-                'gaming_competitive', 'network_latency', 'game_mode',
-                'gpu_scheduling', 'game_dvr', 'fullscreen_optimizations',
-                'directx_runtime', 'vcredist_all',
+                "gaming_competitive",
+                "network_latency",
+                "game_mode",
+                "gpu_scheduling",
+                "game_dvr",
+                "fullscreen_optimizations",
+                "directx_runtime",
+                "vcredist_all",
                 # Gaming platforms
-                'steam', 'epic_games', 'gog_galaxy', 'discord_gaming',
+                "steam",
+                "epic_games",
+                "gog_galaxy",
+                "discord_gaming",
                 # Performance
-                'performance_optimize', 'network_optimize', 'ultimate_performance',
-                'disable_superfetch', 'disable_fast_startup', 'trim_ssd',
+                "performance_optimize",
+                "network_optimize",
+                "ultimate_performance",
+                "disable_superfetch",
+                "disable_fast_startup",
+                "trim_ssd",
                 # Privacy & debloat
-                'debloat_moderate', 'disable_telemetry', 'disable_cortana',
-                'disable_windows_feedback', 'disable_suggestions',
+                "debloat_moderate",
+                "disable_telemetry",
+                "disable_cortana",
+                "disable_windows_feedback",
+                "disable_suggestions",
                 # Visual
-                'dark_theme', 'disable_animations', 'show_file_extensions',
+                "dark_theme",
+                "disable_animations",
+                "show_file_extensions",
                 # Network
-                'dns_cloudflare', 'disable_ipv6',
+                "dns_cloudflare",
+                "disable_ipv6",
                 # Utilities
-                'discord_gaming', '7zip', 'sharex',
+                "discord_gaming",
+                "7zip",
+                "sharex",
             ],
-            'developer': [
+            "developer": [
                 # Development tools
-                'wsl2', 'hyperv', 'sandbox', 'dev_mode', 'docker',
-                'git', 'vscode', 'python', 'nodejs', 'dotnet_sdk',
-                'powershell_7', 'windows_terminal', 'github_desktop', 'postman',
-                'notepad_plusplus', 'putty',
+                "wsl2",
+                "hyperv",
+                "sandbox",
+                "dev_mode",
+                "docker",
+                "git",
+                "vscode",
+                "python",
+                "nodejs",
+                "dotnet_sdk",
+                "powershell_7",
+                "windows_terminal",
+                "github_desktop",
+                "postman",
+                "notepad_plusplus",
+                "putty",
                 # Browsers for testing
-                'firefox', 'chrome', 'brave', 'edge_chromium',
+                "firefox",
+                "chrome",
+                "brave",
+                "edge_chromium",
                 # Utilities
-                '7zip', 'everything_search', 'powertoys', 'winget_packages',
+                "7zip",
+                "everything_search",
+                "powertoys",
+                "winget_packages",
                 # System config
-                'dark_theme', 'taskbar_left', 'show_file_extensions',
-                'show_hidden_files', 'this_pc_default',
+                "dark_theme",
+                "taskbar_left",
+                "show_file_extensions",
+                "show_hidden_files",
+                "this_pc_default",
                 # Performance
-                'debloat_minimal', 'high_performance', 'trim_ssd',
+                "debloat_minimal",
+                "high_performance",
+                "trim_ssd",
                 # Network
-                'dns_google', 'enable_network_discovery',
+                "dns_google",
+                "enable_network_discovery",
             ],
-            'enterprise': [
+            "enterprise": [
                 # Security & compliance
-                'bitlocker', 'cis_benchmark', 'disa_stig', 'gpo_hardening',
-                'certificate_enrollment', 'mdt_integration', 'domain_join_prep',
-                'applocker', 'credential_guard', 'attack_surface_reduction',
-                'exploit_protection', 'firewall_hardening', 'defender_optimize',
-                'smb1_disable',
+                "bitlocker",
+                "cis_benchmark",
+                "disa_stig",
+                "gpo_hardening",
+                "certificate_enrollment",
+                "mdt_integration",
+                "domain_join_prep",
+                "applocker",
+                "credential_guard",
+                "attack_surface_reduction",
+                "exploit_protection",
+                "firewall_hardening",
+                "defender_optimize",
+                "smb1_disable",
                 # Office & productivity
-                'office', 'teams', 'adobe_reader', 'zoom',
+                "office",
+                "teams",
+                "adobe_reader",
+                "zoom",
                 # Network & security
-                'dns_quad9', 'enable_network_discovery', 'remote_desktop',
-                'windows_hello',
+                "dns_quad9",
+                "enable_network_discovery",
+                "remote_desktop",
+                "windows_hello",
                 # System config
-                'light_theme', 'taskbar_left', 'show_file_extensions',
-                'disable_onedrive_remove',  # Keep OneDrive for business
+                "light_theme",
+                "taskbar_left",
+                "show_file_extensions",
+                "disable_onedrive_remove",  # Keep OneDrive for business
                 # Services
-                'disable_cortana', 'disable_bing_search',
+                "disable_cortana",
+                "disable_bing_search",
                 # Minimal debloat (keep enterprise features)
-                'debloat_minimal', 'disable_suggestions',
+                "debloat_minimal",
+                "disable_suggestions",
             ],
-            'student': [
+            "student": [
                 # Productivity
-                'office', 'libreoffice', 'onenote', 'notion',
+                "office",
+                "libreoffice",
+                "onenote",
+                "notion",
                 # Browsers
-                'firefox', 'chrome', 'brave',
+                "firefox",
+                "chrome",
+                "brave",
                 # Communication
-                'zoom', 'teams', 'slack',
+                "zoom",
+                "teams",
+                "slack",
                 # Utilities
-                'adobe_reader', '7zip', 'vlc', 'spotify',
-                'greenshot', 'everything_search', 'qbittorrent',
+                "adobe_reader",
+                "7zip",
+                "vlc",
+                "spotify",
+                "greenshot",
+                "everything_search",
+                "qbittorrent",
                 # Privacy & performance
-                'debloat_moderate', 'privacy_hardening', 'disable_telemetry',
-                'disable_cortana', 'disable_advertising_id', 'disable_location',
-                'block_telemetry_ips', 'performance_optimize',
+                "debloat_moderate",
+                "privacy_hardening",
+                "disable_telemetry",
+                "disable_cortana",
+                "disable_advertising_id",
+                "disable_location",
+                "block_telemetry_ips",
+                "performance_optimize",
                 # Visual
-                'light_theme', 'show_file_extensions', 'preview_pane',
+                "light_theme",
+                "show_file_extensions",
+                "preview_pane",
                 # Network
-                'dns_cloudflare', 'dns_over_https',
+                "dns_cloudflare",
+                "dns_over_https",
                 # Power
-                'high_performance', 'disable_hibernation',
+                "high_performance",
+                "disable_hibernation",
             ],
-            'creator': [
+            "creator": [
                 # Creative tools
-                'obs_studio', 'gimp', 'inkscape', 'krita', 'blender',
-                'audacity', 'handbrake', 'vlc', 'davinci_resolve',
+                "obs_studio",
+                "gimp",
+                "inkscape",
+                "krita",
+                "blender",
+                "audacity",
+                "handbrake",
+                "vlc",
+                "davinci_resolve",
                 # System optimization for creative work
-                'gpu_scheduling', 'ultimate_performance', 'ram_optimize',
-                'storage_optimize', 'performance_optimize',
-                'disable_superfetch', 'disable_fast_startup', 'trim_ssd',
+                "gpu_scheduling",
+                "ultimate_performance",
+                "ram_optimize",
+                "storage_optimize",
+                "performance_optimize",
+                "disable_superfetch",
+                "disable_fast_startup",
+                "trim_ssd",
                 # Visual
-                'dark_theme', 'colored_titlebar', 'show_file_extensions',
+                "dark_theme",
+                "colored_titlebar",
+                "show_file_extensions",
                 # Browsers & productivity
-                'firefox', 'chrome', 'spotify',
+                "firefox",
+                "chrome",
+                "spotify",
                 # File management
-                'show_hidden_files', 'preview_pane', 'details_pane',
-                'show_libraries', 'this_pc_default',
+                "show_hidden_files",
+                "preview_pane",
+                "details_pane",
+                "show_libraries",
+                "this_pc_default",
                 # Utilities
-                '7zip', 'everything_search', 'windirstat', 'sharex',
+                "7zip",
+                "everything_search",
+                "windirstat",
+                "sharex",
                 # Minimal bloat (keep resources for creative apps)
-                'debloat_minimal', 'disable_cortana', 'disable_suggestions',
+                "debloat_minimal",
+                "disable_cortana",
+                "disable_suggestions",
                 # Network
-                'dns_google', 'disable_ipv6',
+                "dns_google",
+                "disable_ipv6",
                 # Power
-                'disable_usb_suspend', 'disable_power_throttling',
+                "disable_usb_suspend",
+                "disable_power_throttling",
             ],
-            'custom': []  # No auto-selection for custom
+            "custom": [],  # No auto-selection for custom
         }
 
         features = profile_features.get(profile_id, [])
@@ -1259,9 +1455,15 @@ class BuildWorker(QThread):
     finished = pyqtSignal(bool, str)  # success, message
     error = pyqtSignal(str)  # error message
 
-    def __init__(self, image_path: Path, profile_name: str,
-                 output_path: Optional[Path], selected_features: Dict[str, bool],
-                 validate: bool, compress: bool):
+    def __init__(
+        self,
+        image_path: Path,
+        profile_name: str,
+        output_path: Optional[Path],
+        selected_features: Dict[str, bool],
+        validate: bool,
+        compress: bool,
+    ):
         super().__init__()
         self.image_path = image_path
         self.profile_name = profile_name
@@ -1308,7 +1510,7 @@ class BuildWorker(QThread):
                 apply_profile(
                     image_path=self.image_path,
                     profile_name=self.profile_name,
-                    output_path=self.output_path
+                    output_path=self.output_path,
                 )
 
                 self.log.emit("[OK] Profile applied successfully")
@@ -1325,7 +1527,9 @@ class BuildWorker(QThread):
 
             # Apply additional features using ConfigurationManager
             self.progress.emit(55, "Applying additional features...")
-            self.log.emit(f"[INFO] Processing {len([f for f in self.selected_features.values() if f])} additional features...")
+            self.log.emit(
+                f"[INFO] Processing {len([f for f in self.selected_features.values() if f])} additional features..."
+            )
 
             try:
                 # Create configuration manager
@@ -1333,8 +1537,7 @@ class BuildWorker(QThread):
 
                 # Set up callbacks for progress and logging
                 config_manager.progress_callback = lambda pct, msg: self.progress.emit(
-                    55 + int(pct * 0.25),  # Map 0-100% to 55-80% of total progress
-                    msg
+                    55 + int(pct * 0.25), msg  # Map 0-100% to 55-80% of total progress
                 )
                 config_manager.log_callback = lambda msg: self.log.emit(msg)
 
@@ -1345,7 +1548,7 @@ class BuildWorker(QThread):
                 success = config_manager.execute_all(
                     image_path=self.image_path,
                     profile_name=self.profile_name,
-                    output_path=self.output_path
+                    output_path=self.output_path,
                 )
 
                 if success:
@@ -1422,7 +1625,8 @@ class BuildProgressDialog(QWidget):
         self.progress_bar.setMinimum(0)
         self.progress_bar.setMaximum(100)
         self.progress_bar.setValue(0)
-        self.progress_bar.setStyleSheet("""
+        self.progress_bar.setStyleSheet(
+            """
             QProgressBar {
                 border: 1px solid #E0E0E0;
                 border-radius: 4px;
@@ -1433,7 +1637,8 @@ class BuildProgressDialog(QWidget):
                 background-color: #0078D4;
                 border-radius: 3px;
             }
-        """)
+        """
+        )
         layout.addWidget(self.progress_bar)
 
         # Time remaining
@@ -1522,9 +1727,7 @@ class BuildProgressDialog(QWidget):
     def on_build_error(self, error_msg: str):
         """Handle build error."""
         QMessageBox.critical(
-            self,
-            "Build Error",
-            f"An error occurred during the build:\n\n{error_msg}"
+            self, "Build Error", f"An error occurred during the build:\n\n{error_msg}"
         )
 
     def cancel_build(self):
@@ -1537,7 +1740,7 @@ class BuildProgressDialog(QWidget):
             self,
             "Cancel Build",
             "Are you sure you want to cancel the build?\n\nThis may leave the image in an incomplete state.",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1586,7 +1789,9 @@ class BuildPage(QWidget):
         header.setFont(QFont("Segoe UI", 20, QFont.Weight.Bold))
         layout.addWidget(header)
 
-        subtitle = QLabel("Create a customized Windows deployment image with your preferred settings and applications.")
+        subtitle = QLabel(
+            "Create a customized Windows deployment image with your preferred settings and applications."
+        )
         subtitle.setStyleSheet("color: #666666;")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
@@ -1634,18 +1839,47 @@ class BuildPage(QWidget):
         # Profile cards
         self.profile_cards = []
         profiles = [
-            ("🎮 Gaming", "Optimized for gaming with performance tweaks, network optimization, and gaming launchers",
-             "gamer", ["Performance tuning", "Network optimization", "Gaming launchers", "Moderate debloating"]),
-            ("💻 Developer", "Development environment with WSL2, Docker, Git, VS Code, and Hyper-V",
-             "developer", ["WSL2", "Docker", "Hyper-V", "Dev tools", "Minimal debloating"]),
-            ("🏢 Enterprise", "Enterprise security with CIS benchmarks, BitLocker, GPO hardening, and DISA STIG",
-             "enterprise", ["Security hardening", "BitLocker", "Compliance", "Certificate management"]),
-            ("📚 Student", "Balanced setup for productivity with Office, browsers, and privacy features",
-             "student", ["Microsoft Office", "Browsers", "Privacy tweaks", "Moderate debloating"]),
-            ("🎨 Creator", "Content creation suite with OBS, GIMP, Audacity, Blender, and GPU optimization",
-             "creator", ["Creative tools", "GPU optimization", "Storage optimization", "Performance"]),
-            ("🔧 Custom", "Start with a minimal base and manually customize every option",
-             "custom", ["Full manual control", "No automatic changes"])
+            (
+                "🎮 Gaming",
+                "Optimized for gaming with performance tweaks, network optimization, and gaming launchers",
+                "gamer",
+                [
+                    "Performance tuning",
+                    "Network optimization",
+                    "Gaming launchers",
+                    "Moderate debloating",
+                ],
+            ),
+            (
+                "💻 Developer",
+                "Development environment with WSL2, Docker, Git, VS Code, and Hyper-V",
+                "developer",
+                ["WSL2", "Docker", "Hyper-V", "Dev tools", "Minimal debloating"],
+            ),
+            (
+                "🏢 Enterprise",
+                "Enterprise security with CIS benchmarks, BitLocker, GPO hardening, and DISA STIG",
+                "enterprise",
+                ["Security hardening", "BitLocker", "Compliance", "Certificate management"],
+            ),
+            (
+                "📚 Student",
+                "Balanced setup for productivity with Office, browsers, and privacy features",
+                "student",
+                ["Microsoft Office", "Browsers", "Privacy tweaks", "Moderate debloating"],
+            ),
+            (
+                "🎨 Creator",
+                "Content creation suite with OBS, GIMP, Audacity, Blender, and GPU optimization",
+                "creator",
+                ["Creative tools", "GPU optimization", "Storage optimization", "Performance"],
+            ),
+            (
+                "🔧 Custom",
+                "Start with a minimal base and manually customize every option",
+                "custom",
+                ["Full manual control", "No automatic changes"],
+            ),
         ]
 
         # Profile tooltips for accessibility
@@ -1655,7 +1889,7 @@ class BuildPage(QWidget):
             "enterprise": "Click to select Enterprise profile - security hardening with CIS, BitLocker, and STIG compliance",
             "student": "Click to select Student profile - balanced productivity setup with Office and browsers",
             "creator": "Click to select Creator profile - content creation tools with GPU and storage optimization",
-            "custom": "Click to select Custom profile - start with minimal base and manually configure all options"
+            "custom": "Click to select Custom profile - start with minimal base and manually configure all options",
         }
 
         for icon_text, description, profile_id, features in profiles:
@@ -1698,11 +1932,15 @@ class BuildPage(QWidget):
 
         self.validate_checkbox = QCheckBox("Validate image after build")
         self.validate_checkbox.setChecked(True)
-        self.validate_checkbox.setToolTip("Verify the image integrity after build completes (recommended)")
+        self.validate_checkbox.setToolTip(
+            "Verify the image integrity after build completes (recommended)"
+        )
         options_layout.addWidget(self.validate_checkbox)
 
         self.compress_checkbox = QCheckBox("Maximum compression")
-        self.compress_checkbox.setToolTip("Apply maximum compression to reduce image file size (slower build)")
+        self.compress_checkbox.setToolTip(
+            "Apply maximum compression to reduce image file size (slower build)"
+        )
         options_layout.addWidget(self.compress_checkbox)
 
         options_layout.addStretch()
@@ -1743,10 +1981,7 @@ class BuildPage(QWidget):
     def browse_source(self):
         """Browse for source image file."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Windows Image",
-            "",
-            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+            self, "Select Windows Image", "", "Windows Images (*.wim *.esd *.iso);;All Files (*)"
         )
 
         if file_path:
@@ -1765,10 +2000,7 @@ class BuildPage(QWidget):
     def browse_output(self):
         """Browse for output location."""
         file_path, _ = QFileDialog.getSaveFileName(
-            self,
-            "Select Output Location",
-            "",
-            "Windows Images (*.wim);;All Files (*)"
+            self, "Select Output Location", "", "Windows Images (*.wim);;All Files (*)"
         )
 
         if file_path:
@@ -1807,12 +2039,12 @@ class BuildPage(QWidget):
         self.summary_card.setVisible(True)
 
         profile_names = {
-            'gamer': 'Gaming Profile',
-            'developer': 'Developer Profile',
-            'enterprise': 'Enterprise Profile',
-            'student': 'Student Profile',
-            'creator': 'Creator Profile',
-            'custom': 'Custom Profile'
+            "gamer": "Gaming Profile",
+            "developer": "Developer Profile",
+            "enterprise": "Enterprise Profile",
+            "student": "Student Profile",
+            "creator": "Creator Profile",
+            "custom": "Custom Profile",
         }
 
         features = self.advanced_options.get_selected_features()
@@ -1835,7 +2067,7 @@ class BuildPage(QWidget):
             QMessageBox.warning(
                 self,
                 "Missing Information",
-                "Please select both a source image and a profile before building."
+                "Please select both a source image and a profile before building.",
             )
             return
 
@@ -1846,7 +2078,7 @@ class BuildPage(QWidget):
             f"Ready to build custom Windows image with {self.selected_profile} profile.\n\n"
             "This may take 30-60 minutes depending on your selections.\n\n"
             "Continue?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1858,7 +2090,7 @@ class BuildPage(QWidget):
             # Check if any URL is a valid image file
             for url in event.mimeData().urls():
                 file_path = url.toLocalFile()
-                if file_path.lower().endswith(('.wim', '.esd', '.iso')):
+                if file_path.lower().endswith((".wim", ".esd", ".iso")):
                     event.acceptProposedAction()
                     return
         event.ignore()
@@ -1867,7 +2099,7 @@ class BuildPage(QWidget):
         """Handle drop event for image files."""
         for url in event.mimeData().urls():
             file_path = url.toLocalFile()
-            if file_path.lower().endswith(('.wim', '.esd', '.iso')):
+            if file_path.lower().endswith((".wim", ".esd", ".iso")):
                 # Set as source image
                 self.selected_source = Path(file_path)
                 self.source_path.setText(file_path)
@@ -1885,7 +2117,7 @@ class BuildPage(QWidget):
                 QMessageBox.information(
                     self,
                     "Image Loaded",
-                    f"Source image loaded successfully!\n\n{Path(file_path).name}\n{file_size:.2f} GB"
+                    f"Source image loaded successfully!\n\n{Path(file_path).name}\n{file_size:.2f} GB",
                 )
                 break
 
@@ -1900,7 +2132,7 @@ class BuildPage(QWidget):
                     self,
                     "Backend Not Available",
                     "DeployForge backend modules are not available.\n\n"
-                    "Please ensure the application is properly installed."
+                    "Please ensure the application is properly installed.",
                 )
                 return
 
@@ -1914,7 +2146,7 @@ class BuildPage(QWidget):
                 output_path=self.selected_output,
                 selected_features=selected_features,
                 validate=self.validate_checkbox.isChecked(),
-                compress=self.compress_checkbox.isChecked()
+                compress=self.compress_checkbox.isChecked(),
             )
 
             # Create and show progress dialog
@@ -1925,7 +2157,7 @@ class BuildPage(QWidget):
             QMessageBox.critical(
                 self,
                 "Build Error",
-                f"Failed to start build:\n\n{str(e)}\n\n{traceback.format_exc()}"
+                f"Failed to start build:\n\n{str(e)}\n\n{traceback.format_exc()}",
             )
 
 
@@ -1967,14 +2199,16 @@ class ProfilesPage(QWidget):
 
         for icon_name, description, profile_id in builtin_profiles:
             profile_row = QFrame()
-            profile_row.setStyleSheet("""
+            profile_row.setStyleSheet(
+                """
                 QFrame {
                     background-color: #F9F9F9;
                     border: 1px solid #E0E0E0;
                     border-radius: 6px;
                     padding: 12px;
                 }
-            """)
+            """
+            )
 
             row_layout = QHBoxLayout(profile_row)
 
@@ -2056,7 +2290,7 @@ class ProfilesPage(QWidget):
             "- Name your profile\n"
             "- Select base profile\n"
             "- Customize all options\n"
-            "- Save for reuse"
+            "- Save for reuse",
         )
 
 
@@ -2195,7 +2429,9 @@ class AnalyzePage(QWidget):
 
         # Compare button
         btn_compare = ModernButton("Compare Images", primary=True)
-        btn_compare.setToolTip("Generate a comparison report showing differences between the two images (Ctrl+Shift+C)")
+        btn_compare.setToolTip(
+            "Generate a comparison report showing differences between the two images (Ctrl+Shift+C)"
+        )
         btn_compare.clicked.connect(self.run_comparison)
         compare_layout.addWidget(btn_compare)
 
@@ -2224,10 +2460,7 @@ class AnalyzePage(QWidget):
     def browse_analyze_image(self):
         """Browse for image to analyze."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Image to Analyze",
-            "",
-            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+            self, "Select Image to Analyze", "", "Windows Images (*.wim *.esd *.iso);;All Files (*)"
         )
 
         if file_path:
@@ -2240,7 +2473,7 @@ class AnalyzePage(QWidget):
             self,
             f"Select Image {image_num}",
             "",
-            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+            "Windows Images (*.wim *.esd *.iso);;All Files (*)",
         )
 
         if file_path:
@@ -2255,9 +2488,7 @@ class AnalyzePage(QWidget):
         """Run image analysis."""
         if self.analyze_path.text() == "No image selected":
             QMessageBox.warning(
-                self,
-                "No Image Selected",
-                "Please select an image to analyze first."
+                self, "No Image Selected", "Please select an image to analyze first."
             )
             return
 
@@ -2266,7 +2497,7 @@ class AnalyzePage(QWidget):
                 self,
                 "Backend Not Available",
                 "DeployForge backend modules are not available.\n\n"
-                "Please ensure the application is properly installed."
+                "Please ensure the application is properly installed.",
             )
             return
 
@@ -2287,21 +2518,22 @@ class AnalyzePage(QWidget):
             report_data = analyzer.analyze()
 
             # Generate report in requested format
-            if report_format == 'html':
+            if report_format == "html":
                 report_content = analyzer.generate_html_report(report_data)
-                report_extension = '.html'
-            elif report_format == 'json':
+                report_extension = ".html"
+            elif report_format == "json":
                 import json
+
                 report_content = json.dumps(report_data, indent=2)
-                report_extension = '.json'
-            elif report_format == 'text':
+                report_extension = ".json"
+            elif report_format == "text":
                 report_content = analyzer.format_text_report(report_data)
-                report_extension = '.txt'
+                report_extension = ".txt"
             else:  # pdf
                 QMessageBox.warning(
                     self,
                     "Format Not Supported",
-                    "PDF format is not yet implemented.\n\nPlease use HTML, JSON, or Text format."
+                    "PDF format is not yet implemented.\n\nPlease use HTML, JSON, or Text format.",
                 )
                 progress.close()
                 return
@@ -2314,11 +2546,11 @@ class AnalyzePage(QWidget):
                 self,
                 "Save Analysis Report",
                 default_name,
-                f"{report_format.upper()} Files (*{report_extension});;All Files (*)"
+                f"{report_format.upper()} Files (*{report_extension});;All Files (*)",
             )
 
             if save_path:
-                with open(save_path, 'w', encoding='utf-8') as f:
+                with open(save_path, "w", encoding="utf-8") as f:
                     f.write(report_content)
 
                 QMessageBox.information(
@@ -2327,7 +2559,7 @@ class AnalyzePage(QWidget):
                     f"Analysis report saved successfully!\n\n"
                     f"Location: {save_path}\n\n"
                     f"Features: {report_data.get('features_count', 0)}\n"
-                    f"Applications: {report_data.get('applications_count', 0)}"
+                    f"Applications: {report_data.get('applications_count', 0)}",
                 )
 
                 # TODO: Add to recent reports list
@@ -2336,18 +2568,16 @@ class AnalyzePage(QWidget):
             QMessageBox.critical(
                 self,
                 "Analysis Error",
-                f"Failed to analyze image:\n\n{str(e)}\n\n{traceback.format_exc()}"
+                f"Failed to analyze image:\n\n{str(e)}\n\n{traceback.format_exc()}",
             )
 
     def run_comparison(self):
         """Run image comparison."""
-        if (self.compare_img1.text() == "No image selected" or
-                self.compare_img2.text() == "No image selected"):
-            QMessageBox.warning(
-                self,
-                "Missing Images",
-                "Please select both images to compare."
-            )
+        if (
+            self.compare_img1.text() == "No image selected"
+            or self.compare_img2.text() == "No image selected"
+        ):
+            QMessageBox.warning(self, "Missing Images", "Please select both images to compare.")
             return
 
         if not BACKEND_AVAILABLE:
@@ -2355,7 +2585,7 @@ class AnalyzePage(QWidget):
                 self,
                 "Backend Not Available",
                 "DeployForge backend modules are not available.\n\n"
-                "Please ensure the application is properly installed."
+                "Please ensure the application is properly installed.",
             )
             return
 
@@ -2381,10 +2611,10 @@ class AnalyzePage(QWidget):
             progress.close()
 
             # Generate comparison summary
-            features1 = set(report1.get('features', []))
-            features2 = set(report2.get('features', []))
-            apps1 = set(report1.get('applications', []))
-            apps2 = set(report2.get('applications', []))
+            features1 = set(report1.get("features", []))
+            features2 = set(report2.get("features", []))
+            apps1 = set(report1.get("applications", []))
+            apps2 = set(report2.get("applications", []))
 
             features_only_1 = features1 - features2
             features_only_2 = features2 - features1
@@ -2418,14 +2648,11 @@ Common:
             # Save comparison report
             default_name = f"comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
             save_path, _ = QFileDialog.getSaveFileName(
-                self,
-                "Save Comparison Report",
-                default_name,
-                "Text Files (*.txt);;All Files (*)"
+                self, "Save Comparison Report", default_name, "Text Files (*.txt);;All Files (*)"
             )
 
             if save_path:
-                with open(save_path, 'w', encoding='utf-8') as f:
+                with open(save_path, "w", encoding="utf-8") as f:
                     f.write(comparison_text)
 
                     # Add detailed lists
@@ -2440,16 +2667,14 @@ Common:
                             f.write(f"  - {feat}\n")
 
                 QMessageBox.information(
-                    self,
-                    "Comparison Complete",
-                    f"Comparison report saved!\n\n{comparison_text}"
+                    self, "Comparison Complete", f"Comparison report saved!\n\n{comparison_text}"
                 )
 
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Comparison Error",
-                f"Failed to compare images:\n\n{str(e)}\n\n{traceback.format_exc()}"
+                f"Failed to compare images:\n\n{str(e)}\n\n{traceback.format_exc()}",
             )
 
 
@@ -2496,13 +2721,13 @@ class SettingsPage(QWidget):
         self.btn_light = ModernButton("☀️ Light Theme")
         self.btn_light.setMinimumWidth(150)
         self.btn_light.setToolTip("Switch to light theme with bright colors")
-        self.btn_light.clicked.connect(lambda: self.set_theme('Light'))
+        self.btn_light.clicked.connect(lambda: self.set_theme("Light"))
         theme_buttons_layout.addWidget(self.btn_light)
 
         self.btn_dark = ModernButton("🌙 Dark Theme")
         self.btn_dark.setMinimumWidth(150)
         self.btn_dark.setToolTip("Switch to dark theme for reduced eye strain")
-        self.btn_dark.clicked.connect(lambda: self.set_theme('Dark'))
+        self.btn_dark.clicked.connect(lambda: self.set_theme("Dark"))
         theme_buttons_layout.addWidget(self.btn_dark)
 
         theme_buttons_layout.addStretch()
@@ -2510,7 +2735,9 @@ class SettingsPage(QWidget):
 
         # Current theme indicator
         self.theme_status = QLabel(f"Current theme: {theme_manager.get_theme()}")
-        self.theme_status.setStyleSheet(f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;")
+        self.theme_status.setStyleSheet(
+            f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;"
+        )
         theme_layout.addWidget(self.theme_status)
 
         theme_card.layout().addLayout(theme_layout)
@@ -2526,7 +2753,9 @@ class SettingsPage(QWidget):
         general_layout.addWidget(self.check_validate)
 
         self.check_compress = QCheckBox("Use maximum compression by default")
-        self.check_compress.setToolTip("Enable maximum compression for all builds (slower but smaller files)")
+        self.check_compress.setToolTip(
+            "Enable maximum compression for all builds (slower but smaller files)"
+        )
         general_layout.addWidget(self.check_compress)
 
         self.check_recent = QCheckBox("Show recent files on welcome page")
@@ -2584,16 +2813,18 @@ class SettingsPage(QWidget):
         """Set the application theme."""
         theme_manager.set_theme(theme_name)
         self.theme_status.setText(f"Current theme: {theme_name}")
-        self.theme_status.setStyleSheet(f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;")
+        self.theme_status.setStyleSheet(
+            f"color: {theme_manager.get_colors()['primary']}; font-size: 9pt; font-weight: bold;"
+        )
 
         # Save to settings
-        settings = QSettings('DeployForge', 'DeployForge')
-        settings.setValue('theme', theme_name)
+        settings = QSettings("DeployForge", "DeployForge")
+        settings.setValue("theme", theme_name)
 
         QMessageBox.information(
             self,
             "Theme Changed",
-            f"Theme changed to {theme_name}!\n\nSome elements will update immediately,\nothers may require restarting the application."
+            f"Theme changed to {theme_name}!\n\nSome elements will update immediately,\nothers may require restarting the application.",
         )
 
     def on_theme_changed(self, theme_name: str):
@@ -2602,17 +2833,15 @@ class SettingsPage(QWidget):
 
     def save_settings(self):
         """Save all settings."""
-        settings = QSettings('DeployForge', 'DeployForge')
-        settings.setValue('validate_default', self.check_validate.isChecked())
-        settings.setValue('compress_default', self.check_compress.isChecked())
-        settings.setValue('show_recent', self.check_recent.isChecked())
-        settings.setValue('debug_logging', self.check_debug.isChecked())
-        settings.setValue('auto_save_window', self.check_auto_save.isChecked())
+        settings = QSettings("DeployForge", "DeployForge")
+        settings.setValue("validate_default", self.check_validate.isChecked())
+        settings.setValue("compress_default", self.check_compress.isChecked())
+        settings.setValue("show_recent", self.check_recent.isChecked())
+        settings.setValue("debug_logging", self.check_debug.isChecked())
+        settings.setValue("auto_save_window", self.check_auto_save.isChecked())
 
         QMessageBox.information(
-            self,
-            "Settings Saved",
-            "Your settings have been saved successfully!"
+            self, "Settings Saved", "Your settings have been saved successfully!"
         )
 
     def reset_settings(self):
@@ -2621,7 +2850,7 @@ class SettingsPage(QWidget):
             self,
             "Reset Settings",
             "Are you sure you want to reset all settings to defaults?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -2630,12 +2859,10 @@ class SettingsPage(QWidget):
             self.check_recent.setChecked(True)
             self.check_debug.setChecked(False)
             self.check_auto_save.setChecked(True)
-            self.set_theme('Light')
+            self.set_theme("Light")
 
             QMessageBox.information(
-                self,
-                "Settings Reset",
-                "All settings have been reset to defaults!"
+                self, "Settings Reset", "All settings have been reset to defaults!"
             )
 
 
@@ -2666,43 +2893,43 @@ class DeployForgeGUI(QMainWindow):
         self.apply_initial_theme()
 
         # Center window (if not loading saved geometry)
-        if not self._get_cached_setting('window/geometry'):
+        if not self._get_cached_setting("window/geometry"):
             self.center_window()
 
         # First-run detection: show tutorial automatically
-        if not self._get_cached_setting('first_run_completed', False):
+        if not self._get_cached_setting("first_run_completed", False):
             # Defer tutorial display to after window is shown
             QTimer.singleShot(500, self._show_first_run_tutorial)
 
     def _show_first_run_tutorial(self):
         """Show tutorial on first run and mark as completed."""
         self.show_tutorial()
-        self._set_cached_setting('first_run_completed', True)
+        self._set_cached_setting("first_run_completed", True)
 
     def _get_cached_setting(self, key: str, default=None):
         """Get setting from cache or QSettings (performance optimization)."""
         if key not in self._settings_cache:
-            settings = QSettings('DeployForge', 'DeployForge')
+            settings = QSettings("DeployForge", "DeployForge")
             self._settings_cache[key] = settings.value(key, default)
         return self._settings_cache[key]
 
     def _set_cached_setting(self, key: str, value):
         """Set setting in cache and QSettings."""
         self._settings_cache[key] = value
-        settings = QSettings('DeployForge', 'DeployForge')
+        settings = QSettings("DeployForge", "DeployForge")
         settings.setValue(key, value)
 
     def load_settings(self):
         """Load application settings with caching."""
-        settings = QSettings('DeployForge', 'DeployForge')
+        settings = QSettings("DeployForge", "DeployForge")
 
         # Load window geometry
-        geometry = self._get_cached_setting('window/geometry')
+        geometry = self._get_cached_setting("window/geometry")
         if geometry:
             self.restoreGeometry(geometry)
 
         # Load theme
-        theme = self._get_cached_setting('theme', 'Light')
+        theme = self._get_cached_setting("theme", "Light")
         theme_manager.set_theme(theme)
 
     def apply_initial_theme(self):
@@ -2744,27 +2971,27 @@ class DeployForgeGUI(QMainWindow):
         # Lazy loading: create pages on-demand for faster startup
         # Initialize page dictionary with None values
         self.pages = {
-            'welcome': None,
-            'build': None,
-            'profiles': None,
-            'analyze': None,
-            'settings': None
+            "welcome": None,
+            "build": None,
+            "profiles": None,
+            "analyze": None,
+            "settings": None,
         }
 
         # Page classes for lazy initialization
         self._page_classes = {
-            'welcome': WelcomePage,
-            'build': BuildPage,
-            'profiles': ProfilesPage,
-            'analyze': AnalyzePage,
-            'settings': SettingsPage
+            "welcome": WelcomePage,
+            "build": BuildPage,
+            "profiles": ProfilesPage,
+            "analyze": AnalyzePage,
+            "settings": SettingsPage,
         }
 
         # Page indices in stack
         self._page_indices = {}
 
         # Create welcome page immediately (shown on startup)
-        self._create_page('welcome')
+        self._create_page("welcome")
 
         main_layout.addWidget(self.content_stack, 1)
 
@@ -2780,12 +3007,14 @@ class DeployForgeGUI(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setFixedWidth(250)
-        sidebar.setStyleSheet("""
+        sidebar.setStyleSheet(
+            """
             QFrame {
                 background-color: #FFFFFF;
                 border-right: 1px solid #E0E0E0;
             }
-        """)
+        """
+        )
 
         layout = QVBoxLayout(sidebar)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -2819,11 +3048,11 @@ class DeployForgeGUI(QMainWindow):
 
         # Create navigation buttons
         nav_items = [
-            ("🏠 Home", 'welcome'),
-            ("🔨 Build Image", 'build'),
-            ("📋 Profiles", 'profiles'),
-            ("🔍 Analyze", 'analyze'),
-            ("⚙️ Settings", 'settings')
+            ("🏠 Home", "welcome"),
+            ("🔨 Build Image", "build"),
+            ("📋 Profiles", "profiles"),
+            ("🔍 Analyze", "analyze"),
+            ("⚙️ Settings", "settings"),
         ]
 
         for text, page_id in nav_items:
@@ -2859,7 +3088,7 @@ class DeployForgeGUI(QMainWindow):
         new_action = QAction("&New Build", self)
         new_action.setShortcut("Ctrl+N")
         new_action.setStatusTip("Start a new build configuration")
-        new_action.triggered.connect(lambda: self.show_page('build'))
+        new_action.triggered.connect(lambda: self.show_page("build"))
         file_menu.addAction(new_action)
 
         open_action = QAction("&Open Image...", self)
@@ -2882,7 +3111,7 @@ class DeployForgeGUI(QMainWindow):
         analyze_action = QAction("&Analyze Image", self)
         analyze_action.setShortcut("Ctrl+A")
         analyze_action.setStatusTip("Analyze a Windows image")
-        analyze_action.triggered.connect(lambda: self.show_page('analyze'))
+        analyze_action.triggered.connect(lambda: self.show_page("analyze"))
         tools_menu.addAction(analyze_action)
 
         compare_action = QAction("&Compare Images", self)
@@ -2896,7 +3125,7 @@ class DeployForgeGUI(QMainWindow):
         profiles_action = QAction("Manage &Profiles", self)
         profiles_action.setShortcut("Ctrl+P")
         profiles_action.setStatusTip("Manage build profiles")
-        profiles_action.triggered.connect(lambda: self.show_page('profiles'))
+        profiles_action.triggered.connect(lambda: self.show_page("profiles"))
         tools_menu.addAction(profiles_action)
 
         # View menu
@@ -2905,7 +3134,7 @@ class DeployForgeGUI(QMainWindow):
         welcome_action = QAction("&Welcome", self)
         welcome_action.setShortcut("Ctrl+Home")
         welcome_action.setStatusTip("Show welcome page")
-        welcome_action.triggered.connect(lambda: self.show_page('welcome'))
+        welcome_action.triggered.connect(lambda: self.show_page("welcome"))
         view_menu.addAction(welcome_action)
 
         view_menu.addSeparator()
@@ -2913,7 +3142,7 @@ class DeployForgeGUI(QMainWindow):
         settings_action = QAction("&Settings", self)
         settings_action.setShortcut("Ctrl+,")
         settings_action.setStatusTip("Open settings")
-        settings_action.triggered.connect(lambda: self.show_page('settings'))
+        settings_action.triggered.connect(lambda: self.show_page("settings"))
         view_menu.addAction(settings_action)
 
         # Help menu
@@ -2948,21 +3177,18 @@ class DeployForgeGUI(QMainWindow):
     def open_image_dialog(self):
         """Open file dialog to select an image."""
         file_path, _ = QFileDialog.getOpenFileName(
-            self,
-            "Open Windows Image",
-            "",
-            "Windows Images (*.wim *.esd *.iso);;All Files (*)"
+            self, "Open Windows Image", "", "Windows Images (*.wim *.esd *.iso);;All Files (*)"
         )
         if file_path:
             # Switch to build page and set the image
-            self.show_page('build')
-            if hasattr(self.pages['build'], 'selected_source'):
-                self.pages['build'].selected_source = Path(file_path)
-                self.pages['build'].source_path.setText(file_path)
+            self.show_page("build")
+            if hasattr(self.pages["build"], "selected_source"):
+                self.pages["build"].selected_source = Path(file_path)
+                self.pages["build"].source_path.setText(file_path)
 
     def show_compare_tab(self):
         """Show compare tab in analyze page."""
-        self.show_page('analyze')
+        self.show_page("analyze")
         # TODO: Switch to compare tab if analyze page has tabs
 
     def show_tutorial(self):
@@ -3178,11 +3404,11 @@ Windows deployment images with a beautiful modern interface.</p>
 
             # Update status bar
             page_names = {
-                'welcome': 'Home',
-                'build': 'Build Image',
-                'profiles': 'Manage Profiles',
-                'analyze': 'Analyze Image',
-                'settings': 'Settings'
+                "welcome": "Home",
+                "build": "Build Image",
+                "profiles": "Manage Profiles",
+                "analyze": "Analyze Image",
+                "settings": "Settings",
             }
             self.statusBar().showMessage(f"{page_names.get(page_id, 'Ready')}")
 
@@ -3190,19 +3416,16 @@ Windows deployment images with a beautiful modern interface.</p>
         """Center the window on screen."""
         screen = QApplication.primaryScreen().geometry()
         size = self.geometry()
-        self.move(
-            (screen.width() - size.width()) // 2,
-            (screen.height() - size.height()) // 2
-        )
+        self.move((screen.width() - size.width()) // 2, (screen.height() - size.height()) // 2)
 
     def closeEvent(self, event):
         """Handle window close event and save settings."""
         # Save window geometry (using cache for better performance)
-        if self._get_cached_setting('auto_save_window', True):
-            self._set_cached_setting('window/geometry', self.saveGeometry())
+        if self._get_cached_setting("auto_save_window", True):
+            self._set_cached_setting("window/geometry", self.saveGeometry())
 
         # Save current theme
-        self._set_cached_setting('theme', theme_manager.get_theme())
+        self._set_cached_setting("theme", theme_manager.get_theme())
 
         event.accept()
 
@@ -3225,5 +3448,5 @@ def launch_modern_gui():
     sys.exit(app.exec())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     launch_modern_gui()

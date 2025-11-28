@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AuditEvent:
     """Represents an audit event."""
+
     timestamp: str
     event_type: str
     action: str
@@ -49,7 +50,7 @@ class AuditLogger:
         image_path: Optional[Path] = None,
         details: Optional[Dict[str, Any]] = None,
         success: bool = True,
-        error: Optional[str] = None
+        error: Optional[str] = None,
     ) -> None:
         """
         Log an audit event.
@@ -63,7 +64,7 @@ class AuditLogger:
             error: Error message if failed
         """
         event = AuditEvent(
-            timestamp=datetime.utcnow().isoformat() + 'Z',
+            timestamp=datetime.utcnow().isoformat() + "Z",
             event_type=event_type,
             action=action,
             user=self.user,
@@ -71,13 +72,13 @@ class AuditLogger:
             image_path=str(image_path) if image_path else None,
             details=details or {},
             success=success,
-            error=error
+            error=error,
         )
 
         # Write to audit log (append mode, JSONL format)
         try:
-            with open(self.audit_log_path, 'a') as f:
-                f.write(json.dumps(asdict(event)) + '\n')
+            with open(self.audit_log_path, "a") as f:
+                f.write(json.dumps(asdict(event)) + "\n")
 
             logger.debug(f"Audit event logged: {event_type} - {action}")
 
@@ -88,7 +89,7 @@ class AuditLogger:
         self,
         event_type: Optional[str] = None,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> list:
         """
         Retrieve audit events.
@@ -107,15 +108,17 @@ class AuditLogger:
             return events
 
         try:
-            with open(self.audit_log_path, 'r') as f:
+            with open(self.audit_log_path, "r") as f:
                 for line in f:
                     event_data = json.loads(line.strip())
 
                     # Apply filters
-                    if event_type and event_data.get('event_type') != event_type:
+                    if event_type and event_data.get("event_type") != event_type:
                         continue
 
-                    event_time = datetime.fromisoformat(event_data['timestamp'].replace('Z', '+00:00'))
+                    event_time = datetime.fromisoformat(
+                        event_data["timestamp"].replace("Z", "+00:00")
+                    )
 
                     if start_time and event_time < start_time:
                         continue
@@ -142,7 +145,7 @@ class AuditLogger:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("=" * 80 + "\n")
             f.write("DEPLOYFORGE AUDIT REPORT\n")
             f.write("=" * 80 + "\n\n")
@@ -152,7 +155,7 @@ class AuditLogger:
             # Event type summary
             event_types = {}
             for event in events:
-                et = event.get('event_type', 'unknown')
+                et = event.get("event_type", "unknown")
                 event_types[et] = event_types.get(et, 0) + 1
 
             f.write("Event Types:\n")
@@ -168,10 +171,10 @@ class AuditLogger:
                 f.write(f"{event['event_type']} - {event['action']}\n")
                 f.write(f"  User: {event['user']}@{event['host']}\n")
 
-                if event.get('image_path'):
+                if event.get("image_path"):
                     f.write(f"  Image: {event['image_path']}\n")
 
-                if not event.get('success'):
+                if not event.get("success"):
                     f.write(f"  ERROR: {event.get('error')}\n")
 
                 f.write("\n")

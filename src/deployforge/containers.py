@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DockerConfig:
     """Docker image configuration."""
+
     base_image: str = "mcr.microsoft.com/windows/servercore:ltsc2022"
     image_name: str = "deployforge/windows-custom"
     tag: str = "latest"
@@ -48,6 +49,7 @@ class DockerConfig:
 @dataclass
 class WSL2Config:
     """WSL2 distro configuration."""
+
     distro_name: str = "CustomWindows"
     install_location: Optional[Path] = None
     default_user: str = "user"
@@ -114,14 +116,14 @@ COPY ./image-content /
         if config.volumes:
             dockerfile_content += "\n# Volumes\n"
             for volume in config.volumes:
-                dockerfile_content += f"VOLUME [\"{volume}\"]\n"
+                dockerfile_content += f'VOLUME ["{volume}"]\n'
 
         # CMD
         if config.cmd:
             cmd_str = '", "'.join(config.cmd)
-            dockerfile_content += f"\n# Default command\nCMD [\"{cmd_str}\"]\n"
+            dockerfile_content += f'\n# Default command\nCMD ["{cmd_str}"]\n'
         else:
-            dockerfile_content += "\nCMD [\"cmd.exe\"]\n"
+            dockerfile_content += '\nCMD ["cmd.exe"]\n'
 
         dockerfile_path.write_text(dockerfile_content)
 
@@ -144,21 +146,23 @@ COPY ./image-content /
 
         try:
             # Mount image
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_docker_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_docker_"))
 
             subprocess.run(
-                ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                 '/Index:1', f'/MountDir:{mount_point}', '/ReadOnly'],
+                [
+                    "dism",
+                    "/Mount-Image",
+                    f"/ImageFile:{self.image_path}",
+                    "/Index:1",
+                    f"/MountDir:{mount_point}",
+                    "/ReadOnly",
+                ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # Copy essential files
-            essential_dirs = [
-                "Windows/System32",
-                "Program Files",
-                "Users/Default"
-            ]
+            essential_dirs = ["Windows/System32", "Program Files", "Users/Default"]
 
             for dir_name in essential_dirs:
                 src = mount_point / dir_name
@@ -170,9 +174,9 @@ COPY ./image-content /
 
             # Unmount
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             logger.info("Image content extracted")
@@ -193,7 +197,7 @@ COPY ./image-content /
             Image ID
         """
         if output_dir is None:
-            output_dir = Path(tempfile.mkdtemp(prefix='deployforge_docker_build_'))
+            output_dir = Path(tempfile.mkdtemp(prefix="deployforge_docker_build_"))
 
         output_dir = Path(output_dir)
 
@@ -211,10 +215,10 @@ COPY ./image-content /
 
         try:
             result = subprocess.run(
-                ['docker', 'build', '-t', image_tag, str(output_dir)],
+                ["docker", "build", "-t", image_tag, str(output_dir)],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             logger.info(f"Docker image built: {image_tag}")
@@ -244,7 +248,7 @@ services:
         if config.expose_ports:
             compose_content += "    ports:\n"
             for port in config.expose_ports:
-                compose_content += f"      - \"{port}:{port}\"\n"
+                compose_content += f'      - "{port}:{port}"\n'
 
         if config.environment_vars:
             compose_content += "    environment:\n"
@@ -282,7 +286,7 @@ class WSL2Manager:
     def _check_wsl_available(self):
         """Check if WSL is available."""
         try:
-            subprocess.run(['wsl', '--version'], capture_output=True, check=True)
+            subprocess.run(["wsl", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             raise RuntimeError("WSL is not available. Install WSL2 first.")
 
@@ -305,9 +309,9 @@ class WSL2Manager:
 
         try:
             subprocess.run(
-                ['wsl', '--import', config.distro_name, str(install_location), str(rootfs_path)],
+                ["wsl", "--import", config.distro_name, str(install_location), str(rootfs_path)],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             logger.info(f"WSL2 distro created: {config.distro_name}")
@@ -342,14 +346,14 @@ class WSL2Manager:
             rootfs_dir.mkdir()
 
             # Create basic Linux directory structure
-            for dir_name in ['bin', 'etc', 'home', 'root', 'usr', 'var', 'tmp']:
+            for dir_name in ["bin", "etc", "home", "root", "usr", "var", "tmp"]:
                 (rootfs_dir / dir_name).mkdir()
 
             # Create tarball
             subprocess.run(
-                ['tar', '-czf', str(rootfs_tar), '-C', str(rootfs_dir), '.'],
+                ["tar", "-czf", str(rootfs_tar), "-C", str(rootfs_dir), "."],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
         return rootfs_tar
@@ -373,7 +377,7 @@ swap={config.swap_gb}GB
             wslconfig_content += f"\n[{config.distro_name}]\nsystemd=true\n"
 
         # Append or create .wslconfig
-        with open(wslconfig_path, 'a') as f:
+        with open(wslconfig_path, "a") as f:
             f.write(f"\n# DeployForge configuration for {config.distro_name}\n")
             f.write(wslconfig_content)
 
@@ -388,22 +392,17 @@ swap={config.swap_gb}GB
         """
         try:
             result = subprocess.run(
-                ['wsl', '--list', '--verbose'],
-                capture_output=True,
-                text=True,
-                check=True
+                ["wsl", "--list", "--verbose"], capture_output=True, text=True, check=True
             )
 
             distros = []
-            for line in result.stdout.split('\n')[1:]:  # Skip header
+            for line in result.stdout.split("\n")[1:]:  # Skip header
                 if line.strip():
                     parts = line.split()
                     if len(parts) >= 3:
-                        distros.append({
-                            'name': parts[0].strip('*'),
-                            'state': parts[1],
-                            'version': parts[2]
-                        })
+                        distros.append(
+                            {"name": parts[0].strip("*"), "state": parts[1], "version": parts[2]}
+                        )
 
             return distros
 
@@ -419,11 +418,7 @@ swap={config.swap_gb}GB
             distro_name: Name of distro to delete
         """
         try:
-            subprocess.run(
-                ['wsl', '--unregister', distro_name],
-                check=True,
-                capture_output=True
-            )
+            subprocess.run(["wsl", "--unregister", distro_name], check=True, capture_output=True)
 
             logger.info(f"WSL2 distro deleted: {distro_name}")
 
@@ -441,7 +436,7 @@ class KubernetesManifestGenerator:
         image: str,
         replicas: int = 1,
         ports: Optional[List[int]] = None,
-        env_vars: Optional[Dict[str, str]] = None
+        env_vars: Optional[Dict[str, str]] = None,
     ) -> str:
         """
         Generate Kubernetes Deployment manifest.
@@ -502,11 +497,7 @@ spec:
         return manifest
 
     @staticmethod
-    def generate_service(
-        name: str,
-        ports: List[int],
-        service_type: str = "LoadBalancer"
-    ) -> str:
+    def generate_service(name: str, ports: List[int], service_type: str = "LoadBalancer") -> str:
         """
         Generate Kubernetes Service manifest.
 
@@ -538,10 +529,7 @@ spec:
         return manifest
 
 
-def create_docker_image(
-    image_path: Path,
-    config: Optional[DockerConfig] = None
-) -> str:
+def create_docker_image(image_path: Path, config: Optional[DockerConfig] = None) -> str:
     """
     Quick Docker image creation.
 
@@ -563,11 +551,7 @@ def create_docker_image(
     return image_tag
 
 
-def create_wsl2_distro(
-    image_path: Path,
-    distro_name: str,
-    config: Optional[WSL2Config] = None
-):
+def create_wsl2_distro(image_path: Path, distro_name: str, config: Optional[WSL2Config] = None):
     """
     Quick WSL2 distro creation.
 

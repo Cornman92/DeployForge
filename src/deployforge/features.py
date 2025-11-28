@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class FeaturePreset(Enum):
     """Predefined feature collections"""
+
     DEVELOPER = "developer"  # WSL2, Hyper-V, Sandbox, VM Platform
     VIRTUALIZATION = "virtualization"  # Hyper-V, VM Platform, Containers
     WEB_SERVER = "web_server"  # IIS, .NET features
@@ -42,6 +43,7 @@ class FeaturePreset(Enum):
 @dataclass
 class FeatureSet:
     """Collection of related Windows features"""
+
     name: str
     features: List[str] = field(default_factory=list)
     dependencies: List[str] = field(default_factory=list)
@@ -58,6 +60,7 @@ class WindowsFeatures:
 
     These are the actual feature names used by DISM.
     """
+
     # Virtualization
     WSL = "Microsoft-Windows-Subsystem-Linux"
     VIRTUAL_MACHINE_PLATFORM = "VirtualMachinePlatform"
@@ -128,7 +131,7 @@ class FeatureManager:
                 WindowsFeatures.CONTAINERS,
                 WindowsFeatures.NET_FRAMEWORK_45,
             ],
-            description="Full development environment with WSL2, Hyper-V, and Sandbox"
+            description="Full development environment with WSL2, Hyper-V, and Sandbox",
         ),
         FeaturePreset.VIRTUALIZATION: FeatureSet(
             name="Virtualization",
@@ -138,7 +141,7 @@ class FeatureManager:
                 WindowsFeatures.VIRTUAL_MACHINE_PLATFORM,
                 WindowsFeatures.CONTAINERS,
             ],
-            description="Complete virtualization stack"
+            description="Complete virtualization stack",
         ),
         FeaturePreset.WEB_SERVER: FeatureSet(
             name="Web Server",
@@ -148,7 +151,7 @@ class FeatureManager:
                 WindowsFeatures.IIS_ASP_NET45,
                 WindowsFeatures.NET_FRAMEWORK_45,
             ],
-            description="IIS web server with ASP.NET support"
+            description="IIS web server with ASP.NET support",
         ),
     }
 
@@ -175,15 +178,21 @@ class FeatureManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_feat_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_feat_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         subprocess.run(
-            ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-             f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-            check=True, capture_output=True
+            [
+                "dism",
+                "/Mount-Wim",
+                f"/WimFile:{self.image_path}",
+                f"/Index:{self.index}",
+                f"/MountDir:{mount_point}",
+            ],
+            check=True,
+            capture_output=True,
         )
         self._mounted = True
         logger.info(f"Feature manager mounted at {mount_point}")
@@ -195,10 +204,11 @@ class FeatureManager:
             logger.warning("Image not mounted")
             return
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
         subprocess.run(
-            ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-            check=True, capture_output=True
+            ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+            check=True,
+            capture_output=True,
         )
         self._mounted = False
         logger.info("Feature manager unmounted")
@@ -216,14 +226,18 @@ class FeatureManager:
         success = True
         for feature in features:
             try:
-                subprocess.run([
-                    'dism',
-                    f'/Image:{self.mount_point}',
-                    '/Enable-Feature',
-                    f'/FeatureName:{feature}',
-                    '/All',  # Enable all dependencies
-                    '/NoRestart'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "dism",
+                        f"/Image:{self.mount_point}",
+                        "/Enable-Feature",
+                        f"/FeatureName:{feature}",
+                        "/All",  # Enable all dependencies
+                        "/NoRestart",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
                 logger.info(f"Enabled feature: {feature}")
 
@@ -246,13 +260,17 @@ class FeatureManager:
         success = True
         for feature in features:
             try:
-                subprocess.run([
-                    'dism',
-                    f'/Image:{self.mount_point}',
-                    '/Disable-Feature',
-                    f'/FeatureName:{feature}',
-                    '/NoRestart'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "dism",
+                        f"/Image:{self.mount_point}",
+                        "/Disable-Feature",
+                        f"/FeatureName:{feature}",
+                        "/NoRestart",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
                 logger.info(f"Disabled feature: {feature}")
 
@@ -284,26 +302,17 @@ class FeatureManager:
     def enable_wsl2(self) -> bool:
         """Enable Windows Subsystem for Linux 2"""
         logger.info("Enabling WSL2...")
-        return self.enable(
-            WindowsFeatures.WSL,
-            WindowsFeatures.VIRTUAL_MACHINE_PLATFORM
-        )
+        return self.enable(WindowsFeatures.WSL, WindowsFeatures.VIRTUAL_MACHINE_PLATFORM)
 
     def enable_hyperv(self) -> bool:
         """Enable Hyper-V virtualization"""
         logger.info("Enabling Hyper-V...")
-        return self.enable(
-            WindowsFeatures.HYPERV,
-            WindowsFeatures.HYPERV_TOOLS
-        )
+        return self.enable(WindowsFeatures.HYPERV, WindowsFeatures.HYPERV_TOOLS)
 
     def enable_sandbox(self) -> bool:
         """Enable Windows Sandbox"""
         logger.info("Enabling Windows Sandbox...")
-        return self.enable(
-            WindowsFeatures.CONTAINERS,
-            WindowsFeatures.WINDOWS_SANDBOX
-        )
+        return self.enable(WindowsFeatures.CONTAINERS, WindowsFeatures.WINDOWS_SANDBOX)
 
     def enable_containers(self) -> bool:
         """Enable Windows Containers"""
@@ -316,7 +325,7 @@ class FeatureManager:
         return self.enable(
             WindowsFeatures.IIS,
             WindowsFeatures.IIS_MANAGEMENT_CONSOLE,
-            WindowsFeatures.IIS_ASP_NET45
+            WindowsFeatures.IIS_ASP_NET45,
         )
 
     def enable_dotnet_35(self) -> bool:
@@ -359,18 +368,18 @@ class FeatureManager:
             List of feature names
         """
         try:
-            result = subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Get-Features',
-                '/Format:List'
-            ], check=True, capture_output=True, text=True)
+            result = subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", "/Get-Features", "/Format:List"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
             # Parse feature names from output
             features = []
-            for line in result.stdout.split('\n'):
-                if line.strip().startswith('Feature Name :'):
-                    feature = line.split(':', 1)[1].strip()
+            for line in result.stdout.split("\n"):
+                if line.strip().startswith("Feature Name :"):
+                    feature = line.split(":", 1)[1].strip()
                     features.append(feature)
 
             return features
@@ -390,17 +399,22 @@ class FeatureManager:
             Feature state (Enabled, Disabled, etc.) or None if not found
         """
         try:
-            result = subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Get-FeatureInfo',
-                f'/FeatureName:{feature_name}'
-            ], check=True, capture_output=True, text=True)
+            result = subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Get-FeatureInfo",
+                    f"/FeatureName:{feature_name}",
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
 
             # Parse state from output
-            for line in result.stdout.split('\n'):
-                if line.strip().startswith('State :'):
-                    return line.split(':', 1)[1].strip()
+            for line in result.stdout.split("\n"):
+                if line.strip().startswith("State :"):
+                    return line.split(":", 1)[1].strip()
 
             return None
 

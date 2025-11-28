@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PerformanceMetrics:
     """Performance metrics for an operation."""
+
     operation: str
     duration_seconds: float
     memory_used_mb: float
@@ -39,6 +40,7 @@ class PerformanceMonitor:
         Args:
             operation_name: Name of the operation being measured
         """
+
         def decorator(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -71,7 +73,7 @@ class PerformanceMonitor:
                         cpu_percent=cpu_percent,
                         disk_read_mb=disk_read,
                         disk_write_mb=disk_write,
-                        timestamp=time.strftime("%Y-%m-%d %H:%M:%S")
+                        timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
                     )
 
                     self.metrics.append(metrics)
@@ -84,6 +86,7 @@ class PerformanceMonitor:
                 return result
 
             return wrapper
+
         return decorator
 
     def get_metrics(self) -> list[PerformanceMetrics]:
@@ -102,7 +105,7 @@ class PerformanceMonitor:
 
         data = [asdict(m) for m in self.metrics]
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(data, f, indent=2)
 
         logger.info(f"Exported {len(self.metrics)} metrics to {output_path}")
@@ -147,7 +150,7 @@ class StreamingFileReader:
         Yields:
             Bytes chunks of the file
         """
-        with open(self.file_path, 'rb') as f:
+        with open(self.file_path, "rb") as f:
             while True:
                 chunk = f.read(self.chunk_size)
                 if not chunk:
@@ -168,7 +171,7 @@ class StreamingFileReader:
         file_size = self.file_path.stat().st_size
         bytes_copied = 0
 
-        with open(destination, 'wb') as dest_file:
+        with open(destination, "wb") as dest_file:
             for chunk in self.read_chunks():
                 dest_file.write(chunk)
                 bytes_copied += len(chunk)
@@ -194,10 +197,10 @@ class MemoryOptimizer:
         mem_info = process.memory_info()
 
         return {
-            'rss_mb': mem_info.rss / 1024 / 1024,
-            'vms_mb': mem_info.vms / 1024 / 1024,
-            'percent': process.memory_percent(),
-            'available_mb': psutil.virtual_memory().available / 1024 / 1024
+            "rss_mb": mem_info.rss / 1024 / 1024,
+            "vms_mb": mem_info.vms / 1024 / 1024,
+            "percent": process.memory_percent(),
+            "available_mb": psutil.virtual_memory().available / 1024 / 1024,
         }
 
     @staticmethod
@@ -212,13 +215,14 @@ class MemoryOptimizer:
             True if under threshold
         """
         usage = MemoryOptimizer.get_memory_usage()
-        return usage['rss_mb'] < threshold_mb
+        return usage["rss_mb"] < threshold_mb
 
     @staticmethod
     def optimize_for_large_files() -> None:
         """Apply optimizations for large file operations."""
         # Force garbage collection
         import gc
+
         gc.collect()
 
         logger.debug("Applied memory optimizations for large files")

@@ -7,6 +7,7 @@ import logging
 
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -19,23 +20,23 @@ class Config:
     """Configuration manager for DeployForge."""
 
     DEFAULT_CONFIG = {
-        'mount': {
-            'default_dir': None,  # Use temp dir if None
-            'auto_cleanup': True,
+        "mount": {
+            "default_dir": None,  # Use temp dir if None
+            "auto_cleanup": True,
         },
-        'logging': {
-            'level': 'INFO',
-            'file': None,
+        "logging": {
+            "level": "INFO",
+            "file": None,
         },
-        'wim': {
-            'default_index': 1,
-            'compression': 'maximum',  # none, fast, maximum, lzx, xpress
+        "wim": {
+            "default_index": 1,
+            "compression": "maximum",  # none, fast, maximum, lzx, xpress
         },
-        'iso': {
-            'preserve_permissions': True,
+        "iso": {
+            "preserve_permissions": True,
         },
-        'ppkg': {
-            'validate_xml': True,
+        "ppkg": {
+            "validate_xml": True,
         },
     }
 
@@ -69,7 +70,7 @@ class Config:
             return
 
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 user_config = yaml.safe_load(f)
 
             if user_config:
@@ -95,7 +96,7 @@ class Config:
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            with open(config_path, 'w') as f:
+            with open(config_path, "w") as f:
                 yaml.safe_dump(self.config, f, default_flow_style=False)
 
             logger.info(f"Saved configuration to {config_path}")
@@ -105,6 +106,7 @@ class Config:
 
     def _merge_config(self, user_config: Dict[str, Any]) -> None:
         """Merge user configuration with defaults."""
+
         def merge_dict(base: dict, updates: dict) -> None:
             for key, value in updates.items():
                 if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -125,7 +127,7 @@ class Config:
         Returns:
             Configuration value
         """
-        keys = key.split('.')
+        keys = key.split(".")
         value = self.config
 
         for k in keys:
@@ -146,7 +148,7 @@ class Config:
             key: Configuration key (e.g., 'mount.default_dir')
             value: Value to set
         """
-        keys = key.split('.')
+        keys = key.split(".")
         config = self.config
 
         for k in keys[:-1]:
@@ -157,7 +159,7 @@ class Config:
         config[keys[-1]] = value
 
     @classmethod
-    def from_env(cls) -> 'Config':
+    def from_env(cls) -> "Config":
         """
         Create configuration from environment variables.
 
@@ -169,15 +171,15 @@ class Config:
         Returns:
             Config instance
         """
-        config_path = os.environ.get('DEPLOYFORGE_CONFIG')
+        config_path = os.environ.get("DEPLOYFORGE_CONFIG")
         config = cls(Path(config_path) if config_path else None)
 
         # Override with environment variables
-        if log_level := os.environ.get('DEPLOYFORGE_LOG_LEVEL'):
-            config.set('logging.level', log_level)
+        if log_level := os.environ.get("DEPLOYFORGE_LOG_LEVEL"):
+            config.set("logging.level", log_level)
 
-        if mount_dir := os.environ.get('DEPLOYFORGE_MOUNT_DIR'):
-            config.set('mount.default_dir', mount_dir)
+        if mount_dir := os.environ.get("DEPLOYFORGE_MOUNT_DIR"):
+            config.set("mount.default_dir", mount_dir)
 
         return config
 

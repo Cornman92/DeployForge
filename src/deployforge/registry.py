@@ -22,11 +22,11 @@ class RegistryEditor:
     """
 
     HIVE_PATHS = {
-        'HKLM\\SOFTWARE': 'Windows/System32/config/SOFTWARE',
-        'HKLM\\SYSTEM': 'Windows/System32/config/SYSTEM',
-        'HKLM\\SECURITY': 'Windows/System32/config/SECURITY',
-        'HKLM\\SAM': 'Windows/System32/config/SAM',
-        'HKU\\.DEFAULT': 'Windows/System32/config/DEFAULT',
+        "HKLM\\SOFTWARE": "Windows/System32/config/SOFTWARE",
+        "HKLM\\SYSTEM": "Windows/System32/config/SYSTEM",
+        "HKLM\\SECURITY": "Windows/System32/config/SECURITY",
+        "HKLM\\SAM": "Windows/System32/config/SAM",
+        "HKU\\.DEFAULT": "Windows/System32/config/DEFAULT",
     }
 
     def __init__(self, mount_point: Path):
@@ -37,7 +37,7 @@ class RegistryEditor:
             mount_point: Path to mounted image
         """
         self.mount_point = Path(mount_point)
-        self.is_windows = platform.system() == 'Windows'
+        self.is_windows = platform.system() == "Windows"
         self.loaded_hives: Dict[str, str] = {}
 
     def load_hive(self, hive_key: str) -> None:
@@ -73,7 +73,7 @@ class RegistryEditor:
         # Create a unique mount point in the registry
         mount_key = f"HKLM\\DEPLOYFORGE_TEMP_{id(self)}"
 
-        cmd = ['reg', 'load', mount_key, str(hive_file)]
+        cmd = ["reg", "load", mount_key, str(hive_file)]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
@@ -96,7 +96,7 @@ class RegistryEditor:
         mount_key = self.loaded_hives[hive_key]
 
         if self.is_windows:
-            cmd = ['reg', 'unload', mount_key]
+            cmd = ["reg", "unload", mount_key]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -112,7 +112,7 @@ class RegistryEditor:
         sub_key: str,
         value_name: str,
         value_data: Any,
-        value_type: str = 'REG_SZ'
+        value_type: str = "REG_SZ",
     ) -> None:
         """
         Set a registry value.
@@ -131,7 +131,18 @@ class RegistryEditor:
         full_key = f"{mount_key}\\{sub_key}"
 
         if self.is_windows:
-            cmd = ['reg', 'add', full_key, '/v', value_name, '/t', value_type, '/d', str(value_data), '/f']
+            cmd = [
+                "reg",
+                "add",
+                full_key,
+                "/v",
+                value_name,
+                "/t",
+                value_type,
+                "/d",
+                str(value_data),
+                "/f",
+            ]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -155,7 +166,7 @@ class RegistryEditor:
         full_key = f"{mount_key}\\{sub_key}"
 
         if self.is_windows:
-            cmd = ['reg', 'delete', full_key, '/v', value_name, '/f']
+            cmd = ["reg", "delete", full_key, "/v", value_name, "/f"]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -178,7 +189,7 @@ class RegistryEditor:
         full_key = f"{mount_key}\\{sub_key}"
 
         if self.is_windows:
-            cmd = ['reg', 'delete', full_key, '/f']
+            cmd = ["reg", "delete", full_key, "/f"]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -201,21 +212,21 @@ class RegistryEditor:
         """
         for tweak in tweaks:
             try:
-                action = tweak.get('action', 'set')
+                action = tweak.get("action", "set")
 
-                if action == 'set':
+                if action == "set":
                     self.set_value(
-                        tweak['hive'],
-                        tweak['path'],
-                        tweak['name'],
-                        tweak['data'],
-                        tweak.get('type', 'REG_SZ')
+                        tweak["hive"],
+                        tweak["path"],
+                        tweak["name"],
+                        tweak["data"],
+                        tweak.get("type", "REG_SZ"),
                     )
-                elif action == 'delete':
-                    if 'name' in tweak:
-                        self.delete_value(tweak['hive'], tweak['path'], tweak['name'])
+                elif action == "delete":
+                    if "name" in tweak:
+                        self.delete_value(tweak["hive"], tweak["path"], tweak["name"])
                     else:
-                        self.delete_key(tweak['hive'], tweak['path'])
+                        self.delete_key(tweak["hive"], tweak["path"])
 
             except Exception as e:
                 logger.error(f"Failed to apply tweak {tweak}: {e}")
@@ -234,7 +245,7 @@ class RegistryEditor:
         mount_key = self.loaded_hives[hive_key]
 
         if self.is_windows:
-            cmd = ['reg', 'export', mount_key, str(output_file), '/y']
+            cmd = ["reg", "export", mount_key, str(output_file), "/y"]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -262,40 +273,40 @@ class RegistryEditor:
 
 # Common registry tweaks
 COMMON_TWEAKS = {
-    'disable_telemetry': [
+    "disable_telemetry": [
         {
-            'hive': 'HKLM\\SOFTWARE',
-            'path': 'Policies\\Microsoft\\Windows\\DataCollection',
-            'name': 'AllowTelemetry',
-            'data': '0',
-            'type': 'REG_DWORD'
+            "hive": "HKLM\\SOFTWARE",
+            "path": "Policies\\Microsoft\\Windows\\DataCollection",
+            "name": "AllowTelemetry",
+            "data": "0",
+            "type": "REG_DWORD",
         }
     ],
-    'disable_cortana': [
+    "disable_cortana": [
         {
-            'hive': 'HKLM\\SOFTWARE',
-            'path': 'Policies\\Microsoft\\Windows\\Windows Search',
-            'name': 'AllowCortana',
-            'data': '0',
-            'type': 'REG_DWORD'
+            "hive": "HKLM\\SOFTWARE",
+            "path": "Policies\\Microsoft\\Windows\\Windows Search",
+            "name": "AllowCortana",
+            "data": "0",
+            "type": "REG_DWORD",
         }
     ],
-    'disable_windows_update': [
+    "disable_windows_update": [
         {
-            'hive': 'HKLM\\SOFTWARE',
-            'path': 'Policies\\Microsoft\\Windows\\WindowsUpdate\\AU',
-            'name': 'NoAutoUpdate',
-            'data': '1',
-            'type': 'REG_DWORD'
+            "hive": "HKLM\\SOFTWARE",
+            "path": "Policies\\Microsoft\\Windows\\WindowsUpdate\\AU",
+            "name": "NoAutoUpdate",
+            "data": "1",
+            "type": "REG_DWORD",
         }
     ],
-    'enable_dark_theme': [
+    "enable_dark_theme": [
         {
-            'hive': 'HKU\\.DEFAULT',
-            'path': 'Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize',
-            'name': 'AppsUseLightTheme',
-            'data': '0',
-            'type': 'REG_DWORD'
+            "hive": "HKU\\.DEFAULT",
+            "path": "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+            "name": "AppsUseLightTheme",
+            "data": "0",
+            "type": "REG_DWORD",
         }
-    ]
+    ],
 }

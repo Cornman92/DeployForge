@@ -9,11 +9,11 @@ from deployforge.handlers.vhd_handler import VHDHandler
 # Register all handlers
 from deployforge.core.image_manager import ImageManager
 
-ImageManager.register_handler('.iso', ISOHandler)
-ImageManager.register_handler('.wim', WIMHandler)
-ImageManager.register_handler('.esd', ESDHandler)
-ImageManager.register_handler('.ppkg', PPKGHandler)
-ImageManager.register_handler('.vhd', VHDHandler)
-ImageManager.register_handler('.vhdx', VHDHandler)
+ImageManager.register_handler(".iso", ISOHandler)
+ImageManager.register_handler(".wim", WIMHandler)
+ImageManager.register_handler(".esd", ESDHandler)
+ImageManager.register_handler(".ppkg", PPKGHandler)
+ImageManager.register_handler(".vhd", VHDHandler)
+ImageManager.register_handler(".vhdx", VHDHandler)
 
-__all__ = ['ISOHandler', 'WIMHandler', 'ESDHandler', 'PPKGHandler', 'VHDHandler']
+__all__ = ["ISOHandler", "WIMHandler", "ESDHandler", "PPKGHandler", "VHDHandler"]

@@ -6,18 +6,33 @@ from typing import Optional
 
 try:
     from PyQt6.QtWidgets import (
-        QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-        QPushButton, QListWidget, QLabel, QFileDialog, QMessageBox,
-        QTabWidget, QTextEdit, QProgressBar, QMenuBar, QMenu, QToolBar
+        QApplication,
+        QMainWindow,
+        QWidget,
+        QVBoxLayout,
+        QHBoxLayout,
+        QPushButton,
+        QListWidget,
+        QLabel,
+        QFileDialog,
+        QMessageBox,
+        QTabWidget,
+        QTextEdit,
+        QProgressBar,
+        QMenuBar,
+        QMenu,
+        QToolBar,
     )
     from PyQt6.QtCore import Qt, QThread, pyqtSignal
     from PyQt6.QtGui import QAction, QIcon
+
     PYQT_AVAILABLE = True
 except ImportError:
     PYQT_AVAILABLE = False
 
 
 if PYQT_AVAILABLE:
+
     class ImageOperationWorker(QThread):
         """Worker thread for image operations."""
 
@@ -38,7 +53,6 @@ if PYQT_AVAILABLE:
                 self.finished.emit(result)
             except Exception as e:
                 self.error.emit(str(e))
-
 
     class DeployForgeMainWindow(QMainWindow):
         """Main application window."""
@@ -286,7 +300,7 @@ if PYQT_AVAILABLE:
                 self,
                 "Open Image File",
                 "",
-                "Image Files (*.iso *.wim *.esd *.ppkg *.vhd *.vhdx);;All Files (*)"
+                "Image Files (*.iso *.wim *.esd *.ppkg *.vhd *.vhdx);;All Files (*)",
             )
 
             if file_path:
@@ -377,7 +391,7 @@ if PYQT_AVAILABLE:
                 f"DeployForge v{__version__}\n\n"
                 "Windows Deployment Suite\n"
                 "Customize, personalize and optimize Windows images.\n\n"
-                "Supported formats: ISO, WIM, ESD, PPKG, VHD, VHDX"
+                "Supported formats: ISO, WIM, ESD, PPKG, VHD, VHDX",
             )
 
         def log(self, message: str):

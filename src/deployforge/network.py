@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class NetworkProfile(Enum):
     """Network optimization profiles"""
+
     GAMING = "gaming"  # Low latency, high throughput
     STREAMING = "streaming"  # High bandwidth, QoS for video
     BALANCED = "balanced"  # General purpose
@@ -38,6 +39,7 @@ class NetworkProfile(Enum):
 @dataclass
 class NetworkSettings:
     """Network configuration settings"""
+
     # TCP/IP Settings
     tcp_ack_frequency: int = 1  # 1 = immediate ACKs (gaming), 2 = default
     tcp_no_delay: bool = True  # Disable Nagle's algorithm
@@ -70,7 +72,7 @@ class NetworkSettings:
 
     def __post_init__(self):
         if self.dns_servers is None:
-            self.dns_servers = ['1.1.1.1', '1.0.0.1']  # Cloudflare DNS
+            self.dns_servers = ["1.1.1.1", "1.0.0.1"]  # Cloudflare DNS
 
 
 class NetworkOptimizer:
@@ -109,15 +111,21 @@ class NetworkOptimizer:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_net_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_net_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         subprocess.run(
-            ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-             f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-            check=True, capture_output=True
+            [
+                "dism",
+                "/Mount-Wim",
+                f"/WimFile:{self.image_path}",
+                f"/Index:{self.index}",
+                f"/MountDir:{mount_point}",
+            ],
+            check=True,
+            capture_output=True,
         )
         self._mounted = True
         logger.info(f"Network optimizer mounted at {mount_point}")
@@ -129,10 +137,11 @@ class NetworkOptimizer:
             logger.warning("Image not mounted")
             return
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
         subprocess.run(
-            ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-            check=True, capture_output=True
+            ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+            check=True,
+            capture_output=True,
         )
         self._mounted = False
         logger.info("Network optimizer unmounted")
@@ -152,7 +161,7 @@ class NetworkOptimizer:
                 optimize_receive_buffers=True,
                 disable_power_saving=True,
                 enable_qos=True,
-                qos_priority="high"
+                qos_priority="high",
             )
         elif profile == NetworkProfile.STREAMING:
             settings = NetworkSettings(
@@ -160,19 +169,15 @@ class NetworkOptimizer:
                 tcp_window_size=131072,  # Larger for streaming
                 enable_qos=True,
                 qos_priority="high",
-                optimize_receive_buffers=True
+                optimize_receive_buffers=True,
             )
         elif profile == NetworkProfile.BALANCED:
             settings = NetworkSettings(
-                tcp_ack_frequency=2,
-                disable_network_throttling=True,
-                enable_dns_over_https=True
+                tcp_ack_frequency=2, disable_network_throttling=True, enable_dns_over_https=True
             )
         else:  # MINIMAL
             settings = NetworkSettings(
-                tcp_ack_frequency=2,
-                tcp_no_delay=False,
-                disable_network_throttling=False
+                tcp_ack_frequency=2, tcp_no_delay=False, disable_network_throttling=False
             )
 
         self.apply_settings(settings)
@@ -236,39 +241,70 @@ class NetworkOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # TCP ACK Frequency
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'TcpAckFrequency',
-                '/t', 'REG_DWORD',
-                '/d', str(tcp_ack_frequency),
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "TcpAckFrequency",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    str(tcp_ack_frequency),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # TCP No Delay (Disable Nagle)
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'TcpNoDelay',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "TcpNoDelay",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # TCP Window Size
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'TcpWindowSize',
-                '/t', 'REG_DWORD',
-                '/d', str(tcp_window_size),
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "TcpWindowSize",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    str(tcp_window_size),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
-            logger.info(f"TCP settings optimized (ACK: {tcp_ack_frequency}, Window: {tcp_window_size})")
+            logger.info(
+                f"TCP settings optimized (ACK: {tcp_ack_frequency}, Window: {tcp_window_size})"
+            )
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def remove_network_throttling(self):
         """Remove Windows network throttling for maximum performance"""
@@ -276,30 +312,50 @@ class NetworkOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable network throttling index
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'NetworkThrottlingIndex',
-                '/t', 'REG_DWORD',
-                '/d', '0xFFFFFFFF',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "NetworkThrottlingIndex",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0xFFFFFFFF",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Disable system responsiveness (allows more CPU for network)
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'SystemResponsiveness',
-                '/t', 'REG_DWORD',
-                '/d', '0',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "SystemResponsiveness",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Network throttling removed")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_receive_buffers(self):
         """Optimize network receive buffers for better performance"""
@@ -307,21 +363,32 @@ class NetworkOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Increase default receive window
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters',
-                '/v', 'DefaultTTL',
-                '/t', 'REG_DWORD',
-                '/d', '64',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Tcpip\\Parameters",
+                    "/v",
+                    "DefaultTTL",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "64",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Receive buffers optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def disable_nic_power_saving(self):
         """Disable network adapter power saving to prevent connection drops"""
@@ -346,27 +413,38 @@ class NetworkOptimizer:
             dns_servers: Optional custom DNS servers, defaults to Cloudflare
         """
         if dns_servers is None:
-            dns_servers = ['1.1.1.1', '1.0.0.1']  # Cloudflare
+            dns_servers = ["1.1.1.1", "1.0.0.1"]  # Cloudflare
 
         hive_file = self.mount_point / "Windows" / "System32" / "config" / "SYSTEM"
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Enable DoH
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\Dnscache\\Parameters',
-                '/v', 'EnableAutoDoh',
-                '/t', 'REG_DWORD',
-                '/d', '2',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\Dnscache\\Parameters",
+                    "/v",
+                    "EnableAutoDoh",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "2",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"DNS over HTTPS configured with servers: {', '.join(dns_servers)}")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_qos(self, priority: str = "high"):
         """
@@ -375,7 +453,7 @@ class NetworkOptimizer:
         Args:
             priority: QoS priority level (low, normal, high)
         """
-        priority_map = {'low': 1, 'normal': 2, 'high': 3}
+        priority_map = {"low": 1, "normal": 2, "high": 3}
         priority_value = priority_map.get(priority, 2)
 
         logger.info(f"QoS configured with {priority} priority")
@@ -383,11 +461,17 @@ class NetworkOptimizer:
     def disable_smb1(self):
         """Disable SMBv1 for security"""
         try:
-            subprocess.run([
-                'dism', f'/Image:{self.mount_point}',
-                '/Disable-Feature', '/FeatureName:SMB1Protocol',
-                '/NoRestart'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Disable-Feature",
+                    "/FeatureName:SMB1Protocol",
+                    "/NoRestart",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("SMBv1 disabled for security")
         except subprocess.CalledProcessError as e:
@@ -399,20 +483,31 @@ class NetworkOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Services\\NetBT\\Parameters',
-                '/v', 'NodeType',
-                '/t', 'REG_DWORD',
-                '/d', '2',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Services\\NetBT\\Parameters",
+                    "/v",
+                    "NodeType",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "2",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("NetBIOS disabled")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_all(self):
         """Apply all network optimizations"""

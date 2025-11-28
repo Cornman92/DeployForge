@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class WindowsEdition(Enum):
     """Windows editions"""
+
     HOME = "Home"
     PRO = "Professional"
     ENTERPRISE = "Enterprise"
@@ -34,6 +35,7 @@ class WindowsEdition(Enum):
 
 class FeatureUpdateType(Enum):
     """Feature update types"""
+
     ENABLEMENT_PACKAGE = "enablement"
     FULL_UPDATE = "full"
     CUMULATIVE = "cumulative"
@@ -42,6 +44,7 @@ class FeatureUpdateType(Enum):
 @dataclass
 class FeatureUpdate:
     """Feature update package information"""
+
     name: str
     version_from: str
     version_to: str
@@ -52,12 +55,12 @@ class FeatureUpdate:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'version_from': self.version_from,
-            'version_to': self.version_to,
-            'update_type': self.update_type.value,
-            'package_path': str(self.package_path),
-            'size_bytes': self.size_bytes
+            "name": self.name,
+            "version_from": self.version_from,
+            "version_to": self.version_to,
+            "update_type": self.update_type.value,
+            "package_path": str(self.package_path),
+            "size_bytes": self.size_bytes,
         }
 
 
@@ -83,7 +86,7 @@ class FeatureUpdateManager:
         source_image: Path,
         feature_update: Path,
         output: Path,
-        validate_compatibility: bool = True
+        validate_compatibility: bool = True,
     ) -> bool:
         """
         Apply feature update to image.
@@ -107,43 +110,51 @@ class FeatureUpdateManager:
 
         # Copy source to output first
         import shutil
+
         shutil.copy2(source_image, output)
 
         # Mount image
-        mount_point = Path(tempfile.mkdtemp(prefix='deployforge_fu_'))
+        mount_point = Path(tempfile.mkdtemp(prefix="deployforge_fu_"))
 
         try:
             # Mount
-            subprocess.run([
-                'dism',
-                '/Mount-Wim',
-                f'/WimFile:{output}',
-                '/Index:1',
-                f'/MountDir:{mount_point}'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{output}",
+                    "/Index:1",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Apply update
-            if feature_update.suffix.lower() == '.cab':
+            if feature_update.suffix.lower() == ".cab":
                 # Apply CAB package
-                subprocess.run([
-                    'dism',
-                    f'/Image:{mount_point}',
-                    '/Add-Package',
-                    f'/PackagePath:{feature_update}'
-                ], check=True, capture_output=True)
-            elif feature_update.suffix.lower() == '.msu':
+                subprocess.run(
+                    [
+                        "dism",
+                        f"/Image:{mount_point}",
+                        "/Add-Package",
+                        f"/PackagePath:{feature_update}",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
+            elif feature_update.suffix.lower() == ".msu":
                 # Extract and apply MSU
                 self._apply_msu_update(mount_point, feature_update)
             else:
                 raise ValueError(f"Unsupported update format: {feature_update.suffix}")
 
             # Unmount with commit
-            subprocess.run([
-                'dism',
-                '/Unmount-Image',
-                f'/MountDir:{mount_point}',
-                '/Commit'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Commit"],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Feature update applied successfully")
 
@@ -154,12 +165,10 @@ class FeatureUpdateManager:
 
             # Try to unmount without committing
             try:
-                subprocess.run([
-                    'dism',
-                    '/Unmount-Image',
-                    f'/MountDir:{mount_point}',
-                    '/Discard'
-                ], capture_output=True)
+                subprocess.run(
+                    ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
+                    capture_output=True,
+                )
             except:
                 pass
 
@@ -169,48 +178,45 @@ class FeatureUpdateManager:
             # Cleanup mount point
             if mount_point.exists():
                 import shutil
+
                 shutil.rmtree(mount_point, ignore_errors=True)
 
     def _apply_msu_update(self, mount_point: Path, msu_package: Path):
         """Apply MSU update package"""
         # Extract MSU to get CAB
-        temp_extract = Path(tempfile.mkdtemp(prefix='deployforge_msu_'))
+        temp_extract = Path(tempfile.mkdtemp(prefix="deployforge_msu_"))
 
         try:
             # Expand MSU
-            subprocess.run([
-                'expand',
-                '-F:*',
-                str(msu_package),
-                str(temp_extract)
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["expand", "-F:*", str(msu_package), str(temp_extract)],
+                check=True,
+                capture_output=True,
+            )
 
             # Find CAB file
-            cab_files = list(temp_extract.glob('*.cab'))
+            cab_files = list(temp_extract.glob("*.cab"))
 
             if not cab_files:
                 raise ValueError("No CAB found in MSU package")
 
             # Apply CAB
             for cab_file in cab_files:
-                subprocess.run([
-                    'dism',
-                    f'/Image:{mount_point}',
-                    '/Add-Package',
-                    f'/PackagePath:{cab_file}'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    ["dism", f"/Image:{mount_point}", "/Add-Package", f"/PackagePath:{cab_file}"],
+                    check=True,
+                    capture_output=True,
+                )
 
         finally:
             # Cleanup
             if temp_extract.exists():
                 import shutil
+
                 shutil.rmtree(temp_extract, ignore_errors=True)
 
     def upgrade_edition(
-        self,
-        image: Path,
-        target_edition: WindowsEdition,
-        product_key: Optional[str] = None
+        self, image: Path, target_edition: WindowsEdition, product_key: Optional[str] = None
     ) -> bool:
         """
         Upgrade Windows edition.
@@ -228,46 +234,39 @@ class FeatureUpdateManager:
 
         logger.info(f"Upgrading edition to {target_edition.value}")
 
-        mount_point = Path(tempfile.mkdtemp(prefix='deployforge_edition_'))
+        mount_point = Path(tempfile.mkdtemp(prefix="deployforge_edition_"))
 
         try:
             # Mount
-            subprocess.run([
-                'dism',
-                '/Mount-Wim',
-                f'/WimFile:{image}',
-                '/Index:1',
-                f'/MountDir:{mount_point}'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["dism", "/Mount-Wim", f"/WimFile:{image}", "/Index:1", f"/MountDir:{mount_point}"],
+                check=True,
+                capture_output=True,
+            )
 
             # Get current edition
-            result = subprocess.run([
-                'dism',
-                f'/Image:{mount_point}',
-                '/Get-CurrentEdition'
-            ], capture_output=True, text=True)
+            result = subprocess.run(
+                ["dism", f"/Image:{mount_point}", "/Get-CurrentEdition"],
+                capture_output=True,
+                text=True,
+            )
 
             logger.info(f"Current edition info:\n{result.stdout}")
 
             # Set edition
-            cmd = [
-                'dism',
-                f'/Image:{mount_point}',
-                '/Set-Edition:{target_edition.value}'
-            ]
+            cmd = ["dism", f"/Image:{mount_point}", "/Set-Edition:{target_edition.value}"]
 
             if product_key:
-                cmd.append(f'/ProductKey:{product_key}')
+                cmd.append(f"/ProductKey:{product_key}")
 
             subprocess.run(cmd, check=True, capture_output=True)
 
             # Unmount
-            subprocess.run([
-                'dism',
-                '/Unmount-Image',
-                f'/MountDir:{mount_point}',
-                '/Commit'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Commit"],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"Edition upgraded to {target_edition.value}")
 
@@ -278,12 +277,10 @@ class FeatureUpdateManager:
 
             # Cleanup
             try:
-                subprocess.run([
-                    'dism',
-                    '/Unmount-Image',
-                    f'/MountDir:{mount_point}',
-                    '/Discard'
-                ], capture_output=True)
+                subprocess.run(
+                    ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
+                    capture_output=True,
+                )
             except:
                 pass
 
@@ -292,6 +289,7 @@ class FeatureUpdateManager:
         finally:
             if mount_point.exists():
                 import shutil
+
                 shutil.rmtree(mount_point, ignore_errors=True)
 
     def get_image_version(self, image: Path) -> Optional[str]:
@@ -305,17 +303,17 @@ class FeatureUpdateManager:
             Version string or None
         """
         try:
-            result = subprocess.run([
-                'dism',
-                '/Get-WimInfo',
-                f'/WimFile:{image}',
-                '/Index:1'
-            ], capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ["dism", "/Get-WimInfo", f"/WimFile:{image}", "/Index:1"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
 
             # Parse version from output
-            for line in result.stdout.split('\n'):
-                if 'Version' in line:
-                    parts = line.split(':')
+            for line in result.stdout.split("\n"):
+                if "Version" in line:
+                    parts = line.split(":")
                     if len(parts) > 1:
                         return parts[1].strip()
 
@@ -326,11 +324,7 @@ class FeatureUpdateManager:
             return None
 
 
-def apply_enablement_package(
-    source_image: Path,
-    enablement_cab: Path,
-    output_image: Path
-) -> bool:
+def apply_enablement_package(source_image: Path, enablement_cab: Path, output_image: Path) -> bool:
     """
     Apply Windows enablement package.
 
@@ -352,16 +346,11 @@ def apply_enablement_package(
     fum = FeatureUpdateManager()
 
     return fum.apply_feature_update(
-        source_image=source_image,
-        feature_update=enablement_cab,
-        output=output_image
+        source_image=source_image, feature_update=enablement_cab, output=output_image
     )
 
 
-def upgrade_to_enterprise(
-    image: Path,
-    product_key: Optional[str] = None
-) -> bool:
+def upgrade_to_enterprise(image: Path, product_key: Optional[str] = None) -> bool:
     """
     Upgrade image to Enterprise edition.
 
@@ -381,7 +370,5 @@ def upgrade_to_enterprise(
     fum = FeatureUpdateManager()
 
     return fum.upgrade_edition(
-        image=image,
-        target_edition=WindowsEdition.ENTERPRISE,
-        product_key=product_key
+        image=image, target_edition=WindowsEdition.ENTERPRISE, product_key=product_key
     )

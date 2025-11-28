@@ -88,18 +88,18 @@ class Partition:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'number': self.number,
-            'name': self.name,
-            'type': self.type_guid,
-            'guid': self.partition_guid,
-            'start': self.start_sector,
-            'end': self.end_sector,
-            'size_bytes': self.size_bytes,
-            'size_mb': self.size_mb,
-            'size_gb': round(self.size_gb, 2),
-            'filesystem': self.filesystem,
-            'label': self.label,
-            'attributes': self.attributes
+            "number": self.number,
+            "name": self.name,
+            "type": self.type_guid,
+            "guid": self.partition_guid,
+            "start": self.start_sector,
+            "end": self.end_sector,
+            "size_bytes": self.size_bytes,
+            "size_mb": self.size_mb,
+            "size_gb": round(self.size_gb, 2),
+            "filesystem": self.filesystem,
+            "label": self.label,
+            "attributes": self.attributes,
         }
 
 
@@ -126,10 +126,10 @@ class DiskLayout:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'disk_guid': self.disk_guid,
-            'sector_size': self.sector_size,
-            'alignment': self.alignment,
-            'partitions': [p.to_dict() for p in self.partitions]
+            "disk_guid": self.disk_guid,
+            "sector_size": self.sector_size,
+            "alignment": self.alignment,
+            "partitions": [p.to_dict() for p in self.partitions],
         }
 
 
@@ -176,25 +176,21 @@ detach vdisk
 
         try:
             result = subprocess.run(
-                ['diskpart'],
-                input=script,
-                capture_output=True,
-                text=True,
-                timeout=30
+                ["diskpart"], input=script, capture_output=True, text=True, timeout=30
             )
 
             # Parse diskpart output
-            lines = result.stdout.split('\n')
+            lines = result.stdout.split("\n")
             partition_num = 1
 
             for line in lines:
-                if 'Partition' in line and line.strip().startswith('Partition'):
+                if "Partition" in line and line.strip().startswith("Partition"):
                     parts = line.split()
                     if len(parts) >= 4:
                         try:
                             size_str = parts[3]
-                            size_mb = int(size_str.replace('MB', '').replace('GB', ''))
-                            if 'GB' in size_str:
+                            size_mb = int(size_str.replace("MB", "").replace("GB", ""))
+                            if "GB" in size_str:
                                 size_mb *= 1024
 
                             partition = Partition(
@@ -204,7 +200,7 @@ detach vdisk
                                 partition_guid=str(uuid.uuid4()),
                                 start_sector=0,  # Would need detailed parsing
                                 end_sector=0,
-                                size_bytes=size_mb * 1024 * 1024
+                                size_bytes=size_mb * 1024 * 1024,
                             )
                             layout.add_partition(partition)
                             partition_num += 1
@@ -224,22 +220,22 @@ detach vdisk
         try:
             # Use parted to list partitions
             result = subprocess.run(
-                ['parted', '-s', '-m', str(self.image_path), 'unit', 'B', 'print'],
+                ["parted", "-s", "-m", str(self.image_path), "unit", "B", "print"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
 
-            lines = result.stdout.strip().split('\n')
+            lines = result.stdout.strip().split("\n")
             for line in lines[2:]:  # Skip header lines
                 if line.strip():
-                    fields = line.split(':')
+                    fields = line.split(":")
                     if len(fields) >= 6:
                         try:
                             num = int(fields[0])
-                            start = int(fields[1].rstrip('B'))
-                            end = int(fields[2].rstrip('B'))
-                            size = int(fields[3].rstrip('B'))
+                            start = int(fields[1].rstrip("B"))
+                            end = int(fields[2].rstrip("B"))
+                            size = int(fields[3].rstrip("B"))
                             fs = fields[4] if fields[4] else None
                             name = fields[5] if len(fields) > 5 else f"Partition {num}"
 
@@ -251,7 +247,7 @@ detach vdisk
                                 start_sector=start // 512,
                                 end_sector=end // 512,
                                 size_bytes=size,
-                                filesystem=fs
+                                filesystem=fs,
                             )
                             layout.add_partition(partition)
                         except (ValueError, IndexError) as e:
@@ -294,11 +290,7 @@ detach vdisk
         self.layout = layout
         return layout
 
-    def create_uefi_boot_partition(
-        self,
-        size_mb: int = 100,
-        label: str = "System"
-    ) -> Partition:
+    def create_uefi_boot_partition(self, size_mb: int = 100, label: str = "System") -> Partition:
         """
         Create EFI System Partition (ESP)
 
@@ -327,7 +319,7 @@ detach vdisk
             size_bytes=size_mb * 1024 * 1024,
             filesystem=FileSystem.FAT32.value,
             label=label,
-            attributes=0x0000000000000001  # System partition
+            attributes=0x0000000000000001,  # System partition
         )
 
         self.layout.add_partition(partition)
@@ -357,7 +349,9 @@ detach vdisk
 
         # Align to 1MB
         alignment_sectors = self.layout.alignment // self.layout.sector_size
-        start_sector = ((start_sector + alignment_sectors - 1) // alignment_sectors) * alignment_sectors
+        start_sector = (
+            (start_sector + alignment_sectors - 1) // alignment_sectors
+        ) * alignment_sectors
 
         size_sectors = (size_mb * 1024 * 1024) // self.layout.sector_size
         end_sector = start_sector + size_sectors - 1
@@ -370,7 +364,7 @@ detach vdisk
             start_sector=start_sector,
             end_sector=end_sector,
             size_bytes=size_mb * 1024 * 1024,
-            attributes=0x8000000000000001  # Required partition
+            attributes=0x8000000000000001,  # Required partition
         )
 
         self.layout.add_partition(partition)
@@ -379,10 +373,7 @@ detach vdisk
         return partition
 
     def create_windows_partition(
-        self,
-        size_gb: int,
-        label: str = "Windows",
-        filesystem: FileSystem = FileSystem.NTFS
+        self, size_gb: int, label: str = "Windows", filesystem: FileSystem = FileSystem.NTFS
     ) -> Partition:
         """
         Create Windows system partition
@@ -407,7 +398,9 @@ detach vdisk
 
         # Align to 1MB
         alignment_sectors = self.layout.alignment // self.layout.sector_size
-        start_sector = ((start_sector + alignment_sectors - 1) // alignment_sectors) * alignment_sectors
+        start_sector = (
+            (start_sector + alignment_sectors - 1) // alignment_sectors
+        ) * alignment_sectors
 
         size_sectors = (size_gb * 1024 * 1024 * 1024) // self.layout.sector_size
         end_sector = start_sector + size_sectors - 1
@@ -421,7 +414,7 @@ detach vdisk
             end_sector=end_sector,
             size_bytes=size_gb * 1024 * 1024 * 1024,
             filesystem=filesystem.value,
-            label=label
+            label=label,
         )
 
         self.layout.add_partition(partition)
@@ -429,11 +422,7 @@ detach vdisk
 
         return partition
 
-    def create_recovery_partition(
-        self,
-        size_mb: int = 500,
-        label: str = "Recovery"
-    ) -> Partition:
+    def create_recovery_partition(self, size_mb: int = 500, label: str = "Recovery") -> Partition:
         """
         Create Windows Recovery Environment partition
 
@@ -456,7 +445,9 @@ detach vdisk
 
         # Align to 1MB
         alignment_sectors = self.layout.alignment // self.layout.sector_size
-        start_sector = ((start_sector + alignment_sectors - 1) // alignment_sectors) * alignment_sectors
+        start_sector = (
+            (start_sector + alignment_sectors - 1) // alignment_sectors
+        ) * alignment_sectors
 
         size_sectors = (size_mb * 1024 * 1024) // self.layout.sector_size
         end_sector = start_sector + size_sectors - 1
@@ -471,7 +462,7 @@ detach vdisk
             size_bytes=size_mb * 1024 * 1024,
             filesystem=FileSystem.NTFS.value,
             label=label,
-            attributes=0x8000000000000001  # Required partition, hidden
+            attributes=0x8000000000000001,  # Required partition, hidden
         )
 
         self.layout.add_partition(partition)
@@ -504,43 +495,45 @@ detach vdisk
         # Build diskpart script
         script_lines = [
             f'select vdisk file="{target}"',
-            'attach vdisk',
-            'convert gpt',
+            "attach vdisk",
+            "convert gpt",
         ]
 
         for part in self.layout.partitions:
             if part.type_guid == PartitionType.EFI_SYSTEM.value:
-                script_lines.extend([
-                    f'create partition efi size={part.size_mb}',
-                    'format quick fs=fat32 label="System"'
-                ])
+                script_lines.extend(
+                    [
+                        f"create partition efi size={part.size_mb}",
+                        'format quick fs=fat32 label="System"',
+                    ]
+                )
             elif part.type_guid == PartitionType.MICROSOFT_RESERVED.value:
-                script_lines.append(f'create partition msr size={part.size_mb}')
+                script_lines.append(f"create partition msr size={part.size_mb}")
             elif part.type_guid == PartitionType.WINDOWS_RECOVERY.value:
-                script_lines.extend([
-                    f'create partition primary size={part.size_mb}',
-                    f'format quick fs=ntfs label="{part.label}"',
-                    'set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac"',
-                    'gpt attributes=0x8000000000000001'
-                ])
+                script_lines.extend(
+                    [
+                        f"create partition primary size={part.size_mb}",
+                        f'format quick fs=ntfs label="{part.label}"',
+                        'set id="de94bba4-06d1-4d40-a16a-bfd50179d6ac"',
+                        "gpt attributes=0x8000000000000001",
+                    ]
+                )
             else:
-                script_lines.extend([
-                    f'create partition primary size={part.size_mb}',
-                    f'format quick fs=ntfs label="{part.label or part.name}"'
-                ])
+                script_lines.extend(
+                    [
+                        f"create partition primary size={part.size_mb}",
+                        f'format quick fs=ntfs label="{part.label or part.name}"',
+                    ]
+                )
 
-        script_lines.append('detach vdisk')
-        script = '\n'.join(script_lines)
+        script_lines.append("detach vdisk")
+        script = "\n".join(script_lines)
 
         logger.debug(f"Diskpart script:\n{script}")
 
         try:
             result = subprocess.run(
-                ['diskpart'],
-                input=script,
-                capture_output=True,
-                text=True,
-                timeout=120
+                ["diskpart"], input=script, capture_output=True, text=True, timeout=120
             )
 
             if result.returncode == 0:
@@ -557,7 +550,7 @@ detach vdisk
         """Apply layout using parted/sgdisk on Linux"""
         try:
             # Create GPT table
-            subprocess.run(['parted', '-s', target, 'mklabel', 'gpt'], check=True, timeout=30)
+            subprocess.run(["parted", "-s", target, "mklabel", "gpt"], check=True, timeout=30)
 
             # Create partitions
             for part in self.layout.partitions:
@@ -566,19 +559,41 @@ detach vdisk
 
                 # Determine partition type name for parted
                 if part.type_guid == PartitionType.EFI_SYSTEM.value:
-                    subprocess.run([
-                        'parted', '-s', target, 'mkpart', part.name,
-                        'fat32', f'{start_mb}MB', f'{end_mb}MB'
-                    ], check=True, timeout=30)
-                    subprocess.run([
-                        'parted', '-s', target, 'set', str(part.number), 'esp', 'on'
-                    ], check=True, timeout=30)
+                    subprocess.run(
+                        [
+                            "parted",
+                            "-s",
+                            target,
+                            "mkpart",
+                            part.name,
+                            "fat32",
+                            f"{start_mb}MB",
+                            f"{end_mb}MB",
+                        ],
+                        check=True,
+                        timeout=30,
+                    )
+                    subprocess.run(
+                        ["parted", "-s", target, "set", str(part.number), "esp", "on"],
+                        check=True,
+                        timeout=30,
+                    )
                 else:
-                    fs_type = 'ext4' if 'linux' in part.name.lower() else 'ntfs'
-                    subprocess.run([
-                        'parted', '-s', target, 'mkpart', part.name,
-                        fs_type, f'{start_mb}MB', f'{end_mb}MB'
-                    ], check=True, timeout=30)
+                    fs_type = "ext4" if "linux" in part.name.lower() else "ntfs"
+                    subprocess.run(
+                        [
+                            "parted",
+                            "-s",
+                            target,
+                            "mkpart",
+                            part.name,
+                            fs_type,
+                            f"{start_mb}MB",
+                            f"{end_mb}MB",
+                        ],
+                        check=True,
+                        timeout=30,
+                    )
 
             logger.info("Partition layout applied successfully (Linux)")
 
@@ -603,7 +618,7 @@ detach vdisk
 
         layout_dict = self.layout.to_dict()
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(layout_dict, f, indent=2)
 
         logger.info(f"Exported partition layout to {output_path}")
@@ -618,27 +633,27 @@ detach vdisk
         Returns:
             Imported DiskLayout
         """
-        with open(layout_path, 'r') as f:
+        with open(layout_path, "r") as f:
             layout_dict = json.load(f)
 
         layout = DiskLayout(
-            sector_size=layout_dict.get('sector_size', 512),
-            alignment=layout_dict.get('alignment', 1048576),
-            disk_guid=layout_dict.get('disk_guid')
+            sector_size=layout_dict.get("sector_size", 512),
+            alignment=layout_dict.get("alignment", 1048576),
+            disk_guid=layout_dict.get("disk_guid"),
         )
 
-        for part_dict in layout_dict.get('partitions', []):
+        for part_dict in layout_dict.get("partitions", []):
             partition = Partition(
-                number=part_dict['number'],
-                name=part_dict['name'],
-                type_guid=part_dict['type'],
-                partition_guid=part_dict['guid'],
-                start_sector=part_dict['start'],
-                end_sector=part_dict['end'],
-                size_bytes=part_dict['size_bytes'],
-                filesystem=part_dict.get('filesystem'),
-                label=part_dict.get('label'),
-                attributes=part_dict.get('attributes', 0)
+                number=part_dict["number"],
+                name=part_dict["name"],
+                type_guid=part_dict["type"],
+                partition_guid=part_dict["guid"],
+                start_sector=part_dict["start"],
+                end_sector=part_dict["end"],
+                size_bytes=part_dict["size_bytes"],
+                filesystem=part_dict.get("filesystem"),
+                label=part_dict.get("label"),
+                attributes=part_dict.get("attributes", 0),
             )
             layout.add_partition(partition)
 
@@ -648,9 +663,7 @@ detach vdisk
         return layout
 
     def create_standard_windows_layout(
-        self,
-        disk_size_gb: int,
-        include_recovery: bool = True
+        self, disk_size_gb: int, include_recovery: bool = True
     ) -> DiskLayout:
         """
         Create standard Windows UEFI partition layout
@@ -684,24 +697,21 @@ detach vdisk
         if include_recovery:
             windows_size_gb -= 1  # Reserve for recovery partition
 
-        self.create_windows_partition(
-            size_gb=int(windows_size_gb),
-            label="Windows"
-        )
+        self.create_windows_partition(size_gb=int(windows_size_gb), label="Windows")
 
         # Recovery partition (500MB)
         if include_recovery:
             self.create_recovery_partition(size_mb=500)
 
-        logger.info(f"Created standard Windows layout with {len(self.layout.partitions)} partitions")
+        logger.info(
+            f"Created standard Windows layout with {len(self.layout.partitions)} partitions"
+        )
 
         return self.layout
 
 
 def create_uefi_bootable_image(
-    image_path: Path,
-    disk_size_gb: int = 50,
-    include_recovery: bool = True
+    image_path: Path, disk_size_gb: int = 50, include_recovery: bool = True
 ) -> PartitionManager:
     """
     Create a UEFI bootable disk image with standard Windows partitioning

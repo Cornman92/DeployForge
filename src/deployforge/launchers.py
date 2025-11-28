@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class LauncherProfile(Enum):
     """Gaming launcher profiles"""
+
     COMPETITIVE = "competitive"  # Competitive gaming focused launchers
     CASUAL = "casual"  # Casual gaming launchers
     COMPLETE = "complete"  # All major launchers
@@ -49,6 +50,7 @@ class LauncherProfile(Enum):
 @dataclass
 class LauncherConfiguration:
     """Launcher configuration settings"""
+
     # Launchers to install
     launchers: List[str] = field(default_factory=lambda: ["steam"])
 
@@ -70,17 +72,17 @@ class LauncherConfiguration:
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
-            'launchers': self.launchers,
-            'performance': {
-                'disable_overlays': self.disable_overlays,
-                'optimize_downloads': self.optimize_downloads,
-                'reduce_latency': self.reduce_latency,
+            "launchers": self.launchers,
+            "performance": {
+                "disable_overlays": self.disable_overlays,
+                "optimize_downloads": self.optimize_downloads,
+                "reduce_latency": self.reduce_latency,
             },
-            'features': {
-                'mod_managers': self.install_mod_managers,
-                'capture_software': self.install_capture_software,
-                'voice_chat': self.setup_voice_chat,
-            }
+            "features": {
+                "mod_managers": self.install_mod_managers,
+                "capture_software": self.install_capture_software,
+                "voice_chat": self.setup_voice_chat,
+            },
         }
 
 
@@ -98,34 +100,34 @@ class GamingLaunchers:
     """
 
     LAUNCHER_PACKAGES = {
-        'steam': 'Valve.Steam',
-        'epic_games': 'EpicGames.EpicGamesLauncher',
-        'gog_galaxy': 'GOGGalaxy.GOGGalaxy',
-        'origin': 'ElectronicArts.Origin',
-        'ea_app': 'ElectronicArts.EADesktop',
-        'ubisoft_connect': 'Ubisoft.Connect',
-        'battle_net': 'Blizzard.BattleNet',
-        'xbox_app': 'Microsoft.GamingApp',
-        'riot_client': 'RiotGames.RiotClient',
-        'rockstar': 'Rockstar.Launcher',
-        'bethesda': 'Bethesda.Launcher',
-        'itch_io': 'ItchIo.Itch',
+        "steam": "Valve.Steam",
+        "epic_games": "EpicGames.EpicGamesLauncher",
+        "gog_galaxy": "GOGGalaxy.GOGGalaxy",
+        "origin": "ElectronicArts.Origin",
+        "ea_app": "ElectronicArts.EADesktop",
+        "ubisoft_connect": "Ubisoft.Connect",
+        "battle_net": "Blizzard.BattleNet",
+        "xbox_app": "Microsoft.GamingApp",
+        "riot_client": "RiotGames.RiotClient",
+        "rockstar": "Rockstar.Launcher",
+        "bethesda": "Bethesda.Launcher",
+        "itch_io": "ItchIo.Itch",
     }
 
     MOD_MANAGERS = {
-        'vortex': 'NexusMods.Vortex',
-        'mod_organizer': 'ModOrganizer.ModOrganizer',
+        "vortex": "NexusMods.Vortex",
+        "mod_organizer": "ModOrganizer.ModOrganizer",
     }
 
     CAPTURE_SOFTWARE = {
-        'obs_studio': 'OBSProject.OBSStudio',
-        'streamlabs': 'Streamlabs.StreamlabsOBS',
+        "obs_studio": "OBSProject.OBSStudio",
+        "streamlabs": "Streamlabs.StreamlabsOBS",
     }
 
     VOICE_CHAT = {
-        'discord': 'Discord.Discord',
-        'teamspeak': 'TeamSpeakSystems.TeamSpeakClient',
-        'mumble': 'Mumble.Mumble',
+        "discord": "Discord.Discord",
+        "teamspeak": "TeamSpeakSystems.TeamSpeakClient",
+        "mumble": "Mumble.Mumble",
     }
 
     def __init__(self, image_path: Path, index: int = 1):
@@ -152,7 +154,7 @@ class GamingLaunchers:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_launch_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_launch_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -160,19 +162,29 @@ class GamingLaunchers:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
 
             self._mounted = True
@@ -192,11 +204,11 @@ class GamingLaunchers:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -206,8 +218,11 @@ class GamingLaunchers:
             logger.error(f"Failed to unmount image: {e.stderr.decode()}")
             raise
 
-    def apply_profile(self, profile: LauncherProfile,
-                     progress_callback: Optional[Callable[[int, str], None]] = None):
+    def apply_profile(
+        self,
+        profile: LauncherProfile,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+    ):
         """
         Apply a launcher profile with recommended platforms.
 
@@ -222,40 +237,49 @@ class GamingLaunchers:
 
         profiles = {
             LauncherProfile.COMPETITIVE: {
-                'launchers': ['steam', 'epic_games', 'riot_client', 'battle_net'],
-                'optimize_for_competitive': True,
-                'disable_overlays': True,
-                'reduce_latency': True,
-                'voice_chat': True,
+                "launchers": ["steam", "epic_games", "riot_client", "battle_net"],
+                "optimize_for_competitive": True,
+                "disable_overlays": True,
+                "reduce_latency": True,
+                "voice_chat": True,
             },
             LauncherProfile.CASUAL: {
-                'launchers': ['steam', 'epic_games', 'gog_galaxy', 'xbox_app'],
-                'optimize_downloads': True,
+                "launchers": ["steam", "epic_games", "gog_galaxy", "xbox_app"],
+                "optimize_downloads": True,
             },
             LauncherProfile.COMPLETE: {
-                'launchers': ['steam', 'epic_games', 'gog_galaxy', 'origin', 'ea_app',
-                             'ubisoft_connect', 'battle_net', 'xbox_app', 'riot_client'],
-                'mod_managers': True,
+                "launchers": [
+                    "steam",
+                    "epic_games",
+                    "gog_galaxy",
+                    "origin",
+                    "ea_app",
+                    "ubisoft_connect",
+                    "battle_net",
+                    "xbox_app",
+                    "riot_client",
+                ],
+                "mod_managers": True,
             },
             LauncherProfile.MINIMAL: {
-                'launchers': ['steam'],
+                "launchers": ["steam"],
             },
             LauncherProfile.STREAM_FOCUSED: {
-                'launchers': ['steam', 'epic_games'],
-                'capture_software': True,
-                'voice_chat': True,
+                "launchers": ["steam", "epic_games"],
+                "capture_software": True,
+                "voice_chat": True,
             },
         }
 
         profile_config = profiles.get(profile, profiles[LauncherProfile.MINIMAL])
 
         # Update configuration
-        self.config.launchers = profile_config.get('launchers', ['steam'])
-        self.config.optimize_for_competitive = profile_config.get('optimize_for_competitive', False)
-        self.config.disable_overlays = profile_config.get('disable_overlays', False)
-        self.config.install_mod_managers = profile_config.get('mod_managers', False)
-        self.config.install_capture_software = profile_config.get('capture_software', False)
-        self.config.setup_voice_chat = profile_config.get('voice_chat', False)
+        self.config.launchers = profile_config.get("launchers", ["steam"])
+        self.config.optimize_for_competitive = profile_config.get("optimize_for_competitive", False)
+        self.config.disable_overlays = profile_config.get("disable_overlays", False)
+        self.config.install_mod_managers = profile_config.get("mod_managers", False)
+        self.config.install_capture_software = profile_config.get("capture_software", False)
+        self.config.setup_voice_chat = profile_config.get("voice_chat", False)
 
         logger.info(f"Profile configuration: {len(self.config.launchers)} launchers")
 
@@ -276,11 +300,13 @@ class GamingLaunchers:
             if launcher in self.LAUNCHER_PACKAGES:
                 package_id = self.LAUNCHER_PACKAGES[launcher]
                 script_lines.append(f"Write-Host 'Installing {launcher}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured launcher installation: {launcher}")
 
         script_path = scripts_dir / "install_launchers.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Launcher installation script created: {len(self.config.launchers)} launchers")
@@ -299,21 +325,27 @@ class GamingLaunchers:
         if self.config.install_mod_managers:
             for mod_mgr, package_id in self.MOD_MANAGERS.items():
                 script_lines.append(f"Write-Host 'Installing {mod_mgr}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
 
         if self.config.install_capture_software:
             for capture, package_id in self.CAPTURE_SOFTWARE.items():
                 script_lines.append(f"Write-Host 'Installing {capture}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
 
         if self.config.setup_voice_chat:
             for voice, package_id in self.VOICE_CHAT.items():
                 script_lines.append(f"Write-Host 'Installing {voice}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
 
         if len(script_lines) > 2:
             script_path = scripts_dir / "install_gaming_tools.ps1"
-            with open(script_path, 'w') as f:
+            with open(script_path, "w") as f:
                 f.writelines(script_lines)
 
             logger.info("Gaming support tools installation script created")
@@ -340,7 +372,7 @@ def install_gaming_launchers(
     launchers: Optional[List[str]] = None,
     profile: Optional[LauncherProfile] = None,
     custom_config: Optional[LauncherConfiguration] = None,
-    progress_callback: Optional[Callable[[int, str], None]] = None
+    progress_callback: Optional[Callable[[int, str], None]] = None,
 ) -> None:
     """
     Quick gaming launcher installation.
@@ -391,7 +423,9 @@ def install_gaming_launchers(
             progress_callback(100, "Gaming launcher configuration complete")
 
         gl.unmount(save_changes=True)
-        logger.info(f"Gaming launcher installation complete: {len(gl.config.launchers)} launchers configured")
+        logger.info(
+            f"Gaming launcher installation complete: {len(gl.config.launchers)} launchers configured"
+        )
 
     except Exception as e:
         logger.error(f"Failed to install gaming launchers: {e}")

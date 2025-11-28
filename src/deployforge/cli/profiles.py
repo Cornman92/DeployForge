@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ProfileConfiguration:
     """Configuration for a deployment profile."""
+
     name: str
     description: str
 
@@ -28,12 +29,12 @@ class ProfileConfiguration:
     enterprise_security: bool = False
 
     # Debloating and privacy
-    debloat_level: str = 'none'  # none, minimal, moderate, aggressive
+    debloat_level: str = "none"  # none, minimal, moderate, aggressive
     privacy_hardening: bool = False
 
     # Visual customization
-    theme: str = 'dark'  # dark, light
-    taskbar_position: str = 'center'  # center, left
+    theme: str = "dark"  # dark, light
+    taskbar_position: str = "center"  # center, left
 
     # Package installation
     browsers: List[str] = None
@@ -65,104 +66,99 @@ class ProfileManager:
     """Manages deployment profiles."""
 
     BUILTIN_PROFILES = {
-        'gamer': ProfileConfiguration(
-            name='Gaming Profile',
-            description='Optimized for gaming with performance tweaks and gaming launchers',
+        "gamer": ProfileConfiguration(
+            name="Gaming Profile",
+            description="Optimized for gaming with performance tweaks and gaming launchers",
             gaming_optimization=True,
-            debloat_level='moderate',
+            debloat_level="moderate",
             privacy_hardening=True,
-            theme='dark',
-            taskbar_position='center',
-            browsers=['brave', 'firefox'],
-            packages=['discord', 'obs-studio'],
-            gaming_launchers=['steam', 'epic', 'gog'],
+            theme="dark",
+            taskbar_position="center",
+            browsers=["brave", "firefox"],
+            packages=["discord", "obs-studio"],
+            gaming_launchers=["steam", "epic", "gog"],
             enable_sandbox=False,
             performance_optimization=True,
             network_optimization=True,
-            enable_backup=True
+            enable_backup=True,
         ),
-
-        'developer': ProfileConfiguration(
-            name='Developer Profile',
-            description='Development tools and programming environments',
+        "developer": ProfileConfiguration(
+            name="Developer Profile",
+            description="Development tools and programming environments",
             developer_tools=True,
-            debloat_level='minimal',
+            debloat_level="minimal",
             privacy_hardening=True,
-            theme='dark',
-            taskbar_position='left',
-            browsers=['chrome', 'firefox'],
-            packages=['vscode', 'git', 'docker-desktop', 'python', 'nodejs'],
+            theme="dark",
+            taskbar_position="left",
+            browsers=["chrome", "firefox"],
+            packages=["vscode", "git", "docker-desktop", "python", "nodejs"],
             enable_wsl2=True,
             enable_hyperv=True,
             enable_sandbox=True,
             performance_optimization=True,
             network_optimization=False,
-            enable_backup=True
+            enable_backup=True,
         ),
-
-        'enterprise': ProfileConfiguration(
-            name='Enterprise Profile',
-            description='Enterprise security and management features',
+        "enterprise": ProfileConfiguration(
+            name="Enterprise Profile",
+            description="Enterprise security and management features",
             enterprise_security=True,
-            debloat_level='none',
+            debloat_level="none",
             privacy_hardening=False,
-            theme='light',
-            taskbar_position='left',
-            browsers=['edge'],
-            packages=['microsoft-365'],
+            theme="light",
+            taskbar_position="left",
+            browsers=["edge"],
+            packages=["microsoft-365"],
             enable_hyperv=False,
             enable_sandbox=False,
             performance_optimization=False,
             network_optimization=False,
-            enable_backup=True
+            enable_backup=True,
         ),
-
-        'student': ProfileConfiguration(
-            name='Student Profile',
-            description='Balanced profile for students with productivity tools',
+        "student": ProfileConfiguration(
+            name="Student Profile",
+            description="Balanced profile for students with productivity tools",
             developer_tools=False,
-            debloat_level='moderate',
+            debloat_level="moderate",
             privacy_hardening=True,
-            theme='light',
-            taskbar_position='center',
-            browsers=['edge', 'firefox'],
-            packages=['microsoft-365', 'vscode', 'python'],
+            theme="light",
+            taskbar_position="center",
+            browsers=["edge", "firefox"],
+            packages=["microsoft-365", "vscode", "python"],
             enable_wsl2=False,
             enable_hyperv=False,
             enable_sandbox=False,
             performance_optimization=True,
             network_optimization=False,
-            enable_backup=True
+            enable_backup=True,
         ),
-
-        'creator': ProfileConfiguration(
-            name='Content Creator Profile',
-            description='Creative tools and optimizations for content creators',
+        "creator": ProfileConfiguration(
+            name="Content Creator Profile",
+            description="Creative tools and optimizations for content creators",
             creative_suite=True,
             gaming_optimization=False,
-            debloat_level='minimal',
+            debloat_level="minimal",
             privacy_hardening=True,
-            theme='dark',
-            taskbar_position='center',
-            browsers=['chrome'],
-            packages=['obs-studio', 'gimp', 'audacity', 'blender', 'vlc'],
+            theme="dark",
+            taskbar_position="center",
+            browsers=["chrome"],
+            packages=["obs-studio", "gimp", "audacity", "blender", "vlc"],
             enable_sandbox=False,
             performance_optimization=True,
             network_optimization=True,
-            enable_backup=True
+            enable_backup=True,
         ),
-
-        'custom': ProfileConfiguration(
-            name='Custom Profile',
-            description='Minimal profile for manual customization',
-            debloat_level='none',
+        "custom": ProfileConfiguration(
+            name="Custom Profile",
+            description="Minimal profile for manual customization",
+            debloat_level="none",
             privacy_hardening=False,
-            theme='dark',
-            taskbar_position='center',
+            theme="dark",
+            taskbar_position="center",
             performance_optimization=False,
             network_optimization=False,
-            enable_backup=False
-        )
+            enable_backup=False,
+        ),
     }
 
     def __init__(self, profiles_dir: Optional[Path] = None):
@@ -172,7 +168,7 @@ class ProfileManager:
         Args:
             profiles_dir: Directory for custom profiles
         """
-        self.profiles_dir = profiles_dir or Path.home() / '.deployforge' / 'profiles'
+        self.profiles_dir = profiles_dir or Path.home() / ".deployforge" / "profiles"
         self.profiles_dir.mkdir(parents=True, exist_ok=True)
 
     def get_profile(self, name: str) -> ProfileConfiguration:
@@ -207,23 +203,27 @@ class ProfileManager:
 
         # Built-in profiles
         for name, config in self.BUILTIN_PROFILES.items():
-            profiles.append({
-                'name': name,
-                'display_name': config.name,
-                'description': config.description,
-                'type': 'builtin'
-            })
+            profiles.append(
+                {
+                    "name": name,
+                    "display_name": config.name,
+                    "description": config.description,
+                    "type": "builtin",
+                }
+            )
 
         # Custom profiles
-        for profile_file in self.profiles_dir.glob('*.json'):
+        for profile_file in self.profiles_dir.glob("*.json"):
             try:
                 config = self._load_custom_profile(profile_file)
-                profiles.append({
-                    'name': profile_file.stem,
-                    'display_name': config.name,
-                    'description': config.description,
-                    'type': 'custom'
-                })
+                profiles.append(
+                    {
+                        "name": profile_file.stem,
+                        "display_name": config.name,
+                        "description": config.description,
+                        "type": "custom",
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to load profile {profile_file}: {e}")
 
@@ -239,7 +239,7 @@ class ProfileManager:
         """
         profile_path = self.profiles_dir / f"{name}.json"
 
-        with open(profile_path, 'w') as f:
+        with open(profile_path, "w") as f:
             json.dump(asdict(config), f, indent=2)
 
         logger.info(f"Saved profile: {name}")
@@ -264,7 +264,7 @@ class ProfileManager:
 
     def _load_custom_profile(self, path: Path) -> ProfileConfiguration:
         """Load a custom profile from file."""
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             data = json.load(f)
 
         return ProfileConfiguration(**data)
@@ -303,6 +303,7 @@ def apply_profile(image_path: Path, profile_name: str, output_path: Optional[Pat
     working_image = output_path if output_path else image_path
     if output_path and output_path != image_path:
         import shutil
+
         shutil.copy2(image_path, output_path)
 
     # Apply gaming optimizations
@@ -333,15 +334,15 @@ def apply_profile(image_path: Path, profile_name: str, output_path: Optional[Pat
         creative.unmount(save_changes=True)
 
     # Apply debloating
-    if config.debloat_level != 'none':
+    if config.debloat_level != "none":
         logger.info(f"Applying debloating ({config.debloat_level})...")
         debloat = DebloatManager(working_image)
         debloat.mount()
 
         level_map = {
-            'minimal': DebloatLevel.MINIMAL,
-            'moderate': DebloatLevel.MODERATE,
-            'aggressive': DebloatLevel.AGGRESSIVE
+            "minimal": DebloatLevel.MINIMAL,
+            "moderate": DebloatLevel.MODERATE,
+            "aggressive": DebloatLevel.AGGRESSIVE,
         }
         debloat.remove_bloatware(level_map[config.debloat_level])
         debloat.unmount(save_changes=True)
@@ -378,11 +379,11 @@ def apply_profile(image_path: Path, profile_name: str, output_path: Optional[Pat
         browsers = BrowserBundler(working_image)
         browsers.mount()
         for browser in config.browsers:
-            if browser == 'chrome':
+            if browser == "chrome":
                 browsers.install_chrome()
-            elif browser == 'firefox':
+            elif browser == "firefox":
                 browsers.install_firefox()
-            elif browser == 'brave':
+            elif browser == "brave":
                 browsers.install_brave()
         browsers.unmount(save_changes=True)
 
@@ -392,11 +393,11 @@ def apply_profile(image_path: Path, profile_name: str, output_path: Optional[Pat
         launchers = GamingLaunchers(working_image)
         launchers.mount()
         for launcher in config.gaming_launchers:
-            if launcher == 'steam':
+            if launcher == "steam":
                 launchers.install_steam()
-            elif launcher == 'epic':
+            elif launcher == "epic":
                 launchers.install_epic_games()
-            elif launcher == 'gog':
+            elif launcher == "gog":
                 launchers.install_gog_galaxy()
         launchers.unmount(save_changes=True)
 

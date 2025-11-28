@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class DevelopmentProfile(Enum):
     """Development environment profiles"""
+
     WEB_FRONTEND = "web-frontend"  # HTML, CSS, JavaScript, TypeScript, React, Vue, Angular
     WEB_BACKEND = "web-backend"  # Node.js, Python, Java, databases
     FULL_STACK = "full-stack"  # Complete web development stack
@@ -53,6 +54,7 @@ class DevelopmentProfile(Enum):
 
 class IDE(Enum):
     """Integrated Development Environments"""
+
     VSCODE = "Microsoft.VisualStudioCode"
     VSCODE_INSIDERS = "Microsoft.VisualStudioCode.Insiders"
     VISUAL_STUDIO_COMMUNITY = "Microsoft.VisualStudio.2022.Community"
@@ -70,6 +72,7 @@ class IDE(Enum):
 @dataclass
 class DevelopmentConfiguration:
     """Development environment configuration settings"""
+
     # Core settings
     enable_developer_mode: bool = True
     enable_wsl2: bool = True
@@ -114,7 +117,9 @@ class DevelopmentConfiguration:
 
     # Fonts
     install_dev_fonts: bool = True
-    fonts: List[str] = field(default_factory=lambda: ["cascadia-code", "firacode", "jetbrains-mono"])
+    fonts: List[str] = field(
+        default_factory=lambda: ["cascadia-code", "firacode", "jetbrains-mono"]
+    )
 
     # Package managers
     setup_npm: bool = True
@@ -148,35 +153,35 @@ class DevelopmentConfiguration:
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
-            'enable_developer_mode': self.enable_developer_mode,
-            'enable_wsl2': self.enable_wsl2,
-            'enable_hyperv': self.enable_hyperv,
-            'enable_containers': self.enable_containers,
-            'ides': self.ides,
-            'languages': {
-                'python': {'enabled': self.install_python, 'version': self.python_version},
-                'nodejs': {'enabled': self.install_nodejs, 'version': self.nodejs_version},
-                'java': {'enabled': self.install_java, 'version': self.java_version},
-                'dotnet': self.install_dotnet,
-                'go': self.install_go,
-                'rust': self.install_rust,
-                'ruby': self.install_ruby,
-                'php': self.install_php,
+            "enable_developer_mode": self.enable_developer_mode,
+            "enable_wsl2": self.enable_wsl2,
+            "enable_hyperv": self.enable_hyperv,
+            "enable_containers": self.enable_containers,
+            "ides": self.ides,
+            "languages": {
+                "python": {"enabled": self.install_python, "version": self.python_version},
+                "nodejs": {"enabled": self.install_nodejs, "version": self.nodejs_version},
+                "java": {"enabled": self.install_java, "version": self.java_version},
+                "dotnet": self.install_dotnet,
+                "go": self.install_go,
+                "rust": self.install_rust,
+                "ruby": self.install_ruby,
+                "php": self.install_php,
             },
-            'containers': {
-                'docker': self.install_docker_desktop,
-                'podman': self.install_podman,
-                'minikube': self.install_minikube,
-                'kind': self.install_kind,
+            "containers": {
+                "docker": self.install_docker_desktop,
+                "podman": self.install_podman,
+                "minikube": self.install_minikube,
+                "kind": self.install_kind,
             },
-            'cloud_tools': {
-                'azure_cli': self.install_azure_cli,
-                'aws_cli': self.install_aws_cli,
-                'gcloud': self.install_gcloud_cli,
-                'kubectl': self.install_kubectl,
-                'terraform': self.install_terraform,
-                'ansible': self.install_ansible,
-            }
+            "cloud_tools": {
+                "azure_cli": self.install_azure_cli,
+                "aws_cli": self.install_aws_cli,
+                "gcloud": self.install_gcloud_cli,
+                "kubectl": self.install_kubectl,
+                "terraform": self.install_terraform,
+                "ansible": self.install_ansible,
+            },
         }
 
 
@@ -195,51 +200,51 @@ class DeveloperEnvironment:
 
     # WinGet package IDs for common tools
     LANGUAGE_PACKAGES = {
-        'python': 'Python.Python.3.12',
-        'python311': 'Python.Python.3.11',
-        'nodejs': 'OpenJS.NodeJS.LTS',
-        'nodejs_current': 'OpenJS.NodeJS',
-        'java17': 'EclipseAdoptium.Temurin.17.JDK',
-        'java21': 'EclipseAdoptium.Temurin.21.JDK',
-        'dotnet': 'Microsoft.DotNet.SDK.8',
-        'dotnet_runtime': 'Microsoft.DotNet.Runtime.8',
-        'go': 'GoLang.Go',
-        'rust': 'Rustlang.Rustup',
-        'ruby': 'RubyInstallerTeam.Ruby.3.2',
-        'php': 'PHP.PHP',
+        "python": "Python.Python.3.12",
+        "python311": "Python.Python.3.11",
+        "nodejs": "OpenJS.NodeJS.LTS",
+        "nodejs_current": "OpenJS.NodeJS",
+        "java17": "EclipseAdoptium.Temurin.17.JDK",
+        "java21": "EclipseAdoptium.Temurin.21.JDK",
+        "dotnet": "Microsoft.DotNet.SDK.8",
+        "dotnet_runtime": "Microsoft.DotNet.Runtime.8",
+        "go": "GoLang.Go",
+        "rust": "Rustlang.Rustup",
+        "ruby": "RubyInstallerTeam.Ruby.3.2",
+        "php": "PHP.PHP",
     }
 
     DEV_TOOLS = {
-        'git': 'Git.Git',
-        'github_desktop': 'GitHub.GitHubDesktop',
-        'postman': 'Postman.Postman',
-        'insomnia': 'Insomnia.Insomnia',
-        'dbeaver': 'dbeaver.dbeaver',
-        'azure_data_studio': 'Microsoft.AzureDataStudio',
-        'docker_desktop': 'Docker.DockerDesktop',
-        'podman_desktop': 'RedHat.Podman-Desktop',
-        'windows_terminal': 'Microsoft.WindowsTerminal',
-        'powershell7': 'Microsoft.PowerShell',
-        'sysinternals': 'Microsoft.Sysinternals',
-        'everything': 'voidtools.Everything',
+        "git": "Git.Git",
+        "github_desktop": "GitHub.GitHubDesktop",
+        "postman": "Postman.Postman",
+        "insomnia": "Insomnia.Insomnia",
+        "dbeaver": "dbeaver.dbeaver",
+        "azure_data_studio": "Microsoft.AzureDataStudio",
+        "docker_desktop": "Docker.DockerDesktop",
+        "podman_desktop": "RedHat.Podman-Desktop",
+        "windows_terminal": "Microsoft.WindowsTerminal",
+        "powershell7": "Microsoft.PowerShell",
+        "sysinternals": "Microsoft.Sysinternals",
+        "everything": "voidtools.Everything",
     }
 
     CLOUD_TOOLS = {
-        'azure_cli': 'Microsoft.AzureCLI',
-        'aws_cli': 'Amazon.AWSCLI',
-        'gcloud': 'Google.CloudSDK',
-        'kubectl': 'Kubernetes.kubectl',
-        'terraform': 'Hashicorp.Terraform',
-        'ansible': 'Ansible.Ansible',
-        'helm': 'Helm.Helm',
+        "azure_cli": "Microsoft.AzureCLI",
+        "aws_cli": "Amazon.AWSCLI",
+        "gcloud": "Google.CloudSDK",
+        "kubectl": "Kubernetes.kubectl",
+        "terraform": "Hashicorp.Terraform",
+        "ansible": "Ansible.Ansible",
+        "helm": "Helm.Helm",
     }
 
     DATABASE_CLIENTS = {
-        'pgadmin': 'PostgreSQL.pgAdmin',
-        'mysql_workbench': 'Oracle.MySQLWorkbench',
-        'mongodb_compass': 'MongoDB.Compass.Community',
-        'redis_insight': 'RedisLabs.RedisInsight',
-        'sql_server_management_studio': 'Microsoft.SQLServerManagementStudio',
+        "pgadmin": "PostgreSQL.pgAdmin",
+        "mysql_workbench": "Oracle.MySQLWorkbench",
+        "mongodb_compass": "MongoDB.Compass.Community",
+        "redis_insight": "RedisLabs.RedisInsight",
+        "sql_server_management_studio": "Microsoft.SQLServerManagementStudio",
     }
 
     def __init__(self, image_path: Path, index: int = 1):
@@ -266,7 +271,7 @@ class DeveloperEnvironment:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_dev_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_dev_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -274,19 +279,29 @@ class DeveloperEnvironment:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
 
             self._mounted = True
@@ -306,11 +321,11 @@ class DeveloperEnvironment:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -320,8 +335,11 @@ class DeveloperEnvironment:
             logger.error(f"Failed to unmount image: {e.stderr.decode()}")
             raise
 
-    def apply_profile(self, profile: DevelopmentProfile,
-                     progress_callback: Optional[Callable[[int, str], None]] = None):
+    def apply_profile(
+        self,
+        profile: DevelopmentProfile,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+    ):
         """
         Apply a development profile with recommended tools.
 
@@ -336,70 +354,72 @@ class DeveloperEnvironment:
 
         profiles = {
             DevelopmentProfile.WEB_FRONTEND: {
-                'ides': ['vscode'],
-                'languages': ['nodejs'],
-                'tools': ['git', 'github_desktop', 'postman'],
-                'terminal': True,
-                'wsl2': True,
+                "ides": ["vscode"],
+                "languages": ["nodejs"],
+                "tools": ["git", "github_desktop", "postman"],
+                "terminal": True,
+                "wsl2": True,
             },
             DevelopmentProfile.WEB_BACKEND: {
-                'ides': ['vscode', 'pycharm'],
-                'languages': ['python', 'nodejs'],
-                'tools': ['git', 'postman', 'dbeaver', 'docker_desktop'],
-                'terminal': True,
-                'wsl2': True,
-                'database_clients': ['pgadmin', 'mongodb_compass'],
+                "ides": ["vscode", "pycharm"],
+                "languages": ["python", "nodejs"],
+                "tools": ["git", "postman", "dbeaver", "docker_desktop"],
+                "terminal": True,
+                "wsl2": True,
+                "database_clients": ["pgadmin", "mongodb_compass"],
             },
             DevelopmentProfile.FULL_STACK: {
-                'ides': ['vscode'],
-                'languages': ['python', 'nodejs', 'dotnet'],
-                'tools': ['git', 'github_desktop', 'postman', 'dbeaver', 'docker_desktop'],
-                'terminal': True,
-                'wsl2': True,
-                'database_clients': ['pgadmin', 'mongodb_compass'],
-                'cloud_tools': ['kubectl', 'azure_cli'],
+                "ides": ["vscode"],
+                "languages": ["python", "nodejs", "dotnet"],
+                "tools": ["git", "github_desktop", "postman", "dbeaver", "docker_desktop"],
+                "terminal": True,
+                "wsl2": True,
+                "database_clients": ["pgadmin", "mongodb_compass"],
+                "cloud_tools": ["kubectl", "azure_cli"],
             },
             DevelopmentProfile.MOBILE: {
-                'ides': ['vscode', 'android_studio'],
-                'languages': ['nodejs', 'java17'],
-                'tools': ['git', 'android_studio'],
-                'terminal': True,
+                "ides": ["vscode", "android_studio"],
+                "languages": ["nodejs", "java17"],
+                "tools": ["git", "android_studio"],
+                "terminal": True,
             },
             DevelopmentProfile.DATA_SCIENCE: {
-                'ides': ['vscode', 'pycharm'],
-                'languages': ['python', 'nodejs'],
-                'tools': ['git', 'azure_data_studio'],
-                'terminal': True,
+                "ides": ["vscode", "pycharm"],
+                "languages": ["python", "nodejs"],
+                "tools": ["git", "azure_data_studio"],
+                "terminal": True,
             },
             DevelopmentProfile.DEVOPS: {
-                'ides': ['vscode'],
-                'languages': ['python', 'go'],
-                'tools': ['git', 'docker_desktop'],
-                'terminal': True,
-                'wsl2': True,
-                'cloud_tools': ['kubectl', 'terraform', 'ansible', 'helm', 'azure_cli', 'aws_cli'],
+                "ides": ["vscode"],
+                "languages": ["python", "go"],
+                "tools": ["git", "docker_desktop"],
+                "terminal": True,
+                "wsl2": True,
+                "cloud_tools": ["kubectl", "terraform", "ansible", "helm", "azure_cli", "aws_cli"],
             },
             DevelopmentProfile.GAME_DEV: {
-                'ides': ['vscode', 'rider'],
-                'languages': ['dotnet'],
-                'tools': ['git', 'github_desktop'],
-                'terminal': True,
+                "ides": ["vscode", "rider"],
+                "languages": ["dotnet"],
+                "tools": ["git", "github_desktop"],
+                "terminal": True,
             },
             DevelopmentProfile.MINIMAL: {
-                'ides': ['vscode'],
-                'languages': ['python'],
-                'tools': ['git'],
-                'terminal': True,
+                "ides": ["vscode"],
+                "languages": ["python"],
+                "tools": ["git"],
+                "terminal": True,
             },
         }
 
         profile_config = profiles.get(profile, profiles[DevelopmentProfile.MINIMAL])
 
         # Update configuration
-        self.config.ides = profile_config.get('ides', [])
-        self.config.enable_wsl2 = profile_config.get('wsl2', False)
+        self.config.ides = profile_config.get("ides", [])
+        self.config.enable_wsl2 = profile_config.get("wsl2", False)
 
-        logger.info(f"Profile configuration: {len(self.config.ides)} IDEs, WSL2={self.config.enable_wsl2}")
+        logger.info(
+            f"Profile configuration: {len(self.config.ides)} IDEs, WSL2={self.config.enable_wsl2}"
+        )
 
     def enable_developer_mode(self):
         """Enable Windows Developer Mode"""
@@ -412,15 +432,26 @@ class DeveloperEnvironment:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock',
-                '/v', 'AllowDevelopmentWithoutDevLicense',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Microsoft\\Windows\\CurrentVersion\\AppModelUnlock",
+                    "/v",
+                    "AllowDevelopmentWithoutDevLicense",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Developer mode enabled successfully")
 
@@ -429,7 +460,7 @@ class DeveloperEnvironment:
             raise
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def install_languages(self, languages: List[str]):
         """Install programming language runtimes"""
@@ -446,11 +477,13 @@ class DeveloperEnvironment:
             if lang in self.LANGUAGE_PACKAGES:
                 package_id = self.LANGUAGE_PACKAGES[lang]
                 script_lines.append(f"Write-Host 'Installing {lang}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured language installation: {lang}")
 
         script_path = scripts_dir / "install_languages.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Language installation script created: {len(languages)} languages")
@@ -464,16 +497,16 @@ class DeveloperEnvironment:
         scripts_dir.mkdir(parents=True, exist_ok=True)
 
         ide_packages = {
-            'vscode': IDE.VSCODE.value,
-            'vscode_insiders': IDE.VSCODE_INSIDERS.value,
-            'visual_studio': IDE.VISUAL_STUDIO_COMMUNITY.value,
-            'pycharm': IDE.PYCHARM_COMMUNITY.value,
-            'intellij': IDE.INTELLIJ_COMMUNITY.value,
-            'webstorm': IDE.WEBSTORM.value,
-            'rider': IDE.RIDER.value,
-            'android_studio': IDE.ANDROID_STUDIO.value,
-            'sublime': IDE.SUBLIME_TEXT.value,
-            'notepadpp': IDE.NOTEPADPP.value,
+            "vscode": IDE.VSCODE.value,
+            "vscode_insiders": IDE.VSCODE_INSIDERS.value,
+            "visual_studio": IDE.VISUAL_STUDIO_COMMUNITY.value,
+            "pycharm": IDE.PYCHARM_COMMUNITY.value,
+            "intellij": IDE.INTELLIJ_COMMUNITY.value,
+            "webstorm": IDE.WEBSTORM.value,
+            "rider": IDE.RIDER.value,
+            "android_studio": IDE.ANDROID_STUDIO.value,
+            "sublime": IDE.SUBLIME_TEXT.value,
+            "notepadpp": IDE.NOTEPADPP.value,
         }
 
         script_lines = ["# IDE Installation\n"]
@@ -483,11 +516,13 @@ class DeveloperEnvironment:
             if ide in ide_packages:
                 package_id = ide_packages[ide]
                 script_lines.append(f"Write-Host 'Installing {ide}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured IDE installation: {ide}")
 
         script_path = scripts_dir / "install_ides.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"IDE installation script created: {len(ides)} IDEs")
@@ -507,11 +542,13 @@ class DeveloperEnvironment:
             if tool in self.DEV_TOOLS:
                 package_id = self.DEV_TOOLS[tool]
                 script_lines.append(f"Write-Host 'Installing {tool}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured tool installation: {tool}")
 
         script_path = scripts_dir / "install_dev_tools.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Development tools installation script created: {len(tools)} tools")
@@ -531,11 +568,13 @@ class DeveloperEnvironment:
             if tool in self.CLOUD_TOOLS:
                 package_id = self.CLOUD_TOOLS[tool]
                 script_lines.append(f"Write-Host 'Installing {tool}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured cloud tool installation: {tool}")
 
         script_path = scripts_dir / "install_cloud_tools.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Cloud tools installation script created: {len(tools)} tools")
@@ -555,11 +594,13 @@ class DeveloperEnvironment:
             if client in self.DATABASE_CLIENTS:
                 package_id = self.DATABASE_CLIENTS[client]
                 script_lines.append(f"Write-Host 'Installing {client}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured database client installation: {client}")
 
         script_path = scripts_dir / "install_db_clients.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Database client installation script created: {len(clients)} clients")
@@ -586,7 +627,7 @@ Write-Host 'Git configured successfully'
 """
 
         script_path = scripts_dir / "configure_git.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         logger.info("Git configuration script created")
@@ -600,20 +641,30 @@ Write-Host 'Git configured successfully'
 
         try:
             # Enable WSL feature
-            subprocess.run([
-                'dism', f'/Image:{self.mount_point}',
-                '/Enable-Feature',
-                '/FeatureName:Microsoft-Windows-Subsystem-Linux',
-                '/All'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Enable-Feature",
+                    "/FeatureName:Microsoft-Windows-Subsystem-Linux",
+                    "/All",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Enable Virtual Machine Platform
-            subprocess.run([
-                'dism', f'/Image:{self.mount_point}',
-                '/Enable-Feature',
-                '/FeatureName:VirtualMachinePlatform',
-                '/All'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Enable-Feature",
+                    "/FeatureName:VirtualMachinePlatform",
+                    "/All",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("WSL2 features enabled successfully")
 
@@ -632,10 +683,10 @@ Write-Host 'Git configured successfully'
         scripts_dir.mkdir(parents=True, exist_ok=True)
 
         font_packages = {
-            'cascadia-code': 'Microsoft.CascadiaCode',
-            'firacode': 'FiraCode.FiraCode',
-            'jetbrains-mono': 'JetBrains.JetBrainsMono',
-            'victor-mono': 'rubjo.VictorMono',
+            "cascadia-code": "Microsoft.CascadiaCode",
+            "firacode": "FiraCode.FiraCode",
+            "jetbrains-mono": "JetBrains.JetBrainsMono",
+            "victor-mono": "rubjo.VictorMono",
         }
 
         script_lines = ["# Developer Font Installation\n"]
@@ -645,10 +696,12 @@ Write-Host 'Git configured successfully'
             if font in font_packages:
                 package_id = font_packages[font]
                 script_lines.append(f"Write-Host 'Installing {font}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
 
         script_path = scripts_dir / "install_fonts.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Font installation script created: {len(fonts)} fonts")
@@ -658,7 +711,7 @@ def setup_dev_environment(
     image_path: Path,
     profile: DevelopmentProfile = DevelopmentProfile.MINIMAL,
     custom_config: Optional[DevelopmentConfiguration] = None,
-    progress_callback: Optional[Callable[[int, str], None]] = None
+    progress_callback: Optional[Callable[[int, str], None]] = None,
 ) -> None:
     """
     Quick development environment setup with a single function call.
@@ -703,9 +756,9 @@ def setup_dev_environment(
         if progress_callback:
             progress_callback(40, "Installing programming languages...")
         if dev.config.install_python:
-            dev.install_languages(['python'])
+            dev.install_languages(["python"])
         if dev.config.install_nodejs:
-            dev.install_languages(['nodejs'])
+            dev.install_languages(["nodejs"])
 
         if progress_callback:
             progress_callback(60, "Installing IDEs...")
@@ -716,13 +769,13 @@ def setup_dev_environment(
             progress_callback(80, "Installing development tools...")
         dev_tools = []
         if dev.config.install_git:
-            dev_tools.append('git')
+            dev_tools.append("git")
         if dev.config.install_docker_desktop:
-            dev_tools.append('docker_desktop')
+            dev_tools.append("docker_desktop")
         if dev.config.install_windows_terminal:
-            dev_tools.append('windows_terminal')
+            dev_tools.append("windows_terminal")
         if dev.config.install_powershell7:
-            dev_tools.append('powershell7')
+            dev_tools.append("powershell7")
 
         if dev_tools:
             dev.install_dev_tools(dev_tools)

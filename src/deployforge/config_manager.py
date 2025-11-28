@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ModuleConfig:
     """Configuration for a single module."""
+
     enabled: bool = False
     options: Dict[str, Any] = field(default_factory=dict)
     priority: int = 100  # Lower = run first
@@ -43,60 +44,60 @@ class ConfigurationManager:
         """Register all available modules with their metadata."""
 
         # Gaming modules
-        self.modules['gaming_competitive'] = ModuleConfig(priority=10)
-        self.modules['gaming_balanced'] = ModuleConfig(priority=10)
-        self.modules['gaming_quality'] = ModuleConfig(priority=10)
-        self.modules['gaming_streaming'] = ModuleConfig(priority=10)
-        self.modules['network_latency'] = ModuleConfig(priority=20)
-        self.modules['game_mode'] = ModuleConfig(priority=30)
-        self.modules['gpu_scheduling'] = ModuleConfig(priority=30)
+        self.modules["gaming_competitive"] = ModuleConfig(priority=10)
+        self.modules["gaming_balanced"] = ModuleConfig(priority=10)
+        self.modules["gaming_quality"] = ModuleConfig(priority=10)
+        self.modules["gaming_streaming"] = ModuleConfig(priority=10)
+        self.modules["network_latency"] = ModuleConfig(priority=20)
+        self.modules["game_mode"] = ModuleConfig(priority=30)
+        self.modules["gpu_scheduling"] = ModuleConfig(priority=30)
 
         # Debloating modules
-        self.modules['debloat_aggressive'] = ModuleConfig(priority=5)
-        self.modules['debloat_moderate'] = ModuleConfig(priority=5)
-        self.modules['debloat_minimal'] = ModuleConfig(priority=5)
-        self.modules['privacy_hardening'] = ModuleConfig(priority=15)
-        self.modules['disable_telemetry'] = ModuleConfig(priority=15)
-        self.modules['dns_over_https'] = ModuleConfig(priority=25)
+        self.modules["debloat_aggressive"] = ModuleConfig(priority=5)
+        self.modules["debloat_moderate"] = ModuleConfig(priority=5)
+        self.modules["debloat_minimal"] = ModuleConfig(priority=5)
+        self.modules["privacy_hardening"] = ModuleConfig(priority=15)
+        self.modules["disable_telemetry"] = ModuleConfig(priority=15)
+        self.modules["dns_over_https"] = ModuleConfig(priority=25)
 
         # Visual customization
-        self.modules['dark_theme'] = ModuleConfig(priority=40)
-        self.modules['light_theme'] = ModuleConfig(priority=40)
-        self.modules['custom_wallpaper'] = ModuleConfig(priority=45)
-        self.modules['taskbar_left'] = ModuleConfig(priority=45)
-        self.modules['taskbar_center'] = ModuleConfig(priority=45)
-        self.modules['modern_ui'] = ModuleConfig(priority=45)
+        self.modules["dark_theme"] = ModuleConfig(priority=40)
+        self.modules["light_theme"] = ModuleConfig(priority=40)
+        self.modules["custom_wallpaper"] = ModuleConfig(priority=45)
+        self.modules["taskbar_left"] = ModuleConfig(priority=45)
+        self.modules["taskbar_center"] = ModuleConfig(priority=45)
+        self.modules["modern_ui"] = ModuleConfig(priority=45)
 
         # Developer tools
-        self.modules['wsl2'] = ModuleConfig(priority=50)
-        self.modules['hyperv'] = ModuleConfig(priority=50)
-        self.modules['sandbox'] = ModuleConfig(priority=50)
-        self.modules['dev_mode'] = ModuleConfig(priority=55)
-        self.modules['docker'] = ModuleConfig(priority=60)
-        self.modules['git'] = ModuleConfig(priority=60)
-        self.modules['vscode'] = ModuleConfig(priority=60)
+        self.modules["wsl2"] = ModuleConfig(priority=50)
+        self.modules["hyperv"] = ModuleConfig(priority=50)
+        self.modules["sandbox"] = ModuleConfig(priority=50)
+        self.modules["dev_mode"] = ModuleConfig(priority=55)
+        self.modules["docker"] = ModuleConfig(priority=60)
+        self.modules["git"] = ModuleConfig(priority=60)
+        self.modules["vscode"] = ModuleConfig(priority=60)
 
         # Enterprise features
-        self.modules['bitlocker'] = ModuleConfig(priority=70)
-        self.modules['cis_benchmark'] = ModuleConfig(priority=75)
-        self.modules['disa_stig'] = ModuleConfig(priority=75)
-        self.modules['gpo_hardening'] = ModuleConfig(priority=75)
-        self.modules['certificate_enrollment'] = ModuleConfig(priority=80)
-        self.modules['mdt_integration'] = ModuleConfig(priority=85)
+        self.modules["bitlocker"] = ModuleConfig(priority=70)
+        self.modules["cis_benchmark"] = ModuleConfig(priority=75)
+        self.modules["disa_stig"] = ModuleConfig(priority=75)
+        self.modules["gpo_hardening"] = ModuleConfig(priority=75)
+        self.modules["certificate_enrollment"] = ModuleConfig(priority=80)
+        self.modules["mdt_integration"] = ModuleConfig(priority=85)
 
         # Applications
-        self.modules['browsers'] = ModuleConfig(priority=90)
-        self.modules['office'] = ModuleConfig(priority=90)
-        self.modules['creative_suite'] = ModuleConfig(priority=90)
-        self.modules['gaming_launchers'] = ModuleConfig(priority=90)
-        self.modules['winget_packages'] = ModuleConfig(priority=95)
+        self.modules["browsers"] = ModuleConfig(priority=90)
+        self.modules["office"] = ModuleConfig(priority=90)
+        self.modules["creative_suite"] = ModuleConfig(priority=90)
+        self.modules["gaming_launchers"] = ModuleConfig(priority=90)
+        self.modules["winget_packages"] = ModuleConfig(priority=95)
 
         # System optimization
-        self.modules['performance_optimize'] = ModuleConfig(priority=35)
-        self.modules['network_optimize'] = ModuleConfig(priority=35)
-        self.modules['storage_optimize'] = ModuleConfig(priority=35)
-        self.modules['ram_optimize'] = ModuleConfig(priority=35)
-        self.modules['startup_optimize'] = ModuleConfig(priority=35)
+        self.modules["performance_optimize"] = ModuleConfig(priority=35)
+        self.modules["network_optimize"] = ModuleConfig(priority=35)
+        self.modules["storage_optimize"] = ModuleConfig(priority=35)
+        self.modules["ram_optimize"] = ModuleConfig(priority=35)
+        self.modules["startup_optimize"] = ModuleConfig(priority=35)
 
     def configure_from_gui(self, feature_selections: Dict[str, bool]):
         """
@@ -110,7 +111,9 @@ class ConfigurationManager:
                 self.modules[feature_id].enabled = enabled
                 logger.info(f"Feature {feature_id}: {'enabled' if enabled else 'disabled'}")
 
-    def execute_all(self, image_path: Path, profile_name: str, output_path: Optional[Path] = None) -> bool:
+    def execute_all(
+        self, image_path: Path, profile_name: str, output_path: Optional[Path] = None
+    ) -> bool:
         """
         Execute all enabled modules in priority order.
 
@@ -124,8 +127,7 @@ class ConfigurationManager:
         """
         # Get enabled modules sorted by priority
         enabled_modules = [
-            (name, config) for name, config in self.modules.items()
-            if config.enabled
+            (name, config) for name, config in self.modules.items() if config.enabled
         ]
         enabled_modules.sort(key=lambda x: x[1].priority)
 
@@ -171,60 +173,54 @@ class ConfigurationManager:
         # Map module names to actual implementations
         module_executors = {
             # Gaming
-            'gaming_competitive': self._apply_gaming_profile,
-            'gaming_balanced': self._apply_gaming_profile,
-            'gaming_quality': self._apply_gaming_profile,
-            'gaming_streaming': self._apply_gaming_profile,
-            'network_latency': self._apply_network_optimization,
-            'game_mode': self._enable_game_mode,
-            'gpu_scheduling': self._enable_gpu_scheduling,
-
+            "gaming_competitive": self._apply_gaming_profile,
+            "gaming_balanced": self._apply_gaming_profile,
+            "gaming_quality": self._apply_gaming_profile,
+            "gaming_streaming": self._apply_gaming_profile,
+            "network_latency": self._apply_network_optimization,
+            "game_mode": self._enable_game_mode,
+            "gpu_scheduling": self._enable_gpu_scheduling,
             # Debloating
-            'debloat_aggressive': lambda p: self._apply_debloat(p, 'aggressive'),
-            'debloat_moderate': lambda p: self._apply_debloat(p, 'moderate'),
-            'debloat_minimal': lambda p: self._apply_debloat(p, 'minimal'),
-            'privacy_hardening': self._apply_privacy_hardening,
-            'disable_telemetry': self._disable_telemetry,
-            'dns_over_https': self._enable_dns_over_https,
-
+            "debloat_aggressive": lambda p: self._apply_debloat(p, "aggressive"),
+            "debloat_moderate": lambda p: self._apply_debloat(p, "moderate"),
+            "debloat_minimal": lambda p: self._apply_debloat(p, "minimal"),
+            "privacy_hardening": self._apply_privacy_hardening,
+            "disable_telemetry": self._disable_telemetry,
+            "dns_over_https": self._enable_dns_over_https,
             # Visual
-            'dark_theme': lambda p: self._apply_theme(p, 'dark'),
-            'light_theme': lambda p: self._apply_theme(p, 'light'),
-            'custom_wallpaper': self._apply_custom_wallpaper,
-            'taskbar_left': lambda p: self._configure_taskbar(p, 'left'),
-            'taskbar_center': lambda p: self._configure_taskbar(p, 'center'),
-            'modern_ui': self._apply_modern_ui,
-
+            "dark_theme": lambda p: self._apply_theme(p, "dark"),
+            "light_theme": lambda p: self._apply_theme(p, "light"),
+            "custom_wallpaper": self._apply_custom_wallpaper,
+            "taskbar_left": lambda p: self._configure_taskbar(p, "left"),
+            "taskbar_center": lambda p: self._configure_taskbar(p, "center"),
+            "modern_ui": self._apply_modern_ui,
             # Developer
-            'wsl2': self._enable_wsl2,
-            'hyperv': self._enable_hyperv,
-            'sandbox': self._enable_sandbox,
-            'dev_mode': self._enable_dev_mode,
-            'docker': self._install_docker,
-            'git': self._install_git,
-            'vscode': self._install_vscode,
-
+            "wsl2": self._enable_wsl2,
+            "hyperv": self._enable_hyperv,
+            "sandbox": self._enable_sandbox,
+            "dev_mode": self._enable_dev_mode,
+            "docker": self._install_docker,
+            "git": self._install_git,
+            "vscode": self._install_vscode,
             # Enterprise
-            'bitlocker': self._configure_bitlocker,
-            'cis_benchmark': self._apply_cis_benchmark,
-            'disa_stig': self._apply_disa_stig,
-            'gpo_hardening': self._apply_gpo_hardening,
-            'certificate_enrollment': self._setup_certificate_enrollment,
-            'mdt_integration': self._configure_mdt_integration,
-
+            "bitlocker": self._configure_bitlocker,
+            "cis_benchmark": self._apply_cis_benchmark,
+            "disa_stig": self._apply_disa_stig,
+            "gpo_hardening": self._apply_gpo_hardening,
+            "certificate_enrollment": self._setup_certificate_enrollment,
+            "mdt_integration": self._configure_mdt_integration,
             # Applications
-            'browsers': self._install_browsers,
-            'office': self._install_office,
-            'creative_suite': self._install_creative_suite,
-            'gaming_launchers': self._install_gaming_launchers,
-            'winget_packages': self._setup_winget,
-
+            "browsers": self._install_browsers,
+            "office": self._install_office,
+            "creative_suite": self._install_creative_suite,
+            "gaming_launchers": self._install_gaming_launchers,
+            "winget_packages": self._setup_winget,
             # Optimization
-            'performance_optimize': self._optimize_performance,
-            'network_optimize': self._optimize_network,
-            'storage_optimize': self._optimize_storage,
-            'ram_optimize': self._optimize_ram,
-            'startup_optimize': self._optimize_startup,
+            "performance_optimize": self._optimize_performance,
+            "network_optimize": self._optimize_network,
+            "storage_optimize": self._optimize_storage,
+            "ram_optimize": self._optimize_ram,
+            "startup_optimize": self._optimize_startup,
         }
 
         executor = module_executors.get(module_name)
@@ -239,6 +235,7 @@ class ConfigurationManager:
         """Apply gaming optimizations."""
         try:
             from deployforge.gaming import GamingOptimizer, GamingProfile
+
             optimizer = GamingOptimizer(image_path)
             optimizer.mount()
             optimizer.apply_profile(GamingProfile.COMPETITIVE)
@@ -252,6 +249,7 @@ class ConfigurationManager:
         """Apply network optimizations."""
         try:
             from deployforge.network import NetworkOptimizer
+
             optimizer = NetworkOptimizer(image_path)
             optimizer.mount()
             optimizer.reduce_latency()
@@ -275,12 +273,13 @@ class ConfigurationManager:
         """Apply debloating."""
         try:
             from deployforge.debloat import DebloatManager, DebloatLevel
+
             manager = DebloatManager(image_path)
             manager.mount()
 
-            if level == 'aggressive':
+            if level == "aggressive":
                 manager.remove_bloatware(DebloatLevel.AGGRESSIVE)
-            elif level == 'moderate':
+            elif level == "moderate":
                 manager.remove_bloatware(DebloatLevel.MODERATE)
             else:
                 manager.remove_bloatware(DebloatLevel.MINIMAL)
@@ -295,6 +294,7 @@ class ConfigurationManager:
         """Apply privacy hardening."""
         try:
             from deployforge.privacy_hardening import PrivacyHardening
+
             hardening = PrivacyHardening(image_path)
             hardening.mount()
             hardening.apply_all_tweaks()
@@ -318,6 +318,7 @@ class ConfigurationManager:
         """Apply visual theme."""
         try:
             from deployforge.themes import ThemeManager
+
             manager = ThemeManager(image_path)
             manager.mount()
             manager.set_theme(theme)
@@ -341,6 +342,7 @@ class ConfigurationManager:
         """Apply modern UI tweaks."""
         try:
             from deployforge.ui_customization import UICustomizer
+
             customizer = UICustomizer(image_path)
             customizer.mount()
             customizer.apply_modern_tweaks()
@@ -354,6 +356,7 @@ class ConfigurationManager:
         """Enable WSL2."""
         try:
             from deployforge.features import FeatureManager
+
             manager = FeatureManager(image_path)
             manager.mount()
             manager.enable_wsl2()
@@ -367,6 +370,7 @@ class ConfigurationManager:
         """Enable Hyper-V."""
         try:
             from deployforge.features import FeatureManager
+
             manager = FeatureManager(image_path)
             manager.mount()
             manager.enable_hyperv()
@@ -380,6 +384,7 @@ class ConfigurationManager:
         """Enable Windows Sandbox."""
         try:
             from deployforge.features import FeatureManager
+
             manager = FeatureManager(image_path)
             manager.mount()
             manager.enable_sandbox()
@@ -398,8 +403,9 @@ class ConfigurationManager:
         """Install Docker."""
         try:
             from deployforge.packages import PackageManager
+
             manager = PackageManager(image_path)
-            manager.add_package('docker-desktop')
+            manager.add_package("docker-desktop")
             return True
         except ImportError:
             self._log("[WARN] Package manager not available")
@@ -409,8 +415,9 @@ class ConfigurationManager:
         """Install Git."""
         try:
             from deployforge.packages import PackageManager
+
             manager = PackageManager(image_path)
-            manager.add_package('git')
+            manager.add_package("git")
             return True
         except ImportError:
             self._log("[WARN] Package manager not available")
@@ -420,8 +427,9 @@ class ConfigurationManager:
         """Install VS Code."""
         try:
             from deployforge.packages import PackageManager
+
             manager = PackageManager(image_path)
-            manager.add_package('vscode')
+            manager.add_package("vscode")
             return True
         except ImportError:
             self._log("[WARN] Package manager not available")
@@ -461,9 +469,10 @@ class ConfigurationManager:
         """Install browsers."""
         try:
             from deployforge.browsers import BrowserBundler
+
             bundler = BrowserBundler(image_path)
-            bundler.add_browser('firefox')
-            bundler.add_browser('brave')
+            bundler.add_browser("firefox")
+            bundler.add_browser("brave")
             return True
         except ImportError:
             self._log("[WARN] Browser module not available")
@@ -478,6 +487,7 @@ class ConfigurationManager:
         """Install creative suite."""
         try:
             from deployforge.creative import CreativeSuite
+
             suite = CreativeSuite(image_path)
             suite.install_tools()
             return True
@@ -489,6 +499,7 @@ class ConfigurationManager:
         """Install gaming launchers."""
         try:
             from deployforge.launchers import GamingLaunchers
+
             launchers = GamingLaunchers(image_path)
             launchers.install_all()
             return True
@@ -500,6 +511,7 @@ class ConfigurationManager:
         """Setup WinGet."""
         try:
             from deployforge.packages import PackageManager
+
             manager = PackageManager(image_path)
             manager.setup_winget()
             return True
@@ -511,6 +523,7 @@ class ConfigurationManager:
         """Optimize performance."""
         try:
             from deployforge.optimizer import SystemOptimizer
+
             optimizer = SystemOptimizer(image_path)
             optimizer.mount()
             optimizer.optimize_performance()
@@ -524,6 +537,7 @@ class ConfigurationManager:
         """Optimize network."""
         try:
             from deployforge.network import NetworkOptimizer
+
             optimizer = NetworkOptimizer(image_path)
             optimizer.mount()
             optimizer.optimize_all()

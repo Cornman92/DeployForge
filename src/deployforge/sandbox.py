@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SandboxConfig:
     """Windows Sandbox configuration"""
+
     vgpu: str = "Enable"  # Enable, Disable, Default
     networking: str = "Enable"  # Enable, Disable, Default
     mapped_folders: List[Dict[str, str]] = None
@@ -64,13 +65,17 @@ class WindowsSandbox:
         """Check if Windows Sandbox is available"""
         try:
             result = subprocess.run(
-                ['powershell', '-Command', 'Get-WindowsOptionalFeature -Online -FeatureName Containers-DisposableClientVM'],
+                [
+                    "powershell",
+                    "-Command",
+                    "Get-WindowsOptionalFeature -Online -FeatureName Containers-DisposableClientVM",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=10
+                timeout=10,
             )
 
-            if 'State' in result.stdout and 'Enabled' in result.stdout:
+            if "State" in result.stdout and "Enabled" in result.stdout:
                 logger.info("Windows Sandbox is available")
             else:
                 logger.warning("Windows Sandbox may not be enabled")
@@ -83,7 +88,7 @@ class WindowsSandbox:
         image: Path,
         test_script: Optional[Path] = None,
         timeout: int = 600,
-        capture_logs: bool = True
+        capture_logs: bool = True,
     ) -> Dict[str, Any]:
         """
         Test image in Windows Sandbox.
@@ -103,26 +108,24 @@ class WindowsSandbox:
         logger.info(f"Testing image in Windows Sandbox: {image}")
 
         # Create temporary directory for test resources
-        temp_dir = Path(tempfile.mkdtemp(prefix='deployforge_sandbox_'))
+        temp_dir = Path(tempfile.mkdtemp(prefix="deployforge_sandbox_"))
 
         try:
             # Create sandbox configuration
             config = SandboxConfig()
 
             # Map image directory
-            config.mapped_folders.append({
-                'HostFolder': str(image.parent),
-                'ReadOnly': 'true'
-            })
+            config.mapped_folders.append({"HostFolder": str(image.parent), "ReadOnly": "true"})
 
             # Create test script
             if test_script:
-                config.mapped_folders.append({
-                    'HostFolder': str(test_script.parent),
-                    'ReadOnly': 'true'
-                })
+                config.mapped_folders.append(
+                    {"HostFolder": str(test_script.parent), "ReadOnly": "true"}
+                )
 
-                config.logon_command = f'powershell.exe -ExecutionPolicy Bypass -File "{test_script.name}"'
+                config.logon_command = (
+                    f'powershell.exe -ExecutionPolicy Bypass -File "{test_script.name}"'
+                )
 
             # Generate sandbox config file
             config_file = temp_dir / "sandbox.wsb"
@@ -139,66 +142,67 @@ class WindowsSandbox:
             # Cleanup
             if temp_dir.exists():
                 import shutil
+
                 shutil.rmtree(temp_dir, ignore_errors=True)
 
     def _create_config_file(self, config: SandboxConfig, output_path: Path):
         """Create Windows Sandbox configuration file"""
-        root = ET.Element('Configuration')
+        root = ET.Element("Configuration")
 
         # vGPU
-        vgpu = ET.SubElement(root, 'VGpu')
+        vgpu = ET.SubElement(root, "VGpu")
         vgpu.text = config.vgpu
 
         # Networking
-        networking = ET.SubElement(root, 'Networking')
+        networking = ET.SubElement(root, "Networking")
         networking.text = config.networking
 
         # Mapped folders
         if config.mapped_folders:
-            mapped_folders = ET.SubElement(root, 'MappedFolders')
+            mapped_folders = ET.SubElement(root, "MappedFolders")
 
             for folder in config.mapped_folders:
-                mapped_folder = ET.SubElement(mapped_folders, 'MappedFolder')
+                mapped_folder = ET.SubElement(mapped_folders, "MappedFolder")
 
-                host_folder = ET.SubElement(mapped_folder, 'HostFolder')
-                host_folder.text = folder['HostFolder']
+                host_folder = ET.SubElement(mapped_folder, "HostFolder")
+                host_folder.text = folder["HostFolder"]
 
-                read_only = ET.SubElement(mapped_folder, 'ReadOnly')
-                read_only.text = folder.get('ReadOnly', 'false')
+                read_only = ET.SubElement(mapped_folder, "ReadOnly")
+                read_only.text = folder.get("ReadOnly", "false")
 
         # Logon command
         if config.logon_command:
-            logon_command = ET.SubElement(root, 'LogonCommand')
-            command = ET.SubElement(logon_command, 'Command')
+            logon_command = ET.SubElement(root, "LogonCommand")
+            command = ET.SubElement(logon_command, "Command")
             command.text = config.logon_command
 
         # Audio input
-        audio_input = ET.SubElement(root, 'AudioInput')
+        audio_input = ET.SubElement(root, "AudioInput")
         audio_input.text = config.audio_input
 
         # Video input
-        video_input = ET.SubElement(root, 'VideoInput')
+        video_input = ET.SubElement(root, "VideoInput")
         video_input.text = config.video_input
 
         # Protected client
-        protected_client = ET.SubElement(root, 'ProtectedClient')
+        protected_client = ET.SubElement(root, "ProtectedClient")
         protected_client.text = config.protected_client
 
         # Printer redirection
-        printer_redirection = ET.SubElement(root, 'PrinterRedirection')
+        printer_redirection = ET.SubElement(root, "PrinterRedirection")
         printer_redirection.text = config.printer_redirection
 
         # Clipboard redirection
-        clipboard_redirection = ET.SubElement(root, 'ClipboardRedirection')
+        clipboard_redirection = ET.SubElement(root, "ClipboardRedirection")
         clipboard_redirection.text = config.clipboard_redirection
 
         # Memory
-        memory_in_mb = ET.SubElement(root, 'MemoryInMB')
+        memory_in_mb = ET.SubElement(root, "MemoryInMB")
         memory_in_mb.text = str(config.memory_in_mb)
 
         # Write XML
         tree = ET.ElementTree(root)
-        tree.write(output_path, encoding='utf-8', xml_declaration=True)
+        tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
         logger.info(f"Created sandbox config: {output_path}")
 
@@ -209,9 +213,9 @@ class WindowsSandbox:
         try:
             # Launch sandbox
             process = subprocess.Popen(
-                ['WindowsSandbox.exe', str(config_file)],
+                ["WindowsSandbox.exe", str(config_file)],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
             )
 
             # Wait for completion or timeout
@@ -226,19 +230,15 @@ class WindowsSandbox:
             duration = time.time() - start_time
 
             return {
-                'success': exit_code == 0,
-                'exit_code': exit_code,
-                'duration_seconds': duration,
-                'timed_out': exit_code == -1
+                "success": exit_code == 0,
+                "exit_code": exit_code,
+                "duration_seconds": duration,
+                "timed_out": exit_code == -1,
             }
 
         except Exception as e:
             logger.error(f"Sandbox execution failed: {e}")
-            return {
-                'success': False,
-                'error': str(e),
-                'duration_seconds': time.time() - start_time
-            }
+            return {"success": False, "error": str(e), "duration_seconds": time.time() - start_time}
 
 
 def create_validation_script(output_path: Path, tests: List[str]):
@@ -257,11 +257,11 @@ $results = @()
 """
 
     test_templates = {
-        'boot': """
+        "boot": """
 Write-Host "Test: Boot validation"
 $results += @{Test="Boot"; Status="PASS"}
 """,
-        'services': """
+        "services": """
 Write-Host "Test: Critical services"
 $criticalServices = @('wuauserv', 'BITS', 'CryptSvc')
 foreach ($svc in $criticalServices) {
@@ -273,7 +273,7 @@ foreach ($svc in $criticalServices) {
     }
 }
 """,
-        'network': """
+        "network": """
 Write-Host "Test: Network connectivity"
 $ping = Test-Connection -ComputerName "8.8.8.8" -Count 1 -Quiet
 if ($ping) {
@@ -282,7 +282,7 @@ if ($ping) {
     $results += @{Test="Network"; Status="FAIL"}
 }
 """,
-        'disk': """
+        "disk": """
 Write-Host "Test: Disk space"
 $disk = Get-PSDrive -Name C
 if ($disk.Free -gt 10GB) {
@@ -290,7 +290,7 @@ if ($disk.Free -gt 10GB) {
 } else {
     $results += @{Test="DiskSpace"; Status="FAIL"}
 }
-"""
+""",
     }
 
     for test in tests:
@@ -312,17 +312,13 @@ if ($failed -gt 0) {
 }
 """
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(script)
 
     logger.info(f"Created validation script: {output_path}")
 
 
-def quick_sandbox_test(
-    image: Path,
-    tests: Optional[List[str]] = None,
-    timeout: int = 300
-) -> bool:
+def quick_sandbox_test(image: Path, tests: Optional[List[str]] = None, timeout: int = 300) -> bool:
     """
     Quick sandbox test of image.
 
@@ -342,10 +338,10 @@ def quick_sandbox_test(
         )
     """
     if tests is None:
-        tests = ['boot', 'services', 'network']
+        tests = ["boot", "services", "network"]
 
     # Create validation script
-    temp_dir = Path(tempfile.mkdtemp(prefix='deployforge_test_'))
+    temp_dir = Path(tempfile.mkdtemp(prefix="deployforge_test_"))
     test_script = temp_dir / "validate.ps1"
 
     create_validation_script(test_script, tests)
@@ -356,6 +352,7 @@ def quick_sandbox_test(
 
     # Cleanup
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
-    return result['success']
+    return result["success"]

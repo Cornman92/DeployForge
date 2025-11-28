@@ -26,8 +26,8 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.version_option(version=__version__)
-@click.option('-v', '--verbose', is_flag=True, help='Enable verbose logging')
-@click.option('--log-file', type=click.Path(), help='Log file path')
+@click.option("-v", "--verbose", is_flag=True, help="Enable verbose logging")
+@click.option("--log-file", type=click.Path(), help="Log file path")
 @click.pass_context
 def main(ctx, verbose, log_file):
     """
@@ -40,7 +40,7 @@ def main(ctx, verbose, log_file):
     Features: Partitioning, WinPE, Answer Files, Multi-language Support.
     """
     ctx.ensure_object(dict)
-    ctx.obj['verbose'] = verbose
+    ctx.obj["verbose"] = verbose
 
     # Setup logging
     level = "DEBUG" if verbose else "INFO"
@@ -60,23 +60,23 @@ def formats():
     table.add_column("Description", style="green")
 
     format_descriptions = {
-        '.iso': 'ISO 9660 - Optical disc image',
-        '.wim': 'WIM - Windows Imaging Format',
-        '.esd': 'ESD - Electronic Software Download (compressed WIM)',
-        '.ppkg': 'PPKG - Provisioning Package',
-        '.vhd': 'VHD - Virtual Hard Disk',
-        '.vhdx': 'VHDX - Hyper-V Virtual Hard Disk',
+        ".iso": "ISO 9660 - Optical disc image",
+        ".wim": "WIM - Windows Imaging Format",
+        ".esd": "ESD - Electronic Software Download (compressed WIM)",
+        ".ppkg": "PPKG - Provisioning Package",
+        ".vhd": "VHD - Virtual Hard Disk",
+        ".vhdx": "VHDX - Hyper-V Virtual Hard Disk",
     }
 
     for fmt in formats_list:
-        desc = format_descriptions.get(fmt, 'Unknown')
+        desc = format_descriptions.get(fmt, "Unknown")
         table.add_row(fmt, desc)
 
     console.print(table)
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
+@click.argument("image_path", type=click.Path(exists=True))
 def info(image_path):
     """Get information about an image file."""
     try:
@@ -109,8 +109,8 @@ def info(image_path):
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
-@click.option('-p', '--path', default='/', help='Path within the image to list')
+@click.argument("image_path", type=click.Path(exists=True))
+@click.option("-p", "--path", default="/", help="Path within the image to list")
 def list(image_path, path):
     """List files in an image."""
     try:
@@ -129,9 +129,9 @@ def list(image_path, path):
             table.add_column("Size", style="green")
 
             for file_info in files:
-                file_type = "DIR" if file_info.get('is_dir') else "FILE"
-                size = "-" if file_info.get('is_dir') else f"{file_info.get('size', 0):,} bytes"
-                table.add_row(file_info['name'], file_type, size)
+                file_type = "DIR" if file_info.get("is_dir") else "FILE"
+                size = "-" if file_info.get("is_dir") else f"{file_info.get('size', 0):,} bytes"
+                table.add_row(file_info["name"], file_type, size)
 
             console.print(table)
 
@@ -149,9 +149,9 @@ def list(image_path, path):
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('source_file', type=click.Path(exists=True))
-@click.argument('destination_path')
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("source_file", type=click.Path(exists=True))
+@click.argument("destination_path")
 def add(image_path, source_file, destination_path):
     """Add a file to an image."""
     try:
@@ -166,7 +166,9 @@ def add(image_path, source_file, destination_path):
             with console.status(f"[bold green]Adding {source_file.name}..."):
                 manager.add_file(source_file, destination_path)
 
-            console.print(f"[bold green]✓[/bold green] Added {source_file.name} to {destination_path}")
+            console.print(
+                f"[bold green]✓[/bold green] Added {source_file.name} to {destination_path}"
+            )
 
         finally:
             with console.status("[bold yellow]Saving changes..."):
@@ -184,8 +186,8 @@ def add(image_path, source_file, destination_path):
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('file_path')
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("file_path")
 def remove(image_path, file_path):
     """Remove a file from an image."""
     try:
@@ -217,9 +219,9 @@ def remove(image_path, file_path):
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('source_path')
-@click.argument('destination_file', type=click.Path())
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("source_path")
+@click.argument("destination_file", type=click.Path())
 def extract(image_path, source_path, destination_file):
     """Extract a file from an image."""
     try:
@@ -250,9 +252,9 @@ def extract(image_path, source_path, destination_file):
 
 
 @main.command()
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('mount_point', type=click.Path())
-@click.option('--index', default=1, help='Image index for WIM/ESD files')
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("mount_point", type=click.Path())
+@click.option("--index", default=1, help="Image index for WIM/ESD files")
 def mount(image_path, mount_point, index):
     """Mount an image to a directory."""
     try:
@@ -263,16 +265,18 @@ def mount(image_path, mount_point, index):
             manager = ImageManager(image_path)
 
             # Handle WIM/ESD index
-            if image_path.suffix.lower() in ['.wim', '.esd']:
+            if image_path.suffix.lower() in [".wim", ".esd"]:
                 manager.handler.index = index
 
             mount_path = manager.mount(mount_point)
 
         console.print(f"[bold green]✓[/bold green] Mounted at {mount_path}")
-        console.print(Panel(
-            f"[yellow]Image is mounted. Use 'deployforge unmount {mount_path}' when done.[/yellow]",
-            title="Warning"
-        ))
+        console.print(
+            Panel(
+                f"[yellow]Image is mounted. Use 'deployforge unmount {mount_path}' when done.[/yellow]",
+                title="Warning",
+            )
+        )
 
     except DeployForgeError as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
@@ -284,8 +288,8 @@ def mount(image_path, mount_point, index):
 
 
 @main.command()
-@click.argument('mount_point', type=click.Path(exists=True))
-@click.option('--save/--discard', default=False, help='Save or discard changes')
+@click.argument("mount_point", type=click.Path(exists=True))
+@click.option("--save/--discard", default=False, help="Save or discard changes")
 def unmount(mount_point, save):
     """Unmount a previously mounted image."""
     try:
@@ -307,8 +311,8 @@ def partition():
     pass
 
 
-@partition.command('list')
-@click.argument('image_path', type=click.Path(exists=True))
+@partition.command("list")
+@click.argument("image_path", type=click.Path(exists=True))
 def partition_list(image_path):
     """List partitions in a disk image."""
     try:
@@ -331,7 +335,7 @@ def partition_list(image_path):
                 part.name,
                 part.type_guid[:8] + "...",
                 f"{part.size_gb:.2f} GB",
-                part.filesystem or "N/A"
+                part.filesystem or "N/A",
             )
 
         console.print(table)
@@ -342,10 +346,10 @@ def partition_list(image_path):
         sys.exit(1)
 
 
-@partition.command('create')
-@click.argument('image_path', type=click.Path())
-@click.option('--size', default=50, help='Disk size in GB')
-@click.option('--recovery/--no-recovery', default=True, help='Include recovery partition')
+@partition.command("create")
+@click.argument("image_path", type=click.Path())
+@click.option("--size", default=50, help="Disk size in GB")
+@click.option("--recovery/--no-recovery", default=True, help="Include recovery partition")
 def partition_create(image_path, size, recovery):
     """Create a new UEFI disk image with standard Windows partitioning."""
     try:
@@ -365,9 +369,9 @@ def partition_create(image_path, size, recovery):
         sys.exit(1)
 
 
-@partition.command('export')
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('output_json', type=click.Path())
+@partition.command("export")
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("output_json", type=click.Path())
 def partition_export(image_path, output_json):
     """Export partition layout to JSON."""
     try:
@@ -393,13 +397,13 @@ def unattend():
     pass
 
 
-@unattend.command('create')
-@click.argument('output_path', type=click.Path())
-@click.option('--product-key', help='Windows product key')
-@click.option('--username', default='Admin', help='Local admin username')
-@click.option('--password', default='P@ssw0rd', help='Local admin password')
-@click.option('--computer-name', help='Computer name')
-@click.option('--timezone', default='Pacific Standard Time', help='Time zone')
+@unattend.command("create")
+@click.argument("output_path", type=click.Path())
+@click.option("--product-key", help="Windows product key")
+@click.option("--username", default="Admin", help="Local admin username")
+@click.option("--password", default="P@ssw0rd", help="Local admin password")
+@click.option("--computer-name", help="Computer name")
+@click.option("--timezone", default="Pacific Standard Time", help="Time zone")
 def unattend_create(output_path, product_key, username, password, computer_name, timezone):
     """Create a basic unattend.xml file."""
     try:
@@ -411,7 +415,7 @@ def unattend_create(output_path, product_key, username, password, computer_name,
                 username=username,
                 password=password,
                 computer_name=computer_name or "DESKTOP-PC",
-                time_zone=timezone
+                time_zone=timezone,
             )
 
             generator = UnattendGenerator(config)
@@ -435,8 +439,8 @@ def language():
     pass
 
 
-@language.command('list')
-@click.argument('image_path', type=click.Path(exists=True))
+@language.command("list")
+@click.argument("image_path", type=click.Path(exists=True))
 def language_list(image_path):
     """List installed languages in an image."""
     try:
@@ -455,9 +459,9 @@ def language_list(image_path):
         sys.exit(1)
 
 
-@language.command('add')
-@click.argument('image_path', type=click.Path(exists=True))
-@click.argument('language_pack', type=click.Path(exists=True))
+@language.command("add")
+@click.argument("image_path", type=click.Path(exists=True))
+@click.argument("language_pack", type=click.Path(exists=True))
 def language_add(image_path, language_pack):
     """Add a language pack to an image."""
     try:
@@ -476,5 +480,5 @@ def language_add(image_path, language_pack):
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

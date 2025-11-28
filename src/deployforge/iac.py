@@ -27,12 +27,14 @@ logger = logging.getLogger(__name__)
 
 class ConfigFormat(Enum):
     """Configuration file format"""
+
     YAML = "yaml"
     JSON = "json"
 
 
 class BuildStage(Enum):
     """Build stage"""
+
     INIT = "init"
     PARTITIONS = "partitions"
     BASE = "base"
@@ -50,17 +52,14 @@ class BuildStage(Enum):
 @dataclass
 class DeploymentVariable:
     """Deployment variable for interpolation"""
+
     name: str
     value: Any
     description: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
-        return {
-            'name': self.name,
-            'value': self.value,
-            'description': self.description
-        }
+        return {"name": self.name, "value": self.value, "description": self.description}
 
 
 @dataclass
@@ -70,6 +69,7 @@ class DeploymentConfig:
 
     Represents a full deployment definition loaded from YAML/JSON.
     """
+
     version: str
     name: str
     description: str = ""
@@ -122,40 +122,28 @@ class DeploymentConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'version': self.version,
-            'name': self.name,
-            'description': self.description,
-            'base_image': {
-                'source': str(self.base_image_source) if self.base_image_source else None,
-                'index': self.base_image_index
+            "version": self.version,
+            "name": self.name,
+            "description": self.description,
+            "base_image": {
+                "source": str(self.base_image_source) if self.base_image_source else None,
+                "index": self.base_image_index,
             },
-            'output': {
-                'path': str(self.output_path) if self.output_path else None,
-                'format': self.output_format
+            "output": {
+                "path": str(self.output_path) if self.output_path else None,
+                "format": self.output_format,
             },
-            'partitions': {
-                'layout': self.partition_layout,
-                'disk_size_gb': self.disk_size_gb
-            },
-            'drivers': [str(p) for p in self.driver_paths],
-            'updates': [str(p) for p in self.update_paths],
-            'applications': self.applications,
-            'security': {
-                'baseline': self.security_baseline,
-                'custom': self.security_custom
-            },
-            'certificates': self.certificates,
-            'gpo': {
-                'backups': [str(p) for p in self.gpo_backups],
-                'settings': self.gpo_settings
-            },
-            'languages': {
-                'default': self.default_language,
-                'additional': self.languages
-            },
-            'unattend': self.unattend_settings,
-            'variables': self.variables,
-            'stages': self.stages
+            "partitions": {"layout": self.partition_layout, "disk_size_gb": self.disk_size_gb},
+            "drivers": [str(p) for p in self.driver_paths],
+            "updates": [str(p) for p in self.update_paths],
+            "applications": self.applications,
+            "security": {"baseline": self.security_baseline, "custom": self.security_custom},
+            "certificates": self.certificates,
+            "gpo": {"backups": [str(p) for p in self.gpo_backups], "settings": self.gpo_settings},
+            "languages": {"default": self.default_language, "additional": self.languages},
+            "unattend": self.unattend_settings,
+            "variables": self.variables,
+            "stages": self.stages,
         }
 
 
@@ -189,11 +177,11 @@ class ConfigLoader:
             raise FileNotFoundError(f"Config file not found: {config_path}")
 
         # Detect format
-        if config_path.suffix.lower() in ['.yaml', '.yml']:
-            with open(config_path, 'r') as f:
+        if config_path.suffix.lower() in [".yaml", ".yml"]:
+            with open(config_path, "r") as f:
                 data = yaml.safe_load(f)
-        elif config_path.suffix.lower() == '.json':
-            with open(config_path, 'r') as f:
+        elif config_path.suffix.lower() == ".json":
+            with open(config_path, "r") as f:
                 data = json.load(f)
         else:
             raise ValueError(f"Unsupported config format: {config_path.suffix}")
@@ -208,7 +196,7 @@ class ConfigLoader:
     def _parse_config(self, data: Dict[str, Any], base_path: Path) -> DeploymentConfig:
         """Parse configuration data"""
         # Extract variables first
-        variables = data.get('variables', {})
+        variables = data.get("variables", {})
         self.variables = variables
 
         # Perform variable interpolation
@@ -216,102 +204,102 @@ class ConfigLoader:
 
         # Create config object
         config = DeploymentConfig(
-            version=data.get('version', '1.0'),
-            name=data.get('name', 'Unnamed Deployment'),
-            description=data.get('description', ''),
-            variables=variables
+            version=data.get("version", "1.0"),
+            name=data.get("name", "Unnamed Deployment"),
+            description=data.get("description", ""),
+            variables=variables,
         )
 
         # Parse base image
-        if 'base_image' in data:
-            base_img = data['base_image']
+        if "base_image" in data:
+            base_img = data["base_image"]
             if isinstance(base_img, str):
                 config.base_image_source = base_path / base_img
             elif isinstance(base_img, dict):
-                config.base_image_source = base_path / base_img.get('source', '')
-                config.base_image_index = base_img.get('index', 1)
+                config.base_image_source = base_path / base_img.get("source", "")
+                config.base_image_index = base_img.get("index", 1)
 
         # Parse output
-        if 'output' in data:
-            output = data['output']
+        if "output" in data:
+            output = data["output"]
             if isinstance(output, str):
                 config.output_path = base_path / output
             elif isinstance(output, dict):
-                config.output_path = base_path / output.get('path', '')
-                config.output_format = output.get('format', 'wim')
+                config.output_path = base_path / output.get("path", "")
+                config.output_format = output.get("format", "wim")
 
         # Parse partitions
-        if 'partitions' in data:
-            partitions = data['partitions']
+        if "partitions" in data:
+            partitions = data["partitions"]
             if isinstance(partitions, dict):
-                config.partition_layout = partitions.get('layout', 'uefi-standard')
-                config.disk_size_gb = partitions.get('disk_size_gb', 100)
+                config.partition_layout = partitions.get("layout", "uefi-standard")
+                config.disk_size_gb = partitions.get("disk_size_gb", 100)
 
         # Parse drivers
-        if 'drivers' in data:
-            drivers = data['drivers']
+        if "drivers" in data:
+            drivers = data["drivers"]
             if isinstance(drivers, list):
                 config.driver_paths = [base_path / d for d in drivers]
             elif isinstance(drivers, str):
                 config.driver_paths = [base_path / drivers]
 
         # Parse updates
-        if 'updates' in data:
-            updates = data['updates']
+        if "updates" in data:
+            updates = data["updates"]
             if isinstance(updates, list):
                 config.update_paths = [base_path / u for u in updates]
             elif isinstance(updates, str):
                 config.update_paths = [base_path / updates]
 
         # Parse customizations
-        if 'customizations' in data:
-            custom = data['customizations']
+        if "customizations" in data:
+            custom = data["customizations"]
 
             # Applications
-            if 'applications' in custom:
-                config.applications = custom['applications']
+            if "applications" in custom:
+                config.applications = custom["applications"]
 
             # Security
-            if 'security' in custom:
-                security = custom['security']
+            if "security" in custom:
+                security = custom["security"]
                 if isinstance(security, str):
                     config.security_baseline = security
                 elif isinstance(security, dict):
-                    config.security_baseline = security.get('baseline')
-                    config.security_custom = security.get('custom')
+                    config.security_baseline = security.get("baseline")
+                    config.security_custom = security.get("custom")
 
             # Certificates
-            if 'certificates' in custom:
-                config.certificates = custom['certificates']
+            if "certificates" in custom:
+                config.certificates = custom["certificates"]
 
             # GPO
-            if 'gpo' in custom:
-                gpo = custom['gpo']
+            if "gpo" in custom:
+                gpo = custom["gpo"]
                 if isinstance(gpo, list):
                     config.gpo_backups = [base_path / g for g in gpo]
                 elif isinstance(gpo, dict):
-                    config.gpo_backups = [base_path / g for g in gpo.get('backups', [])]
-                    config.gpo_settings = gpo.get('settings')
+                    config.gpo_backups = [base_path / g for g in gpo.get("backups", [])]
+                    config.gpo_settings = gpo.get("settings")
 
             # Languages
-            if 'languages' in custom:
-                langs = custom['languages']
+            if "languages" in custom:
+                langs = custom["languages"]
                 if isinstance(langs, dict):
-                    config.default_language = langs.get('default', 'en-US')
-                    config.languages = langs.get('additional', [])
+                    config.default_language = langs.get("default", "en-US")
+                    config.languages = langs.get("additional", [])
                 elif isinstance(langs, list):
                     config.languages = langs
 
             # Unattend
-            if 'unattend' in custom:
-                config.unattend_settings = custom['unattend']
+            if "unattend" in custom:
+                config.unattend_settings = custom["unattend"]
 
         # Parse stages
-        if 'stages' in data:
-            config.stages = data['stages']
+        if "stages" in data:
+            config.stages = data["stages"]
         else:
             # Default stages
-            config.stages = ['all']
+            config.stages = ["all"]
 
         return config
 
@@ -327,13 +315,13 @@ class ConfigLoader:
             return [self._interpolate_variables(item, variables) for item in data]
         elif isinstance(data, str):
             # Replace ${VAR_NAME} with variable value
-            pattern = r'\$\{([^}]+)\}'
+            pattern = r"\$\{([^}]+)\}"
             matches = re.findall(pattern, data)
 
             result = data
             for var_name in matches:
                 if var_name in variables:
-                    result = result.replace(f'${{{var_name}}}', str(variables[var_name]))
+                    result = result.replace(f"${{{var_name}}}", str(variables[var_name]))
                 else:
                     logger.warning(f"Variable ${{{var_name}}} not defined")
 
@@ -399,10 +387,10 @@ class ConfigLoader:
         data = config.to_dict()
 
         if format == "yaml":
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 yaml.dump(data, f, default_flow_style=False, sort_keys=False)
         elif format == "json":
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(data, f, indent=2)
         else:
             raise ValueError(f"Unsupported format: {format}")
@@ -455,7 +443,7 @@ class DeploymentBuilder:
             logger.info(f"Starting build: {self.config.name}")
 
             stages_to_run = self.config.stages
-            if 'all' in stages_to_run:
+            if "all" in stages_to_run:
                 stages_to_run = [stage.value for stage in BuildStage]
 
             for stage_name in stages_to_run:
@@ -532,13 +520,11 @@ class DeploymentBuilder:
 
         if self.config.partition_layout == "uefi-standard":
             pm.create_standard_windows_layout(
-                disk_size_gb=self.config.disk_size_gb or 100,
-                include_recovery=True
+                disk_size_gb=self.config.disk_size_gb or 100, include_recovery=True
             )
         elif self.config.partition_layout == "bios-legacy":
             pm.create_standard_windows_layout(
-                disk_size_gb=self.config.disk_size_gb or 100,
-                include_recovery=False
+                disk_size_gb=self.config.disk_size_gb or 100, include_recovery=False
             )
 
         return True
@@ -553,6 +539,7 @@ class DeploymentBuilder:
 
         # Copy base image to output
         import shutil
+
         shutil.copy2(self.config.base_image_source, self.config.output_path)
 
         return True
@@ -612,10 +599,10 @@ class DeploymentBuilder:
 
         for app_config in self.config.applications:
             app = AppPackage(
-                name=app_config.get('name', ''),
-                installer=Path(app_config.get('source', '')),
-                install_type=InstallType(app_config.get('type', 'msi')),
-                arguments=app_config.get('arguments', '')
+                name=app_config.get("name", ""),
+                installer=Path(app_config.get("source", "")),
+                install_type=InstallType(app_config.get("type", "msi")),
+                arguments=app_config.get("arguments", ""),
             )
             ai.add_application(app)
 
@@ -662,8 +649,8 @@ class DeploymentBuilder:
         cm.mount()
 
         for cert_config in self.config.certificates:
-            cert_path = Path(cert_config.get('path', ''))
-            store = CertificateStore(cert_config.get('store', 'Root'))
+            cert_path = Path(cert_config.get("path", ""))
+            store = CertificateStore(cert_config.get("store", "Root"))
             cm.add_certificate(cert_path, store)
 
         cm.unmount(save_changes=True)
@@ -729,8 +716,8 @@ class DeploymentBuilder:
         config = UnattendConfig()
 
         # Apply unattend settings from config
-        if 'computer_name' in self.config.unattend_settings:
-            config.network_settings.computer_name = self.config.unattend_settings['computer_name']
+        if "computer_name" in self.config.unattend_settings:
+            config.network_settings.computer_name = self.config.unattend_settings["computer_name"]
 
         # Generate and inject unattend.xml
         generator = UnattendGenerator(config)

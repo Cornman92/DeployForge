@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityStandard(Enum):
     """Security compliance standards"""
+
     CIS_WINDOWS_10 = "cis-windows-10"
     CIS_WINDOWS_11 = "cis-windows-11"
     CIS_WINDOWS_SERVER_2019 = "cis-server-2019"
@@ -45,6 +46,7 @@ class SecurityStandard(Enum):
 
 class ServiceStartupType(Enum):
     """Windows service startup types"""
+
     AUTOMATIC = "auto"
     AUTOMATIC_DELAYED = "delayed-auto"
     MANUAL = "demand"
@@ -53,6 +55,7 @@ class ServiceStartupType(Enum):
 
 class AuditPolicy(Enum):
     """Audit policy settings"""
+
     SUCCESS = "Success"
     FAILURE = "Failure"
     SUCCESS_FAILURE = "Success,Failure"
@@ -62,6 +65,7 @@ class AuditPolicy(Enum):
 @dataclass
 class RegistryTweak:
     """Registry security tweak"""
+
     key: str
     value_name: str
     value_data: Any
@@ -69,31 +73,33 @@ class RegistryTweak:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'key': self.key,
-            'value_name': self.value_name,
-            'value_data': self.value_data,
-            'value_type': self.value_type
+            "key": self.key,
+            "value_name": self.value_name,
+            "value_data": self.value_data,
+            "value_type": self.value_type,
         }
 
 
 @dataclass
 class ServiceConfig:
     """Service configuration"""
+
     name: str
     startup_type: ServiceStartupType
     description: Optional[str] = None
 
     def to_dict(self) -> Dict[str, str]:
         return {
-            'name': self.name,
-            'startup': self.startup_type.value,
-            'description': self.description or ''
+            "name": self.name,
+            "startup": self.startup_type.value,
+            "description": self.description or "",
         }
 
 
 @dataclass
 class FirewallRule:
     """Firewall rule configuration"""
+
     name: str
     action: str  # Allow, Block
     direction: str  # Inbound, Outbound
@@ -105,12 +111,12 @@ class FirewallRule:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'name': self.name,
-            'action': self.action,
-            'direction': self.direction,
-            'protocol': self.protocol,
-            'local_port': self.local_port,
-            'enabled': self.enabled
+            "name": self.name,
+            "action": self.action,
+            "direction": self.direction,
+            "protocol": self.protocol,
+            "local_port": self.local_port,
+            "enabled": self.enabled,
         }
 
 
@@ -143,16 +149,16 @@ class HardeningProfile:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'name': self.name,
-            'description': self.description,
-            'standard': self.standard.value,
-            'disable_services': self.disable_services,
-            'service_configs': [s.to_dict() for s in self.service_configs],
-            'registry_tweaks': [r.to_dict() for r in self.registry_tweaks],
-            'firewall_rules': [f.to_dict() for f in self.firewall_rules],
-            'audit_policies': self.audit_policies,
-            'user_rights': self.user_rights,
-            'security_options': self.security_options
+            "name": self.name,
+            "description": self.description,
+            "standard": self.standard.value,
+            "disable_services": self.disable_services,
+            "service_configs": [s.to_dict() for s in self.service_configs],
+            "registry_tweaks": [r.to_dict() for r in self.registry_tweaks],
+            "firewall_rules": [f.to_dict() for f in self.firewall_rules],
+            "audit_policies": self.audit_policies,
+            "user_rights": self.user_rights,
+            "security_options": self.security_options,
         }
 
 
@@ -180,127 +186,122 @@ class SecurityBaseline:
         profile = HardeningProfile(
             name="CIS Windows 11 Enterprise Level 1",
             description="CIS Benchmark for Windows 11 Enterprise (Level 1)",
-            standard=SecurityStandard.CIS_WINDOWS_11
+            standard=SecurityStandard.CIS_WINDOWS_11,
         )
 
         # Disable unnecessary services
         profile.disable_services = [
-            'RemoteRegistry',
-            'RemoteAccess',
-            'SSDPSRV',  # SSDP Discovery
-            'upnphost',  # UPnP Device Host
-            'WMPNetworkSvc',  # Windows Media Player Network Sharing
-            'XblAuthManager',  # Xbox Live Auth Manager
-            'XblGameSave',  # Xbox Live Game Save
-            'XboxNetApiSvc',  # Xbox Live Networking Service
+            "RemoteRegistry",
+            "RemoteAccess",
+            "SSDPSRV",  # SSDP Discovery
+            "upnphost",  # UPnP Device Host
+            "WMPNetworkSvc",  # Windows Media Player Network Sharing
+            "XblAuthManager",  # Xbox Live Auth Manager
+            "XblGameSave",  # Xbox Live Game Save
+            "XboxNetApiSvc",  # Xbox Live Networking Service
         ]
 
         # Registry security tweaks
         profile.registry_tweaks = [
             # Windows Update settings
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU',
-                value_name='NoAutoUpdate',
+                key=r"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU",
+                value_name="NoAutoUpdate",
                 value_data=0,  # Enable automatic updates
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU',
-                value_name='AUOptions',
+                key=r"HKLM\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU",
+                value_name="AUOptions",
                 value_data=4,  # Auto download and schedule install
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Disable AutoPlay
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer',
-                value_name='NoDriveTypeAutoRun',
+                key=r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer",
+                value_name="NoDriveTypeAutoRun",
                 value_data=255,  # Disable all AutoPlay
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Screen saver settings
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System',
-                value_name='InactivityTimeoutSecs',
+                key=r"HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
+                value_name="InactivityTimeoutSecs",
                 value_data=900,  # 15 minutes
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Disable Windows Error Reporting
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting',
-                value_name='Disabled',
+                key=r"HKLM\SOFTWARE\Policies\Microsoft\Windows\Windows Error Reporting",
+                value_name="Disabled",
                 value_data=1,
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Enable Windows Defender
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Policies\Microsoft\Windows Defender',
-                value_name='DisableAntiSpyware',
+                key=r"HKLM\SOFTWARE\Policies\Microsoft\Windows Defender",
+                value_name="DisableAntiSpyware",
                 value_data=0,  # Enable Defender
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # SMB security
             RegistryTweak(
-                key=r'HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters',
-                value_name='SMB1',
+                key=r"HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters",
+                value_name="SMB1",
                 value_data=0,  # Disable SMBv1
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
         ]
 
         # Audit policies
         profile.audit_policies = {
-            'Account Logon\\Credential Validation': AuditPolicy.SUCCESS_FAILURE.value,
-            'Account Management\\Security Group Management': AuditPolicy.SUCCESS_FAILURE.value,
-            'Account Management\\User Account Management': AuditPolicy.SUCCESS_FAILURE.value,
-            'Logon/Logoff\\Logoff': AuditPolicy.SUCCESS.value,
-            'Logon/Logoff\\Logon': AuditPolicy.SUCCESS_FAILURE.value,
-            'Object Access\\File System': AuditPolicy.FAILURE.value,
-            'Object Access\\Registry': AuditPolicy.FAILURE.value,
-            'Policy Change\\Audit Policy Change': AuditPolicy.SUCCESS_FAILURE.value,
-            'System\\Security State Change': AuditPolicy.SUCCESS.value,
-            'System\\Security System Extension': AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Logon\\Credential Validation": AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Management\\Security Group Management": AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Management\\User Account Management": AuditPolicy.SUCCESS_FAILURE.value,
+            "Logon/Logoff\\Logoff": AuditPolicy.SUCCESS.value,
+            "Logon/Logoff\\Logon": AuditPolicy.SUCCESS_FAILURE.value,
+            "Object Access\\File System": AuditPolicy.FAILURE.value,
+            "Object Access\\Registry": AuditPolicy.FAILURE.value,
+            "Policy Change\\Audit Policy Change": AuditPolicy.SUCCESS_FAILURE.value,
+            "System\\Security State Change": AuditPolicy.SUCCESS.value,
+            "System\\Security System Extension": AuditPolicy.SUCCESS_FAILURE.value,
         }
 
         # Firewall rules
         profile.firewall_rules = [
             FirewallRule(
-                name='Block_SMBv1_Inbound',
-                action='Block',
-                direction='Inbound',
-                protocol='TCP',
-                local_port='445'
+                name="Block_SMBv1_Inbound",
+                action="Block",
+                direction="Inbound",
+                protocol="TCP",
+                local_port="445",
             ),
             FirewallRule(
-                name='Block_NetBIOS_Inbound',
-                action='Block',
-                direction='Inbound',
-                protocol='TCP',
-                local_port='137-139'
+                name="Block_NetBIOS_Inbound",
+                action="Block",
+                direction="Inbound",
+                protocol="TCP",
+                local_port="137-139",
             ),
         ]
 
         # User rights assignments
         profile.user_rights = {
-            'SeNetworkLogonRight': ['Administrators', 'Authenticated Users'],
-            'SeRemoteInteractiveLogonRight': ['Administrators'],
-            'SeDenyNetworkLogonRight': ['Guests'],
-            'SeDenyRemoteInteractiveLogonRight': ['Guests'],
+            "SeNetworkLogonRight": ["Administrators", "Authenticated Users"],
+            "SeRemoteInteractiveLogonRight": ["Administrators"],
+            "SeDenyNetworkLogonRight": ["Guests"],
+            "SeDenyRemoteInteractiveLogonRight": ["Guests"],
         }
 
         # Security options
         profile.security_options = {
-            'MinimumPasswordLength': 14,
-            'PasswordComplexity': 1,  # Enabled
-            'PasswordHistory': 24,
-            'MaximumPasswordAge': 90,
-            'LockoutDuration': 15,  # minutes
-            'LockoutBadCount': 5,
-            'ResetLockoutCount': 15,  # minutes
+            "MinimumPasswordLength": 14,
+            "PasswordComplexity": 1,  # Enabled
+            "PasswordHistory": 24,
+            "MaximumPasswordAge": 90,
+            "LockoutDuration": 15,  # minutes
+            "LockoutBadCount": 5,
+            "ResetLockoutCount": 15,  # minutes
         }
 
         return profile
@@ -316,88 +317,85 @@ class SecurityBaseline:
         profile = HardeningProfile(
             name="DISA STIG Windows 11",
             description="Defense Information Systems Agency Security Technical Implementation Guide",
-            standard=SecurityStandard.DISA_STIG_WIN11
+            standard=SecurityStandard.DISA_STIG_WIN11,
         )
 
         # More restrictive than CIS
         profile.disable_services = [
-            'RemoteRegistry',
-            'RemoteAccess',
-            'SSDPSRV',
-            'upnphost',
-            'WMPNetworkSvc',
-            'XblAuthManager',
-            'XblGameSave',
-            'XboxNetApiSvc',
-            'WinRM',  # Unless specifically needed
-            'W3SVC',  # IIS (if not needed)
+            "RemoteRegistry",
+            "RemoteAccess",
+            "SSDPSRV",
+            "upnphost",
+            "WMPNetworkSvc",
+            "XblAuthManager",
+            "XblGameSave",
+            "XboxNetApiSvc",
+            "WinRM",  # Unless specifically needed
+            "W3SVC",  # IIS (if not needed)
         ]
 
         # STIG-specific registry settings
         profile.registry_tweaks = [
             # Stronger password requirements
             RegistryTweak(
-                key=r'HKLM\SYSTEM\CurrentControlSet\Control\Lsa',
-                value_name='LimitBlankPasswordUse',
+                key=r"HKLM\SYSTEM\CurrentControlSet\Control\Lsa",
+                value_name="LimitBlankPasswordUse",
                 value_data=1,
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Disable LM hash storage
             RegistryTweak(
-                key=r'HKLM\SYSTEM\CurrentControlSet\Control\Lsa',
-                value_name='NoLMHash',
+                key=r"HKLM\SYSTEM\CurrentControlSet\Control\Lsa",
+                value_name="NoLMHash",
                 value_data=1,
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Enable DEP
             RegistryTweak(
-                key=r'HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer',
-                value_name='NoDataExecutionPrevention',
+                key=r"HKLM\SOFTWARE\Policies\Microsoft\Windows\Explorer",
+                value_name="NoDataExecutionPrevention",
                 value_data=0,
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
-
             # Disable anonymous SID enumeration
             RegistryTweak(
-                key=r'HKLM\SYSTEM\CurrentControlSet\Control\Lsa',
-                value_name='RestrictAnonymousSAM',
+                key=r"HKLM\SYSTEM\CurrentControlSet\Control\Lsa",
+                value_name="RestrictAnonymousSAM",
                 value_data=1,
-                value_type='REG_DWORD'
+                value_type="REG_DWORD",
             ),
         ]
 
         # Enhanced audit policies
         profile.audit_policies = {
-            'Account Logon\\Credential Validation': AuditPolicy.SUCCESS_FAILURE.value,
-            'Account Management\\Computer Account Management': AuditPolicy.SUCCESS_FAILURE.value,
-            'Account Management\\Security Group Management': AuditPolicy.SUCCESS_FAILURE.value,
-            'Account Management\\User Account Management': AuditPolicy.SUCCESS_FAILURE.value,
-            'Detailed Tracking\\Process Creation': AuditPolicy.SUCCESS.value,
-            'Logon/Logoff\\Account Lockout': AuditPolicy.FAILURE.value,
-            'Logon/Logoff\\Logoff': AuditPolicy.SUCCESS.value,
-            'Logon/Logoff\\Logon': AuditPolicy.SUCCESS_FAILURE.value,
-            'Object Access\\File System': AuditPolicy.SUCCESS_FAILURE.value,
-            'Object Access\\Registry': AuditPolicy.SUCCESS_FAILURE.value,
-            'Policy Change\\Audit Policy Change': AuditPolicy.SUCCESS_FAILURE.value,
-            'Policy Change\\Authentication Policy Change': AuditPolicy.SUCCESS.value,
-            'Privilege Use\\Sensitive Privilege Use': AuditPolicy.SUCCESS_FAILURE.value,
-            'System\\IPsec Driver': AuditPolicy.SUCCESS_FAILURE.value,
-            'System\\Security State Change': AuditPolicy.SUCCESS.value,
-            'System\\Security System Extension': AuditPolicy.SUCCESS_FAILURE.value,
-            'System\\System Integrity': AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Logon\\Credential Validation": AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Management\\Computer Account Management": AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Management\\Security Group Management": AuditPolicy.SUCCESS_FAILURE.value,
+            "Account Management\\User Account Management": AuditPolicy.SUCCESS_FAILURE.value,
+            "Detailed Tracking\\Process Creation": AuditPolicy.SUCCESS.value,
+            "Logon/Logoff\\Account Lockout": AuditPolicy.FAILURE.value,
+            "Logon/Logoff\\Logoff": AuditPolicy.SUCCESS.value,
+            "Logon/Logoff\\Logon": AuditPolicy.SUCCESS_FAILURE.value,
+            "Object Access\\File System": AuditPolicy.SUCCESS_FAILURE.value,
+            "Object Access\\Registry": AuditPolicy.SUCCESS_FAILURE.value,
+            "Policy Change\\Audit Policy Change": AuditPolicy.SUCCESS_FAILURE.value,
+            "Policy Change\\Authentication Policy Change": AuditPolicy.SUCCESS.value,
+            "Privilege Use\\Sensitive Privilege Use": AuditPolicy.SUCCESS_FAILURE.value,
+            "System\\IPsec Driver": AuditPolicy.SUCCESS_FAILURE.value,
+            "System\\Security State Change": AuditPolicy.SUCCESS.value,
+            "System\\Security System Extension": AuditPolicy.SUCCESS_FAILURE.value,
+            "System\\System Integrity": AuditPolicy.SUCCESS_FAILURE.value,
         }
 
         # Stricter security options
         profile.security_options = {
-            'MinimumPasswordLength': 15,
-            'PasswordComplexity': 1,
-            'PasswordHistory': 24,
-            'MaximumPasswordAge': 60,  # Shorter than CIS
-            'LockoutDuration': 15,
-            'LockoutBadCount': 3,  # More restrictive
-            'ResetLockoutCount': 15,
+            "MinimumPasswordLength": 15,
+            "PasswordComplexity": 1,
+            "PasswordHistory": 24,
+            "MaximumPasswordAge": 60,  # Shorter than CIS
+            "LockoutDuration": 15,
+            "LockoutBadCount": 3,  # More restrictive
+            "ResetLockoutCount": 15,
         }
 
         return profile
@@ -443,32 +441,39 @@ class SecurityBaseline:
         hive_path = self.mount_point / "Windows" / "System32" / "config"
 
         # Determine which hive to load
-        if tweak.key.startswith('HKLM\\SOFTWARE'):
+        if tweak.key.startswith("HKLM\\SOFTWARE"):
             hive_file = hive_path / "SOFTWARE"
-            hive_key = 'HKLM\\DeployForge_SOFTWARE'
-            reg_key = tweak.key.replace('HKLM\\SOFTWARE', hive_key)
-        elif tweak.key.startswith('HKLM\\SYSTEM'):
+            hive_key = "HKLM\\DeployForge_SOFTWARE"
+            reg_key = tweak.key.replace("HKLM\\SOFTWARE", hive_key)
+        elif tweak.key.startswith("HKLM\\SYSTEM"):
             hive_file = hive_path / "SYSTEM"
-            hive_key = 'HKLM\\DeployForge_SYSTEM'
-            reg_key = tweak.key.replace('HKLM\\SYSTEM', hive_key)
+            hive_key = "HKLM\\DeployForge_SYSTEM"
+            reg_key = tweak.key.replace("HKLM\\SYSTEM", hive_key)
         else:
             logger.warning(f"Unsupported registry hive: {tweak.key}")
             return
 
         try:
             # Load hive
-            subprocess.run([
-                'reg', 'load', hive_key, str(hive_file)
-            ], check=True, timeout=30)
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, timeout=30)
 
             # Set value
-            subprocess.run([
-                'reg', 'add', reg_key,
-                '/v', tweak.value_name,
-                '/t', tweak.value_type,
-                '/d', str(tweak.value_data),
-                '/f'
-            ], check=True, timeout=30)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    reg_key,
+                    "/v",
+                    tweak.value_name,
+                    "/t",
+                    tweak.value_type,
+                    "/d",
+                    str(tweak.value_data),
+                    "/f",
+                ],
+                check=True,
+                timeout=30,
+            )
 
             logger.debug(f"Registry tweak applied: {tweak.value_name}")
 
@@ -478,9 +483,7 @@ class SecurityBaseline:
         finally:
             # Unload hive
             try:
-                subprocess.run([
-                    'reg', 'unload', hive_key
-                ], timeout=30)
+                subprocess.run(["reg", "unload", hive_key], timeout=30)
             except Exception as e:
                 logger.warning(f"Failed to unload hive: {e}")
 
@@ -490,24 +493,19 @@ class SecurityBaseline:
 
         # Load SYSTEM hive
         system_hive = self.mount_point / "Windows" / "System32" / "config" / "SYSTEM"
-        hive_key = 'HKLM\\DeployForge_SYSTEM'
+        hive_key = "HKLM\\DeployForge_SYSTEM"
 
         try:
-            subprocess.run([
-                'reg', 'load', hive_key, str(system_hive)
-            ], check=True, timeout=30)
+            subprocess.run(["reg", "load", hive_key, str(system_hive)], check=True, timeout=30)
 
             # Find service in registry
             services_key = f"{hive_key}\\ControlSet001\\Services\\{service_name}"
 
             # Set Start value to 4 (Disabled)
-            subprocess.run([
-                'reg', 'add', services_key,
-                '/v', 'Start',
-                '/t', 'REG_DWORD',
-                '/d', '4',
-                '/f'
-            ], timeout=30)
+            subprocess.run(
+                ["reg", "add", services_key, "/v", "Start", "/t", "REG_DWORD", "/d", "4", "/f"],
+                timeout=30,
+            )
 
             logger.debug(f"Service {service_name} disabled")
 
@@ -516,7 +514,7 @@ class SecurityBaseline:
 
         finally:
             try:
-                subprocess.run(['reg', 'unload', hive_key], timeout=30)
+                subprocess.run(["reg", "unload", hive_key], timeout=30)
             except Exception:
                 pass
 
@@ -525,10 +523,10 @@ class SecurityBaseline:
         logger.debug(f"Configuring service: {config.name}")
 
         startup_map = {
-            ServiceStartupType.AUTOMATIC: '2',
-            ServiceStartupType.AUTOMATIC_DELAYED: '2',
-            ServiceStartupType.MANUAL: '3',
-            ServiceStartupType.DISABLED: '4'
+            ServiceStartupType.AUTOMATIC: "2",
+            ServiceStartupType.AUTOMATIC_DELAYED: "2",
+            ServiceStartupType.MANUAL: "3",
+            ServiceStartupType.DISABLED: "4",
         }
 
         # Similar to _disable_service but with different Start value
@@ -559,30 +557,31 @@ class SecurityBaseline:
             raise RuntimeError("Image must be mounted first")
 
         report = {
-            'profile': profile.name,
-            'standard': profile.standard.value,
-            'passed': [],
-            'failed': [],
-            'warnings': [],
-            'total_checks': 0
+            "profile": profile.name,
+            "standard": profile.standard.value,
+            "passed": [],
+            "failed": [],
+            "warnings": [],
+            "total_checks": 0,
         }
 
         # Check registry tweaks
         for tweak in profile.registry_tweaks:
             check_name = f"{tweak.key}\\{tweak.value_name}"
             # Would validate actual registry value
-            report['total_checks'] += 1
-            report['passed'].append(check_name)
+            report["total_checks"] += 1
+            report["passed"].append(check_name)
 
         # Check services
         for service in profile.disable_services:
-            report['total_checks'] += 1
+            report["total_checks"] += 1
             # Would validate service is actually disabled
-            report['passed'].append(f"Service: {service}")
+            report["passed"].append(f"Service: {service}")
 
-        report['compliance_percentage'] = (
-            len(report['passed']) / report['total_checks'] * 100
-            if report['total_checks'] > 0 else 0
+        report["compliance_percentage"] = (
+            len(report["passed"]) / report["total_checks"] * 100
+            if report["total_checks"] > 0
+            else 0
         )
 
         logger.info(f"Compliance: {report['compliance_percentage']:.1f}%")
@@ -597,7 +596,7 @@ class SecurityBaseline:
             profile: HardeningProfile to export
             output_path: Output file path
         """
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(profile.to_dict(), f, indent=2)
 
         logger.info(f"Profile exported to {output_path}")
@@ -613,29 +612,31 @@ class SecurityBaseline:
         Returns:
             HardeningProfile object
         """
-        with open(profile_path, 'r', encoding='utf-8') as f:
+        with open(profile_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         profile = HardeningProfile(
-            name=data['name'],
-            description=data['description'],
-            standard=SecurityStandard(data['standard'])
+            name=data["name"],
+            description=data["description"],
+            standard=SecurityStandard(data["standard"]),
         )
 
-        profile.disable_services = data.get('disable_services', [])
+        profile.disable_services = data.get("disable_services", [])
 
         # Reconstruct registry tweaks
-        for tweak_data in data.get('registry_tweaks', []):
-            profile.registry_tweaks.append(RegistryTweak(
-                key=tweak_data['key'],
-                value_name=tweak_data['value_name'],
-                value_data=tweak_data['value_data'],
-                value_type=tweak_data['value_type']
-            ))
+        for tweak_data in data.get("registry_tweaks", []):
+            profile.registry_tweaks.append(
+                RegistryTweak(
+                    key=tweak_data["key"],
+                    value_name=tweak_data["value_name"],
+                    value_data=tweak_data["value_data"],
+                    value_type=tweak_data["value_type"],
+                )
+            )
 
-        profile.audit_policies = data.get('audit_policies', {})
-        profile.user_rights = data.get('user_rights', {})
-        profile.security_options = data.get('security_options', {})
+        profile.audit_policies = data.get("audit_policies", {})
+        profile.user_rights = data.get("user_rights", {})
+        profile.security_options = data.get("security_options", {})
 
         logger.info(f"Profile imported from {profile_path}")
 

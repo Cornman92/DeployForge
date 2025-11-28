@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ImageInfo:
     """Image metadata and information."""
+
     path: str
     name: str
     description: str
@@ -39,6 +40,7 @@ class ImageInfo:
 @dataclass
 class AnalysisReport:
     """Complete analysis report for an image."""
+
     image_info: ImageInfo
     features_count: int
     applications_count: int
@@ -77,13 +79,13 @@ class ImageAnalyzer:
         logger.info(f"Analyzing image: {self.image_path}")
 
         report = {
-            'image_info': self._get_image_info(index),
-            'features': self._get_features(index),
-            'applications': self._get_applications(index),
-            'drivers': self._get_drivers(index),
-            'updates': self._get_updates(index),
-            'size_analysis': self._analyze_size(),
-            'timestamp': datetime.now().isoformat()
+            "image_info": self._get_image_info(index),
+            "features": self._get_features(index),
+            "applications": self._get_applications(index),
+            "drivers": self._get_drivers(index),
+            "updates": self._get_updates(index),
+            "size_analysis": self._analyze_size(),
+            "timestamp": datetime.now().isoformat(),
         }
 
         return report
@@ -92,26 +94,28 @@ class ImageAnalyzer:
         """Get basic image information using DISM."""
         try:
             result = subprocess.run(
-                ['dism', '/Get-ImageInfo', f'/ImageFile:{self.image_path}', f'/Index:{index}'],
+                ["dism", "/Get-ImageInfo", f"/ImageFile:{self.image_path}", f"/Index:{index}"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             output = result.stdout
 
             # Parse DISM output
             info = {
-                'path': str(self.image_path),
-                'name': self._extract_value(output, 'Name'),
-                'description': self._extract_value(output, 'Description'),
-                'size_mb': round(self.image_path.stat().st_size / 1024 / 1024, 2),
-                'architecture': self._extract_value(output, 'Architecture'),
-                'version': self._extract_value(output, 'Version'),
-                'edition': self._extract_value(output, 'Edition'),
-                'build': self._extract_value(output, 'Build'),
-                'modified': self._extract_value(output, 'Modified'),
-                'languages': self._extract_value(output, 'Languages').split(', ') if self._extract_value(output, 'Languages') else []
+                "path": str(self.image_path),
+                "name": self._extract_value(output, "Name"),
+                "description": self._extract_value(output, "Description"),
+                "size_mb": round(self.image_path.stat().st_size / 1024 / 1024, 2),
+                "architecture": self._extract_value(output, "Architecture"),
+                "version": self._extract_value(output, "Version"),
+                "edition": self._extract_value(output, "Edition"),
+                "build": self._extract_value(output, "Build"),
+                "modified": self._extract_value(output, "Modified"),
+                "languages": self._extract_value(output, "Languages").split(", ")
+                if self._extract_value(output, "Languages")
+                else [],
             }
 
             return info
@@ -119,9 +123,9 @@ class ImageAnalyzer:
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to get image info: {e.stderr}")
             return {
-                'path': str(self.image_path),
-                'size_mb': round(self.image_path.stat().st_size / 1024 / 1024, 2),
-                'error': 'Failed to read image metadata'
+                "path": str(self.image_path),
+                "size_mb": round(self.image_path.stat().st_size / 1024 / 1024, 2),
+                "error": "Failed to read image metadata",
             }
 
     def _get_features(self, index: int = 1) -> List[Dict[str, str]]:
@@ -130,28 +134,34 @@ class ImageAnalyzer:
 
         try:
             # Mount image temporarily
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_analyze_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_analyze_"))
 
             subprocess.run(
-                ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                 f'/Index:{index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                [
+                    "dism",
+                    "/Mount-Image",
+                    f"/ImageFile:{self.image_path}",
+                    f"/Index:{index}",
+                    f"/MountDir:{mount_point}",
+                    "/ReadOnly",
+                ],
                 capture_output=True,
-                check=True
+                check=True,
             )
 
             # Get features
             result = subprocess.run(
-                ['dism', '/Image:{}'.format(mount_point), '/Get-Features'],
+                ["dism", "/Image:{}".format(mount_point), "/Get-Features"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             features = []
-            for line in result.stdout.split('\n'):
-                if line.startswith('Feature Name :'):
-                    name = line.split(':', 1)[1].strip()
-                    features.append({'name': name, 'state': 'Enabled'})
+            for line in result.stdout.split("\n"):
+                if line.startswith("Feature Name :"):
+                    name = line.split(":", 1)[1].strip()
+                    features.append({"name": name, "state": "Enabled"})
 
             return features
 
@@ -163,9 +173,9 @@ class ImageAnalyzer:
             if mount_point and mount_point.exists():
                 try:
                     subprocess.run(
-                        ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                        ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                         capture_output=True,
-                        timeout=60
+                        timeout=60,
                     )
                 except Exception as e:
                     logger.warning(f"Failed to unmount: {e}")
@@ -175,32 +185,38 @@ class ImageAnalyzer:
         mount_point = None
 
         try:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_analyze_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_analyze_"))
 
             subprocess.run(
-                ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                 f'/Index:{index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                [
+                    "dism",
+                    "/Mount-Image",
+                    f"/ImageFile:{self.image_path}",
+                    f"/Index:{index}",
+                    f"/MountDir:{mount_point}",
+                    "/ReadOnly",
+                ],
                 capture_output=True,
-                check=True
+                check=True,
             )
 
             result = subprocess.run(
-                ['dism', '/Image:{}'.format(mount_point), '/Get-ProvisionedAppxPackages'],
+                ["dism", "/Image:{}".format(mount_point), "/Get-ProvisionedAppxPackages"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             apps = []
             current_app = {}
 
-            for line in result.stdout.split('\n'):
-                if line.startswith('DisplayName :'):
+            for line in result.stdout.split("\n"):
+                if line.startswith("DisplayName :"):
                     if current_app:
                         apps.append(current_app)
-                    current_app = {'name': line.split(':', 1)[1].strip()}
-                elif line.startswith('Version :') and current_app:
-                    current_app['version'] = line.split(':', 1)[1].strip()
+                    current_app = {"name": line.split(":", 1)[1].strip()}
+                elif line.startswith("Version :") and current_app:
+                    current_app["version"] = line.split(":", 1)[1].strip()
 
             if current_app:
                 apps.append(current_app)
@@ -215,9 +231,9 @@ class ImageAnalyzer:
             if mount_point and mount_point.exists():
                 try:
                     subprocess.run(
-                        ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                        ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                         capture_output=True,
-                        timeout=60
+                        timeout=60,
                     )
                 except Exception as e:
                     logger.warning(f"Failed to unmount: {e}")
@@ -227,27 +243,33 @@ class ImageAnalyzer:
         mount_point = None
 
         try:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_analyze_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_analyze_"))
 
             subprocess.run(
-                ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                 f'/Index:{index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                [
+                    "dism",
+                    "/Mount-Image",
+                    f"/ImageFile:{self.image_path}",
+                    f"/Index:{index}",
+                    f"/MountDir:{mount_point}",
+                    "/ReadOnly",
+                ],
                 capture_output=True,
-                check=True
+                check=True,
             )
 
             result = subprocess.run(
-                ['dism', '/Image:{}'.format(mount_point), '/Get-Drivers'],
+                ["dism", "/Image:{}".format(mount_point), "/Get-Drivers"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             drivers = []
-            for line in result.stdout.split('\n'):
-                if 'Published Name' in line:
-                    driver_name = line.split(':', 1)[1].strip()
-                    drivers.append({'name': driver_name})
+            for line in result.stdout.split("\n"):
+                if "Published Name" in line:
+                    driver_name = line.split(":", 1)[1].strip()
+                    drivers.append({"name": driver_name})
 
             return drivers
 
@@ -259,9 +281,9 @@ class ImageAnalyzer:
             if mount_point and mount_point.exists():
                 try:
                     subprocess.run(
-                        ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                        ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                         capture_output=True,
-                        timeout=60
+                        timeout=60,
                     )
                 except Exception as e:
                     logger.warning(f"Failed to unmount: {e}")
@@ -271,27 +293,33 @@ class ImageAnalyzer:
         mount_point = None
 
         try:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_analyze_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_analyze_"))
 
             subprocess.run(
-                ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                 f'/Index:{index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                [
+                    "dism",
+                    "/Mount-Image",
+                    f"/ImageFile:{self.image_path}",
+                    f"/Index:{index}",
+                    f"/MountDir:{mount_point}",
+                    "/ReadOnly",
+                ],
                 capture_output=True,
-                check=True
+                check=True,
             )
 
             result = subprocess.run(
-                ['dism', '/Image:{}'.format(mount_point), '/Get-Packages'],
+                ["dism", "/Image:{}".format(mount_point), "/Get-Packages"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             updates = []
-            for line in result.stdout.split('\n'):
-                if 'Package Identity' in line:
-                    update_name = line.split(':', 1)[1].strip()
-                    updates.append({'name': update_name})
+            for line in result.stdout.split("\n"):
+                if "Package Identity" in line:
+                    update_name = line.split(":", 1)[1].strip()
+                    updates.append({"name": update_name})
 
             return updates
 
@@ -303,9 +331,9 @@ class ImageAnalyzer:
             if mount_point and mount_point.exists():
                 try:
                     subprocess.run(
-                        ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                        ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                         capture_output=True,
-                        timeout=60
+                        timeout=60,
                     )
                 except Exception as e:
                     logger.warning(f"Failed to unmount: {e}")
@@ -315,18 +343,18 @@ class ImageAnalyzer:
         size_bytes = self.image_path.stat().st_size
 
         return {
-            'bytes': size_bytes,
-            'kb': round(size_bytes / 1024, 2),
-            'mb': round(size_bytes / 1024 / 1024, 2),
-            'gb': round(size_bytes / 1024 / 1024 / 1024, 2)
+            "bytes": size_bytes,
+            "kb": round(size_bytes / 1024, 2),
+            "mb": round(size_bytes / 1024 / 1024, 2),
+            "gb": round(size_bytes / 1024 / 1024 / 1024, 2),
         }
 
     def _extract_value(self, text: str, key: str) -> str:
         """Extract value from DISM output."""
-        for line in text.split('\n'):
-            if key in line and ':' in line:
-                return line.split(':', 1)[1].strip()
-        return ''
+        for line in text.split("\n"):
+            if key in line and ":" in line:
+                return line.split(":", 1)[1].strip()
+        return ""
 
     def format_text_report(self, report: Dict[str, Any]) -> str:
         """
@@ -345,7 +373,7 @@ class ImageAnalyzer:
         output.append("")
 
         # Image info
-        info = report['image_info']
+        info = report["image_info"]
         output.append("IMAGE INFORMATION:")
         output.append(f"  Name: {info.get('name', 'N/A')}")
         output.append(f"  Description: {info.get('description', 'N/A')}")
@@ -357,7 +385,7 @@ class ImageAnalyzer:
         output.append("")
 
         # Features
-        features = report.get('features', [])
+        features = report.get("features", [])
         output.append(f"WINDOWS FEATURES: {len(features)}")
         for feature in features[:10]:
             output.append(f"  - {feature['name']}")
@@ -366,7 +394,7 @@ class ImageAnalyzer:
         output.append("")
 
         # Applications
-        apps = report.get('applications', [])
+        apps = report.get("applications", [])
         output.append(f"PROVISIONED APPLICATIONS: {len(apps)}")
         for app in apps[:10]:
             output.append(f"  - {app['name']}")
@@ -375,18 +403,18 @@ class ImageAnalyzer:
         output.append("")
 
         # Drivers
-        drivers = report.get('drivers', [])
+        drivers = report.get("drivers", [])
         output.append(f"DRIVERS: {len(drivers)}")
         output.append("")
 
         # Updates
-        updates = report.get('updates', [])
+        updates = report.get("updates", [])
         output.append(f"INSTALLED UPDATES: {len(updates)}")
         output.append("")
 
         output.append("=" * 80)
 
-        return '\n'.join(output)
+        return "\n".join(output)
 
     def generate_html_report(self, report: Dict[str, Any]) -> str:
         """
@@ -491,29 +519,33 @@ class ImageAnalyzer:
 </html>
 """
 
-        info = report['image_info']
-        features = report.get('features', [])
-        apps = report.get('applications', [])
-        drivers = report.get('drivers', [])
-        updates = report.get('updates', [])
+        info = report["image_info"]
+        features = report.get("features", [])
+        apps = report.get("applications", [])
+        drivers = report.get("drivers", [])
+        updates = report.get("updates", [])
 
-        features_rows = '\n'.join([f"<tr><td>{f['name']}</td><td>{f['state']}</td></tr>" for f in features[:50]])
-        apps_rows = '\n'.join([f"<tr><td>{a['name']}</td><td>{a.get('version', 'N/A')}</td></tr>" for a in apps[:50]])
+        features_rows = "\n".join(
+            [f"<tr><td>{f['name']}</td><td>{f['state']}</td></tr>" for f in features[:50]]
+        )
+        apps_rows = "\n".join(
+            [f"<tr><td>{a['name']}</td><td>{a.get('version', 'N/A')}</td></tr>" for a in apps[:50]]
+        )
 
         return html.format(
-            timestamp=report['timestamp'],
-            name=info.get('name', 'N/A'),
-            edition=info.get('edition', 'N/A'),
-            version=info.get('version', 'N/A'),
-            architecture=info.get('architecture', 'N/A'),
-            build=info.get('build', 'N/A'),
-            size_mb=info.get('size_mb', 0),
+            timestamp=report["timestamp"],
+            name=info.get("name", "N/A"),
+            edition=info.get("edition", "N/A"),
+            version=info.get("version", "N/A"),
+            architecture=info.get("architecture", "N/A"),
+            build=info.get("build", "N/A"),
+            size_mb=info.get("size_mb", 0),
             features_count=len(features),
             apps_count=len(apps),
             drivers_count=len(drivers),
             updates_count=len(updates),
             features_rows=features_rows,
-            apps_rows=apps_rows
+            apps_rows=apps_rows,
         )
 
 
@@ -539,23 +571,25 @@ def compare_images(image1_path: Path, image2_path: Path) -> Dict[str, Any]:
     report2 = analyzer2.analyze()
 
     # Compare features
-    features1 = set(f['name'] for f in report1.get('features', []))
-    features2 = set(f['name'] for f in report2.get('features', []))
+    features1 = set(f["name"] for f in report1.get("features", []))
+    features2 = set(f["name"] for f in report2.get("features", []))
 
     # Compare applications
-    apps1 = set(a['name'] for a in report1.get('applications', []))
-    apps2 = set(a['name'] for a in report2.get('applications', []))
+    apps1 = set(a["name"] for a in report1.get("applications", []))
+    apps2 = set(a["name"] for a in report2.get("applications", []))
 
     differences = {
-        'image1_info': report1['image_info'],
-        'image2_info': report2['image_info'],
-        'size_difference_mb': abs(report1['image_info']['size_mb'] - report2['image_info']['size_mb']),
-        'features_only_in_image1': list(features1 - features2),
-        'features_only_in_image2': list(features2 - features1),
-        'features_common': list(features1 & features2),
-        'apps_only_in_image1': list(apps1 - apps2),
-        'apps_only_in_image2': list(apps2 - apps1),
-        'apps_common': list(apps1 & apps2)
+        "image1_info": report1["image_info"],
+        "image2_info": report2["image_info"],
+        "size_difference_mb": abs(
+            report1["image_info"]["size_mb"] - report2["image_info"]["size_mb"]
+        ),
+        "features_only_in_image1": list(features1 - features2),
+        "features_only_in_image2": list(features2 - features1),
+        "features_common": list(features1 & features2),
+        "apps_only_in_image1": list(apps1 - apps2),
+        "apps_only_in_image2": list(apps2 - apps1),
+        "apps_common": list(apps1 & apps2),
     }
 
     return differences

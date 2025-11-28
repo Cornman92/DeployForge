@@ -28,6 +28,7 @@ class BaseImageHandler(ABC):
         """Validate that the image file exists and is valid."""
         if not self.image_path.exists():
             from deployforge.core.exceptions import ImageNotFoundError
+
             raise ImageNotFoundError(f"Image file not found: {self.image_path}")
 
     @abstractmethod

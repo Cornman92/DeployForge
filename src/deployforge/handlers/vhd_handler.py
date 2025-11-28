@@ -29,7 +29,7 @@ class VHDHandler(BaseImageHandler):
     def __init__(self, image_path: Path):
         """Initialize the VHD handler."""
         super().__init__(image_path)
-        self.is_windows = platform.system() == 'Windows'
+        self.is_windows = platform.system() == "Windows"
         self._temp_dir = None
         self.partition = 1  # Default partition to mount
 
@@ -37,10 +37,7 @@ class VHDHandler(BaseImageHandler):
         """Check if qemu-nbd is available."""
         try:
             result = subprocess.run(
-                ['qemu-nbd', '--version'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["qemu-nbd", "--version"], capture_output=True, text=True, timeout=5
             )
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -50,10 +47,7 @@ class VHDHandler(BaseImageHandler):
         """Check if libguestfs tools are available."""
         try:
             result = subprocess.run(
-                ['guestmount', '--version'],
-                capture_output=True,
-                text=True,
-                timeout=5
+                ["guestmount", "--version"], capture_output=True, text=True, timeout=5
             )
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
@@ -119,9 +113,7 @@ class VHDHandler(BaseImageHandler):
         """
 
         result = subprocess.run(
-            ['powershell', '-Command', ps_script],
-            capture_output=True,
-            text=True
+            ["powershell", "-Command", ps_script], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -135,11 +127,13 @@ class VHDHandler(BaseImageHandler):
     def _mount_guestfs(self) -> None:
         """Mount VHD using libguestfs (Linux)."""
         cmd = [
-            'guestmount',
-            '-a', str(self.image_path),
-            '-m', f'/dev/sda{self.partition}',
-            '--ro',  # Read-only by default
-            str(self.mount_point)
+            "guestmount",
+            "-a",
+            str(self.image_path),
+            "-m",
+            f"/dev/sda{self.partition}",
+            "--ro",  # Read-only by default
+            str(self.mount_point),
         ]
 
         logger.debug(f"Running: {' '.join(cmd)}")
@@ -152,13 +146,13 @@ class VHDHandler(BaseImageHandler):
         """Mount VHD using qemu-nbd (Linux/Mac)."""
         # Load nbd module
         try:
-            subprocess.run(['sudo', 'modprobe', 'nbd', 'max_part=8'], check=False)
+            subprocess.run(["sudo", "modprobe", "nbd", "max_part=8"], check=False)
         except Exception:
             pass
 
         # Connect VHD to NBD device
-        nbd_device = '/dev/nbd0'
-        cmd = ['sudo', 'qemu-nbd', '--connect', nbd_device, str(self.image_path)]
+        nbd_device = "/dev/nbd0"
+        cmd = ["sudo", "qemu-nbd", "--connect", nbd_device, str(self.image_path)]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
@@ -166,12 +160,12 @@ class VHDHandler(BaseImageHandler):
 
         # Mount the partition
         partition_device = f"{nbd_device}p{self.partition}"
-        mount_cmd = ['sudo', 'mount', '-o', 'ro', partition_device, str(self.mount_point)]
+        mount_cmd = ["sudo", "mount", "-o", "ro", partition_device, str(self.mount_point)]
 
         result = subprocess.run(mount_cmd, capture_output=True, text=True)
         if result.returncode != 0:
             # Disconnect nbd on failure
-            subprocess.run(['sudo', 'qemu-nbd', '--disconnect', nbd_device], check=False)
+            subprocess.run(["sudo", "qemu-nbd", "--disconnect", nbd_device], check=False)
             raise MountError(f"mount failed: {result.stderr}")
 
     def unmount(self, save_changes: bool = False) -> None:
@@ -209,9 +203,7 @@ class VHDHandler(BaseImageHandler):
         """Unmount VHD using Windows PowerShell."""
         ps_script = f"Dismount-DiskImage -ImagePath '{self.image_path}'"
         result = subprocess.run(
-            ['powershell', '-Command', ps_script],
-            capture_output=True,
-            text=True
+            ["powershell", "-Command", ps_script], capture_output=True, text=True
         )
 
         if result.returncode != 0:
@@ -219,12 +211,12 @@ class VHDHandler(BaseImageHandler):
 
     def _unmount_guestfs(self) -> None:
         """Unmount using guestfs."""
-        cmd = ['fusermount', '-u', str(self.mount_point)]
+        cmd = ["fusermount", "-u", str(self.mount_point)]
         result = subprocess.run(cmd, capture_output=True, text=True)
 
         if result.returncode != 0:
             # Try guestunmount
-            cmd = ['guestunmount', str(self.mount_point)]
+            cmd = ["guestunmount", str(self.mount_point)]
             result = subprocess.run(cmd, capture_output=True, text=True)
 
             if result.returncode != 0:
@@ -233,11 +225,11 @@ class VHDHandler(BaseImageHandler):
     def _unmount_qemu_nbd(self) -> None:
         """Unmount using qemu-nbd."""
         # Unmount filesystem
-        subprocess.run(['sudo', 'umount', str(self.mount_point)], check=False)
+        subprocess.run(["sudo", "umount", str(self.mount_point)], check=False)
 
         # Disconnect NBD
-        nbd_device = '/dev/nbd0'
-        subprocess.run(['sudo', 'qemu-nbd', '--disconnect', nbd_device], check=False)
+        nbd_device = "/dev/nbd0"
+        subprocess.run(["sudo", "qemu-nbd", "--disconnect", nbd_device], check=False)
 
     def list_files(self, path: str = "/") -> List[Dict[str, Any]]:
         """List files in the VHD."""
@@ -245,18 +237,20 @@ class VHDHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if not target_path.exists():
                 return []
 
             files = []
             for item in target_path.iterdir():
-                files.append({
-                    'name': item.name,
-                    'is_dir': item.is_dir(),
-                    'size': item.stat().st_size if item.is_file() else 0,
-                    'path': str(item.relative_to(self.mount_point)),
-                })
+                files.append(
+                    {
+                        "name": item.name,
+                        "is_dir": item.is_dir(),
+                        "size": item.stat().st_size if item.is_file() else 0,
+                        "path": str(item.relative_to(self.mount_point)),
+                    }
+                )
             return files
 
         except Exception as e:
@@ -273,7 +267,7 @@ class VHDHandler(BaseImageHandler):
             if not source.exists():
                 raise OperationError(f"Source file not found: {source}")
 
-            dest_path = self.mount_point / destination.lstrip('/')
+            dest_path = self.mount_point / destination.lstrip("/")
             dest_path.parent.mkdir(parents=True, exist_ok=True)
 
             shutil.copy2(source, dest_path)
@@ -288,7 +282,7 @@ class VHDHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if target_path.is_file():
                 target_path.unlink()
             elif target_path.is_dir():
@@ -307,7 +301,7 @@ class VHDHandler(BaseImageHandler):
             raise MountError("Image must be mounted first")
 
         try:
-            source_path = self.mount_point / source.lstrip('/')
+            source_path = self.mount_point / source.lstrip("/")
             destination = Path(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -326,16 +320,16 @@ class VHDHandler(BaseImageHandler):
     def get_info(self) -> Dict[str, Any]:
         """Get information about the VHD."""
         info = {
-            'path': str(self.image_path),
-            'format': 'VHDX' if self.image_path.suffix.lower() == '.vhdx' else 'VHD',
-            'size': self.image_path.stat().st_size,
-            'mounted': self.is_mounted,
-            'partition': self.partition,
+            "path": str(self.image_path),
+            "format": "VHDX" if self.image_path.suffix.lower() == ".vhdx" else "VHD",
+            "size": self.image_path.stat().st_size,
+            "mounted": self.is_mounted,
+            "partition": self.partition,
         }
 
         return info
 
     def __repr__(self) -> str:
         """String representation."""
-        format_type = 'VHDX' if self.image_path.suffix.lower() == '.vhdx' else 'VHD'
+        format_type = "VHDX" if self.image_path.suffix.lower() == ".vhdx" else "VHD"
         return f"{format_type}Handler(image_path={self.image_path})"

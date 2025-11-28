@@ -36,11 +36,11 @@ class ESDHandler(WIMHandler):
         """
         info = super().get_info()
         # Override format to indicate ESD
-        info['format'] = 'ESD (Electronic Software Download)'
-        info['note'] = 'ESD files are highly compressed WIM files'
+        info["format"] = "ESD (Electronic Software Download)"
+        info["note"] = "ESD files are highly compressed WIM files"
         return info
 
-    def convert_to_wim(self, output_path: Path, compression: str = 'maximum') -> None:
+    def convert_to_wim(self, output_path: Path, compression: str = "maximum") -> None:
         """
         Convert ESD to WIM format.
 
@@ -60,22 +60,22 @@ class ESDHandler(WIMHandler):
             if self.is_windows and self._check_dism():
                 # Use DISM to export (convert) ESD to WIM
                 cmd = [
-                    'dism',
-                    '/Export-Image',
-                    f'/SourceImageFile:{self.image_path}',
-                    f'/SourceIndex:{self.index}',
-                    f'/DestinationImageFile:{output_path}',
-                    f'/Compress:{compression}',
+                    "dism",
+                    "/Export-Image",
+                    f"/SourceImageFile:{self.image_path}",
+                    f"/SourceIndex:{self.index}",
+                    f"/DestinationImageFile:{output_path}",
+                    f"/Compress:{compression}",
                 ]
             elif self._check_wimlib():
                 # Use wimlib to export
                 cmd = [
-                    'wimlib-imagex',
-                    'export',
+                    "wimlib-imagex",
+                    "export",
                     str(self.image_path),
                     str(self.index),
                     str(output_path),
-                    f'--compress={compression}',
+                    f"--compress={compression}",
                 ]
             else:
                 raise OperationError(

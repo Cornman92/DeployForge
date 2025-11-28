@@ -9,6 +9,7 @@ import shutil
 
 try:
     import pycdlib
+
     PYCDLIB_AVAILABLE = True
 except ImportError:
     PYCDLIB_AVAILABLE = False
@@ -27,8 +28,7 @@ class ISOHandler(BaseImageHandler):
         """Initialize the ISO handler."""
         if not PYCDLIB_AVAILABLE:
             raise ImportError(
-                "pycdlib is required for ISO handling. "
-                "Install it with: pip install pycdlib"
+                "pycdlib is required for ISO handling. " "Install it with: pip install pycdlib"
             )
         super().__init__(image_path)
         self.iso = None
@@ -87,8 +87,8 @@ class ISOHandler(BaseImageHandler):
         try:
             if save_changes and self.iso:
                 # Save changes to a new ISO
-                backup_path = self.image_path.with_suffix('.iso.bak')
-                new_iso_path = self.image_path.with_suffix('.iso.new')
+                backup_path = self.image_path.with_suffix(".iso.bak")
+                new_iso_path = self.image_path.with_suffix(".iso.new")
 
                 self.iso.write(str(new_iso_path))
                 logger.info(f"Saved modified ISO to {new_iso_path}")
@@ -125,16 +125,18 @@ class ISOHandler(BaseImageHandler):
         try:
             files = []
             # Convert path to ISO 9660 format
-            iso_path = path.replace('\\', '/').upper()
-            if not iso_path.startswith('/'):
-                iso_path = '/' + iso_path
+            iso_path = path.replace("\\", "/").upper()
+            if not iso_path.startswith("/"):
+                iso_path = "/" + iso_path
 
             # List directory contents
             for child in self.iso.list_children(iso_path=iso_path):
                 file_info = {
-                    'name': child.file_identifier().decode('utf-8') if isinstance(child.file_identifier(), bytes) else child.file_identifier(),
-                    'is_dir': child.is_dir(),
-                    'size': child.get_data_length() if not child.is_dir() else 0,
+                    "name": child.file_identifier().decode("utf-8")
+                    if isinstance(child.file_identifier(), bytes)
+                    else child.file_identifier(),
+                    "is_dir": child.is_dir(),
+                    "size": child.get_data_length() if not child.is_dir() else 0,
                 }
                 files.append(file_info)
 
@@ -161,10 +163,10 @@ class ISOHandler(BaseImageHandler):
                 raise OperationError(f"Source file not found: {source}")
 
             # Convert destination to ISO 9660 format
-            iso_dest = destination.replace('\\', '/').upper()
+            iso_dest = destination.replace("\\", "/").upper()
 
             # Add file to ISO
-            with open(source, 'rb') as f:
+            with open(source, "rb") as f:
                 self.iso.add_fp(f, length=source.stat().st_size, iso_path=iso_dest)
 
             logger.info(f"Added {source} to ISO at {iso_dest}")
@@ -184,7 +186,7 @@ class ISOHandler(BaseImageHandler):
 
         try:
             # Convert path to ISO 9660 format
-            iso_path = path.replace('\\', '/').upper()
+            iso_path = path.replace("\\", "/").upper()
 
             # Remove from ISO
             self.iso.rm_file(iso_path)
@@ -209,7 +211,7 @@ class ISOHandler(BaseImageHandler):
             destination.parent.mkdir(parents=True, exist_ok=True)
 
             # Convert source to ISO 9660 format
-            iso_path = source.replace('\\', '/').upper()
+            iso_path = source.replace("\\", "/").upper()
 
             # Extract file
             self.iso.get_file_from_iso(str(destination), iso_path=iso_path)
@@ -226,20 +228,28 @@ class ISOHandler(BaseImageHandler):
             Dictionary containing ISO metadata
         """
         info = {
-            'path': str(self.image_path),
-            'format': 'ISO 9660',
-            'size': self.image_path.stat().st_size,
-            'mounted': self.is_mounted,
+            "path": str(self.image_path),
+            "format": "ISO 9660",
+            "size": self.image_path.stat().st_size,
+            "mounted": self.is_mounted,
         }
 
         if self.is_mounted and self.iso:
             try:
                 pvd = self.iso.pvd
-                info.update({
-                    'volume_identifier': pvd.volume_identifier.decode('utf-8').strip() if pvd.volume_identifier else '',
-                    'system_identifier': pvd.system_identifier.decode('utf-8').strip() if pvd.system_identifier else '',
-                    'volume_set_identifier': pvd.volume_set_identifier.decode('utf-8').strip() if pvd.volume_set_identifier else '',
-                })
+                info.update(
+                    {
+                        "volume_identifier": pvd.volume_identifier.decode("utf-8").strip()
+                        if pvd.volume_identifier
+                        else "",
+                        "system_identifier": pvd.system_identifier.decode("utf-8").strip()
+                        if pvd.system_identifier
+                        else "",
+                        "volume_set_identifier": pvd.volume_set_identifier.decode("utf-8").strip()
+                        if pvd.volume_set_identifier
+                        else "",
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Could not read ISO metadata: {e}")
 

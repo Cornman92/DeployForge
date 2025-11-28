@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class FileOperation:
     """Represents a file operation in a template."""
+
     action: str  # add, remove, replace
     source: Optional[str] = None
     destination: str = ""
@@ -25,6 +26,7 @@ class FileOperation:
 @dataclass
 class RegistryTweak:
     """Represents a registry tweak in a template."""
+
     hive: str
     path: str
     name: str
@@ -36,6 +38,7 @@ class RegistryTweak:
 @dataclass
 class DriverPackage:
     """Represents a driver package in a template."""
+
     name: str
     path: str
     force_unsigned: bool = False
@@ -44,6 +47,7 @@ class DriverPackage:
 @dataclass
 class UpdatePackageTemplate:
     """Represents an update package in a template."""
+
     kb_number: str
     path: str
     package_type: str = "msu"
@@ -56,6 +60,7 @@ class CustomizationTemplate:
 
     Defines all customization operations to apply to an image.
     """
+
     name: str
     version: str = "1.0"
     description: str = ""
@@ -112,10 +117,10 @@ class TemplateManager:
             raise ValidationError(f"Template not found: {template_path}")
 
         # Load based on extension
-        with open(template_path, 'r') as f:
-            if template_path.suffix.lower() in ['.json']:
+        with open(template_path, "r") as f:
+            if template_path.suffix.lower() in [".json"]:
                 data = json.load(f)
-            elif template_path.suffix.lower() in ['.yaml', '.yml']:
+            elif template_path.suffix.lower() in [".yaml", ".yml"]:
                 data = yaml.safe_load(f)
             else:
                 raise ValidationError(f"Unsupported template format: {template_path.suffix}")
@@ -129,30 +134,30 @@ class TemplateManager:
     def _parse_template(self, data: Dict[str, Any]) -> CustomizationTemplate:
         """Parse template data into CustomizationTemplate."""
         template = CustomizationTemplate(
-            name=data.get('name', 'Unnamed'),
-            version=data.get('version', '1.0'),
-            description=data.get('description', ''),
-            author=data.get('author', ''),
-            tags=data.get('tags', []),
-            features=data.get('features', {}),
-            remove_packages=data.get('remove_packages', []),
-            scripts=data.get('scripts', [])
+            name=data.get("name", "Unnamed"),
+            version=data.get("version", "1.0"),
+            description=data.get("description", ""),
+            author=data.get("author", ""),
+            tags=data.get("tags", []),
+            features=data.get("features", {}),
+            remove_packages=data.get("remove_packages", []),
+            scripts=data.get("scripts", []),
         )
 
         # Parse file operations
-        for file_op in data.get('files', []):
+        for file_op in data.get("files", []):
             template.files.append(FileOperation(**file_op))
 
         # Parse registry tweaks
-        for reg_tweak in data.get('registry', []):
+        for reg_tweak in data.get("registry", []):
             template.registry.append(RegistryTweak(**reg_tweak))
 
         # Parse drivers
-        for driver in data.get('drivers', []):
+        for driver in data.get("drivers", []):
             template.drivers.append(DriverPackage(**driver))
 
         # Parse updates
-        for update in data.get('updates', []):
+        for update in data.get("updates", []):
             template.updates.append(UpdatePackageTemplate(**update))
 
         return template
@@ -172,10 +177,10 @@ class TemplateManager:
         data = asdict(template)
 
         # Save based on extension
-        with open(output_path, 'w') as f:
-            if output_path.suffix.lower() in ['.json']:
+        with open(output_path, "w") as f:
+            if output_path.suffix.lower() in [".json"]:
                 json.dump(data, f, indent=2)
-            elif output_path.suffix.lower() in ['.yaml', '.yml']:
+            elif output_path.suffix.lower() in [".yaml", ".yml"]:
                 yaml.safe_dump(data, f, default_flow_style=False)
             else:
                 raise ValidationError(f"Unsupported template format: {output_path.suffix}")
@@ -191,14 +196,14 @@ class TemplateManager:
         """
         templates = []
 
-        for template_file in self.templates_dir.glob('*.json'):
+        for template_file in self.templates_dir.glob("*.json"):
             try:
                 template = self.load_template(template_file)
                 templates.append(template)
             except Exception as e:
                 logger.error(f"Failed to load template {template_file}: {e}")
 
-        for template_file in self.templates_dir.glob('*.yaml'):
+        for template_file in self.templates_dir.glob("*.yaml"):
             try:
                 template = self.load_template(template_file)
                 templates.append(template)
@@ -226,15 +231,15 @@ class TemplateManager:
 
         # Validate file operations
         for file_op in template.files:
-            if file_op.action not in ['add', 'remove', 'replace']:
+            if file_op.action not in ["add", "remove", "replace"]:
                 raise ValidationError(f"Invalid file action: {file_op.action}")
 
-            if file_op.action in ['add', 'replace'] and not (file_op.source or file_op.content):
+            if file_op.action in ["add", "replace"] and not (file_op.source or file_op.content):
                 raise ValidationError("File operations require source or content")
 
         # Validate registry tweaks
         for reg_tweak in template.registry:
-            if reg_tweak.action not in ['set', 'delete']:
+            if reg_tweak.action not in ["set", "delete"]:
                 raise ValidationError(f"Invalid registry action: {reg_tweak.action}")
 
         logger.info(f"Template {template.name} is valid")
@@ -285,7 +290,7 @@ GAMING_TEMPLATE = CustomizationTemplate(
             name="GPU Priority",
             data="8",
             type="REG_DWORD",
-            action="set"
+            action="set",
         ),
         RegistryTweak(
             hive="HKLM\\SOFTWARE",
@@ -293,7 +298,7 @@ GAMING_TEMPLATE = CustomizationTemplate(
             name="Priority",
             data="6",
             type="REG_DWORD",
-            action="set"
+            action="set",
         ),
-    ]
+    ],
 )

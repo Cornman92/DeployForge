@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 class InstallType(Enum):
     """Application installation types"""
+
     MSI = "msi"
     EXE = "exe"
     APPX = "appx"
@@ -45,8 +46,9 @@ class InstallType(Enum):
 
 class InstallContext(Enum):
     """Installation context"""
+
     MACHINE = "machine"  # Install for all users
-    USER = "user"        # Install for current user
+    USER = "user"  # Install for current user
     PROVISION = "provision"  # Provision for all users (APPX)
 
 
@@ -68,14 +70,14 @@ class AppPackage:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'installer': str(self.installer),
-            'install_type': self.install_type.value,
-            'arguments': self.arguments,
-            'install_context': self.install_context.value,
-            'dependencies': self.dependencies,
-            'has_license': self.license_key is not None,
-            'architecture': self.architecture
+            "name": self.name,
+            "installer": str(self.installer),
+            "install_type": self.install_type.value,
+            "arguments": self.arguments,
+            "install_context": self.install_context.value,
+            "dependencies": self.dependencies,
+            "has_license": self.license_key is not None,
+            "architecture": self.architecture,
         }
 
 
@@ -95,44 +97,44 @@ class Office365Config:
 
     def generate_xml(self) -> str:
         """Generate Office deployment XML configuration"""
-        config = ET.Element('Configuration')
+        config = ET.Element("Configuration")
 
         # Add element
-        add = ET.SubElement(config, 'Add')
-        add.set('OfficeClientEdition', self.architecture)
-        add.set('Channel', self.channel)
+        add = ET.SubElement(config, "Add")
+        add.set("OfficeClientEdition", self.architecture)
+        add.set("Channel", self.channel)
 
         # Product
-        product = ET.SubElement(add, 'Product')
-        product.set('ID', 'O365ProPlusRetail')
+        product = ET.SubElement(add, "Product")
+        product.set("ID", "O365ProPlusRetail")
 
         # Language
-        lang = ET.SubElement(product, 'Language')
-        lang.set('ID', self.language)
+        lang = ET.SubElement(product, "Language")
+        lang.set("ID", self.language)
 
         # Exclude apps
         if self.exclude_apps:
             for app in self.exclude_apps:
-                exclude = ET.SubElement(product, 'ExcludeApp')
-                exclude.set('ID', app)
+                exclude = ET.SubElement(product, "ExcludeApp")
+                exclude.set("ID", app)
 
         # Display settings
-        display = ET.SubElement(config, 'Display')
-        display.set('Level', self.display_level)
-        display.set('AcceptEULA', str(self.accept_eula).upper())
+        display = ET.SubElement(config, "Display")
+        display.set("Level", self.display_level)
+        display.set("AcceptEULA", str(self.accept_eula).upper())
 
         # Updates
         if not self.update_enabled:
-            updates = ET.SubElement(config, 'Updates')
-            updates.set('Enabled', 'FALSE')
+            updates = ET.SubElement(config, "Updates")
+            updates.set("Enabled", "FALSE")
 
         # Shared activation
         if self.shared_activation:
-            property_elem = ET.SubElement(config, 'Property')
-            property_elem.set('Name', 'SharedComputerLicensing')
-            property_elem.set('Value', '1')
+            property_elem = ET.SubElement(config, "Property")
+            property_elem.set("Name", "SharedComputerLicensing")
+            property_elem.set("Value", "1")
 
-        return ET.tostring(config, encoding='unicode')
+        return ET.tostring(config, encoding="unicode")
 
 
 class ApplicationInjector:
@@ -169,13 +171,17 @@ class ApplicationInjector:
         logger.info(f"Mounting image {self.image_path} to {mount_point}")
 
         try:
-            subprocess.run([
-                'dism',
-                '/Mount-Wim',
-                f'/WimFile:{self.image_path}',
-                '/Index:1',
-                f'/MountDir:{mount_point}'
-            ], check=True, timeout=300)
+            subprocess.run(
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{self.image_path}",
+                    "/Index:1",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                timeout=300,
+            )
 
             self.is_mounted = True
             logger.info("Image mounted successfully")
@@ -199,15 +205,14 @@ class ApplicationInjector:
 
         logger.info(f"Unmounting image from {self.mount_point}")
 
-        action = '/Commit' if save_changes else '/Discard'
+        action = "/Commit" if save_changes else "/Discard"
 
         try:
-            subprocess.run([
-                'dism',
-                '/Unmount-Wim',
-                f'/MountDir:{self.mount_point}',
-                action
-            ], check=True, timeout=600)
+            subprocess.run(
+                ["dism", "/Unmount-Wim", f"/MountDir:{self.mount_point}", action],
+                check=True,
+                timeout=600,
+            )
 
             self.is_mounted = False
             logger.info("Image unmounted successfully")
@@ -269,7 +274,7 @@ if %errorlevel% equ 0 (
 """
 
         script_path = app_dir / "install.cmd"
-        script_path.write_text(install_script, encoding='utf-8')
+        script_path.write_text(install_script, encoding="utf-8")
 
         # Add to FirstLogonCommands or RunOnce
         self._add_to_autologon_scripts(app.name, str(script_path))
@@ -300,7 +305,7 @@ if %errorlevel% equ 0 (
 """
 
         script_path = app_dir / "install.cmd"
-        script_path.write_text(install_script, encoding='utf-8')
+        script_path.write_text(install_script, encoding="utf-8")
 
         # Add to autologon scripts
         self._add_to_autologon_scripts(app.name, str(script_path))
@@ -316,13 +321,17 @@ if %errorlevel% equ 0 (
 
         try:
             # Provision app for all users
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Add-ProvisionedAppxPackage',
-                f'/PackagePath:{app.installer}',
-                '/SkipLicense'
-            ], check=True, timeout=300)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Add-ProvisionedAppxPackage",
+                    f"/PackagePath:{app.installer}",
+                    "/SkipLicense",
+                ],
+                check=True,
+                timeout=300,
+            )
 
             logger.info(f"APPX package {app.name} provisioned")
 
@@ -357,13 +366,13 @@ if %errorlevel% equ 0 (
 
         # Append to SetupComplete.cmd
         if setupcomplete.exists():
-            content = setupcomplete.read_text(encoding='utf-8')
+            content = setupcomplete.read_text(encoding="utf-8")
         else:
             content = "@echo off\nREM Application installation scripts\n\n"
 
         content += f'call "{script_path}"\n'
 
-        setupcomplete.write_text(content, encoding='utf-8')
+        setupcomplete.write_text(content, encoding="utf-8")
 
         logger.info(f"Added {name} to SetupComplete.cmd")
 
@@ -392,7 +401,7 @@ if %errorlevel% equ 0 (
 
         # Generate configuration XML
         config_xml = config.generate_xml()
-        (office_dir / "configuration.xml").write_text(config_xml, encoding='utf-8')
+        (office_dir / "configuration.xml").write_text(config_xml, encoding="utf-8")
 
         # Create install script
         install_script = f"""@echo off
@@ -407,7 +416,7 @@ if %errorlevel% equ 0 (
 """
 
         script_path = office_dir / "install_office.cmd"
-        script_path.write_text(install_script, encoding='utf-8')
+        script_path.write_text(install_script, encoding="utf-8")
 
         # Add to autologon scripts
         self._add_to_autologon_scripts("Office365", str(script_path))
@@ -439,11 +448,11 @@ if %errorlevel% equ 0 (
         logger.info(f"Installing dependency: {dependency}")
 
         dependency_map = {
-            'vcredist2015': 'Visual C++ 2015-2022 Redistributable',
-            'vcredist2013': 'Visual C++ 2013 Redistributable',
-            'dotnet48': '.NET Framework 4.8',
-            'dotnet6': '.NET 6 Runtime',
-            'directx': 'DirectX End-User Runtime',
+            "vcredist2015": "Visual C++ 2015-2022 Redistributable",
+            "vcredist2013": "Visual C++ 2013 Redistributable",
+            "dotnet48": ".NET Framework 4.8",
+            "dotnet6": ".NET 6 Runtime",
+            "directx": "DirectX End-User Runtime",
         }
 
         if dependency in dependency_map:
@@ -461,12 +470,12 @@ if %errorlevel% equ 0 (
             output_path: Output JSON file path
         """
         manifest = {
-            'image': str(self.image_path),
-            'applications': [app.to_dict() for app in self.applications],
-            'total_apps': len(self.applications)
+            "image": str(self.image_path),
+            "applications": [app.to_dict() for app in self.applications],
+            "total_apps": len(self.applications),
         }
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
         logger.info(f"Application manifest exported to {output_path}")
@@ -483,43 +492,43 @@ def create_standard_app_bundle(bundle_name: str = "enterprise") -> List[AppPacka
         List of AppPackage objects
     """
     bundles = {
-        'enterprise': [
+        "enterprise": [
             AppPackage(
                 name="7-Zip",
                 installer=Path("apps/7z-x64.exe"),
                 install_type=InstallType.EXE,
-                arguments="/S"
+                arguments="/S",
             ),
             AppPackage(
                 name="Adobe Acrobat Reader",
                 installer=Path("apps/AcroRdrDC.msi"),
                 install_type=InstallType.MSI,
-                arguments="/quiet /norestart"
+                arguments="/quiet /norestart",
             ),
             AppPackage(
                 name="Google Chrome",
                 installer=Path("apps/GoogleChromeStandaloneEnterprise64.msi"),
                 install_type=InstallType.MSI,
-                arguments="/quiet /norestart"
+                arguments="/quiet /norestart",
             ),
         ],
-        'developer': [
+        "developer": [
             AppPackage(
                 name="Visual Studio Code",
                 installer=Path("apps/VSCodeSetup-x64.exe"),
                 install_type=InstallType.EXE,
-                arguments="/SILENT /NORESTART /MERGETASKS=!runcode"
+                arguments="/SILENT /NORESTART /MERGETASKS=!runcode",
             ),
             AppPackage(
                 name="Git",
                 installer=Path("apps/Git-x64.exe"),
                 install_type=InstallType.EXE,
-                arguments="/SILENT /NORESTART"
+                arguments="/SILENT /NORESTART",
             ),
         ],
-        'office': [
+        "office": [
             # Office 365 would be added separately
-        ]
+        ],
     }
 
     return bundles.get(bundle_name, [])

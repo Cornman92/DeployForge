@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CacheEntry:
     """Represents a cache entry."""
+
     key: str
     value: Any
     timestamp: float
@@ -66,7 +67,7 @@ class Cache:
             return default
 
         try:
-            with open(cache_path, 'rb') as f:
+            with open(cache_path, "rb") as f:
                 entry = pickle.load(f)
 
             if entry.is_expired():
@@ -95,17 +96,13 @@ class Cache:
             ttl = self.default_ttl
 
         entry = CacheEntry(
-            key=key,
-            value=value,
-            timestamp=time.time(),
-            ttl=ttl,
-            metadata=metadata or {}
+            key=key, value=value, timestamp=time.time(), ttl=ttl, metadata=metadata or {}
         )
 
         cache_path = self._get_cache_path(key)
 
         try:
-            with open(cache_path, 'wb') as f:
+            with open(cache_path, "wb") as f:
                 pickle.dump(entry, f)
 
             logger.debug(f"Cache set: {key}")
@@ -123,7 +120,7 @@ class Cache:
 
     def clear(self) -> None:
         """Clear all cache entries."""
-        for cache_file in self.cache_dir.glob('*.cache'):
+        for cache_file in self.cache_dir.glob("*.cache"):
             cache_file.unlink()
 
         logger.info("Cache cleared")
@@ -137,9 +134,9 @@ class Cache:
         """
         removed = 0
 
-        for cache_file in self.cache_dir.glob('*.cache'):
+        for cache_file in self.cache_dir.glob("*.cache"):
             try:
-                with open(cache_file, 'rb') as f:
+                with open(cache_file, "rb") as f:
                     entry = pickle.load(f)
 
                 if entry.is_expired():
@@ -165,6 +162,7 @@ def cached(cache_instance: Cache, ttl: Optional[int] = None, key_func: Optional[
     Returns:
         Decorated function
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -189,4 +187,5 @@ def cached(cache_instance: Cache, ttl: Optional[int] = None, key_func: Optional[
             return result
 
         return wrapper
+
     return decorator

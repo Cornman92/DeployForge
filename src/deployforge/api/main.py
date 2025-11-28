@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="DeployForge API",
     description="REST API for Windows deployment image management",
-    version=__version__
+    version=__version__,
 )
 
 # In-memory job store (use Redis/DB in production)
@@ -34,11 +34,13 @@ audit_logger = AuditLogger(Path("./logs/audit.jsonl"))
 
 class ImageInfoRequest(BaseModel):
     """Request model for getting image information."""
+
     image_path: str = Field(..., description="Path to the image file")
 
 
 class BatchOperationRequest(BaseModel):
     """Request model for batch operations."""
+
     image_paths: List[str] = Field(..., description="List of image paths")
     operation: str = Field(..., description="Operation to perform")
     parameters: Dict[str, Any] = Field(default_factory=dict, description="Operation parameters")
@@ -46,6 +48,7 @@ class BatchOperationRequest(BaseModel):
 
 class CompareRequest(BaseModel):
     """Request model for image comparison."""
+
     image1_path: str
     image2_path: str
     compute_hashes: bool = False
@@ -53,6 +56,7 @@ class CompareRequest(BaseModel):
 
 class JobResponse(BaseModel):
     """Response model for job status."""
+
     job_id: str
     status: str
     created_at: str
@@ -64,21 +68,13 @@ class JobResponse(BaseModel):
 @app.get("/", tags=["General"])
 async def root():
     """API root endpoint."""
-    return {
-        "name": "DeployForge API",
-        "version": __version__,
-        "documentation": "/docs"
-    }
+    return {"name": "DeployForge API", "version": __version__, "documentation": "/docs"}
 
 
 @app.get("/health", tags=["General"])
 async def health_check():
     """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "version": __version__,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return {"status": "healthy", "version": __version__, "timestamp": datetime.utcnow().isoformat()}
 
 
 @app.post("/images/info", tags=["Images"])
@@ -93,18 +89,14 @@ async def get_image_info(request: ImageInfoRequest):
 
         if not image_path.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Image not found: {image_path}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Image not found: {image_path}"
             )
 
         with ImageManager(image_path) as manager:
             info = manager.get_info()
 
         audit_logger.log_event(
-            event_type="image_info",
-            action="get_info",
-            image_path=image_path,
-            success=True
+            event_type="image_info", action="get_info", image_path=image_path, success=True
         )
 
         return info
@@ -116,12 +108,9 @@ async def get_image_info(request: ImageInfoRequest):
             action="get_info",
             image_path=Path(request.image_path) if request.image_path else None,
             success=False,
-            error=str(e)
+            error=str(e),
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @app.post("/images/list", tags=["Images"])
@@ -132,8 +121,7 @@ async def list_image_files(image_path: str, path: str = "/"):
 
         if not img_path.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Image not found: {img_path}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Image not found: {img_path}"
             )
 
         with ImageManager(img_path) as manager:
@@ -147,10 +135,7 @@ async def list_image_files(image_path: str, path: str = "/"):
 
     except Exception as e:
         logger.error(f"Error listing files: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @app.post("/images/compare", tags=["Images"])
@@ -162,14 +147,12 @@ async def compare_images(request: CompareRequest):
 
         if not image1.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Image 1 not found: {image1}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Image 1 not found: {image1}"
             )
 
         if not image2.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Image 2 not found: {image2}"
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Image 2 not found: {image2}"
             )
 
         comparator = ImageComparator(compute_hashes=request.compute_hashes)
@@ -182,22 +165,16 @@ async def compare_images(request: CompareRequest):
             "only_in_image1": len(result.only_in_image1),
             "only_in_image2": len(result.only_in_image2),
             "different_files": len(result.different_files),
-            "identical_files": len(result.identical_files)
+            "identical_files": len(result.identical_files),
         }
 
     except Exception as e:
         logger.error(f"Error comparing images: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 @app.post("/batch/operations", tags=["Batch"])
-async def create_batch_operation(
-    request: BatchOperationRequest,
-    background_tasks: BackgroundTasks
-):
+async def create_batch_operation(request: BatchOperationRequest, background_tasks: BackgroundTasks):
     """
     Create a batch operation job.
 
@@ -218,7 +195,7 @@ async def create_batch_operation(
         "created_at": datetime.utcnow().isoformat(),
         "completed_at": None,
         "result": None,
-        "error": None
+        "error": None,
     }
 
     jobs[job_id] = job
@@ -267,7 +244,7 @@ async def execute_batch_operation(job_id: str):
             event_type="batch_operation",
             action=operation,
             details={"job_id": job_id, "images_count": len(image_paths)},
-            success=True
+            success=True,
         )
 
     except Exception as e:
@@ -281,7 +258,7 @@ async def execute_batch_operation(job_id: str):
             action=job.get("operation", "unknown"),
             details={"job_id": job_id},
             success=False,
-            error=str(e)
+            error=str(e),
         )
 
 
@@ -292,8 +269,7 @@ async def get_job_status(job_id: str):
 
     if not job:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Job not found: {job_id}"
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Job not found: {job_id}"
         )
 
     return job
@@ -311,18 +287,17 @@ async def list_supported_formats():
     formats = ImageManager.supported_formats()
 
     format_info = {
-        '.iso': 'ISO 9660 - Optical disc image',
-        '.wim': 'WIM - Windows Imaging Format',
-        '.esd': 'ESD - Electronic Software Download',
-        '.ppkg': 'PPKG - Provisioning Package',
-        '.vhd': 'VHD - Virtual Hard Disk',
-        '.vhdx': 'VHDX - Virtual Hard Disk (Extended)'
+        ".iso": "ISO 9660 - Optical disc image",
+        ".wim": "WIM - Windows Imaging Format",
+        ".esd": "ESD - Electronic Software Download",
+        ".ppkg": "PPKG - Provisioning Package",
+        ".vhd": "VHD - Virtual Hard Disk",
+        ".vhdx": "VHDX - Virtual Hard Disk (Extended)",
     }
 
     return {
         "formats": [
-            {"extension": fmt, "description": format_info.get(fmt, "Unknown")}
-            for fmt in formats
+            {"extension": fmt, "description": format_info.get(fmt, "Unknown")} for fmt in formats
         ]
     }
 
@@ -336,4 +311,5 @@ async def get_audit_events(event_type: Optional[str] = None):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -36,7 +36,7 @@ class BatchOperation:
         image_paths: List[Path],
         operation: Callable,
         description: str = "Processing images",
-        **kwargs
+        **kwargs,
     ) -> List[Dict[str, Any]]:
         """
         Process multiple images in parallel.
@@ -68,23 +68,16 @@ class BatchOperation:
                         results.append(result)
                     except Exception as e:
                         logger.error(f"Failed to process {image_path}: {e}")
-                        results.append({
-                            'image': str(image_path),
-                            'status': 'failed',
-                            'error': str(e)
-                        })
+                        results.append(
+                            {"image": str(image_path), "status": "failed", "error": str(e)}
+                        )
 
                     progress.advance(task)
 
         self.results = results
         return results
 
-    def _process_single(
-        self,
-        image_path: Path,
-        operation: Callable,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def _process_single(self, image_path: Path, operation: Callable, **kwargs) -> Dict[str, Any]:
         """
         Process a single image.
 
@@ -101,11 +94,7 @@ class BatchOperation:
             with ImageManager(image_path) as manager:
                 result = operation(manager, **kwargs)
 
-            return {
-                'image': str(image_path),
-                'status': 'success',
-                'result': result
-            }
+            return {"image": str(image_path), "status": "success", "result": result}
 
         except Exception as e:
             logger.error(f"Error processing {image_path}: {e}")
@@ -121,20 +110,13 @@ class BatchOperation:
         Returns:
             List of image information
         """
+
         def get_info(manager: ImageManager) -> Dict[str, Any]:
             return manager.get_info()
 
-        return self.process_images(
-            image_paths,
-            get_info,
-            description="Getting image information"
-        )
+        return self.process_images(image_paths, get_info, description="Getting image information")
 
-    def list_files_batch(
-        self,
-        image_paths: List[Path],
-        path: str = "/"
-    ) -> List[Dict[str, Any]]:
+    def list_files_batch(self, image_paths: List[Path], path: str = "/") -> List[Dict[str, Any]]:
         """
         List files in multiple images.
 
@@ -145,6 +127,7 @@ class BatchOperation:
         Returns:
             List of file listings
         """
+
         def list_files(manager: ImageManager, path: str) -> List:
             manager.mount()
             try:
@@ -152,18 +135,10 @@ class BatchOperation:
             finally:
                 manager.unmount()
 
-        return self.process_images(
-            image_paths,
-            list_files,
-            description="Listing files",
-            path=path
-        )
+        return self.process_images(image_paths, list_files, description="Listing files", path=path)
 
     def add_file_batch(
-        self,
-        image_paths: List[Path],
-        source: Path,
-        destination: str
+        self, image_paths: List[Path], source: Path, destination: str
     ) -> List[Dict[str, Any]]:
         """
         Add a file to multiple images.
@@ -176,6 +151,7 @@ class BatchOperation:
         Returns:
             List of operation results
         """
+
         def add_file(manager: ImageManager, source: Path, dest: str) -> bool:
             manager.mount()
             try:
@@ -191,14 +167,10 @@ class BatchOperation:
             add_file,
             description=f"Adding {source.name}",
             source=source,
-            dest=destination
+            dest=destination,
         )
 
-    def remove_file_batch(
-        self,
-        image_paths: List[Path],
-        file_path: str
-    ) -> List[Dict[str, Any]]:
+    def remove_file_batch(self, image_paths: List[Path], file_path: str) -> List[Dict[str, Any]]:
         """
         Remove a file from multiple images.
 
@@ -209,6 +181,7 @@ class BatchOperation:
         Returns:
             List of operation results
         """
+
         def remove_file(manager: ImageManager, path: str) -> bool:
             manager.mount()
             try:
@@ -220,17 +193,11 @@ class BatchOperation:
                 raise
 
         return self.process_images(
-            image_paths,
-            remove_file,
-            description=f"Removing {file_path}",
-            path=file_path
+            image_paths, remove_file, description=f"Removing {file_path}", path=file_path
         )
 
     def extract_file_batch(
-        self,
-        image_paths: List[Path],
-        source: str,
-        destination_dir: Path
+        self, image_paths: List[Path], source: str, destination_dir: Path
     ) -> List[Dict[str, Any]]:
         """
         Extract a file from multiple images.
@@ -246,11 +213,7 @@ class BatchOperation:
         destination_dir = Path(destination_dir)
         destination_dir.mkdir(parents=True, exist_ok=True)
 
-        def extract_file(
-            manager: ImageManager,
-            src: str,
-            dest_dir: Path
-        ) -> Path:
+        def extract_file(manager: ImageManager, src: str, dest_dir: Path) -> Path:
             manager.mount()
             try:
                 # Create unique destination based on image name
@@ -266,10 +229,10 @@ class BatchOperation:
             extract_file,
             description=f"Extracting {source}",
             src=source,
-            dest_dir=destination_dir
+            dest_dir=destination_dir,
         )
 
-    def export_results(self, output_path: Path, format: str = 'json') -> None:
+    def export_results(self, output_path: Path, format: str = "json") -> None:
         """
         Export batch operation results.
 
@@ -280,16 +243,16 @@ class BatchOperation:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if format == 'json':
-            with open(output_path, 'w') as f:
+        if format == "json":
+            with open(output_path, "w") as f:
                 json.dump(self.results, f, indent=2, default=str)
 
-        elif format == 'text':
-            with open(output_path, 'w') as f:
+        elif format == "text":
+            with open(output_path, "w") as f:
                 for result in self.results:
                     f.write(f"Image: {result.get('image')}\n")
                     f.write(f"Status: {result.get('status')}\n")
-                    if 'error' in result:
+                    if "error" in result:
                         f.write(f"Error: {result.get('error')}\n")
                     f.write("-" * 80 + "\n")
 
@@ -301,8 +264,8 @@ class BatchOperation:
             console.print("[yellow]No results to display[/yellow]")
             return
 
-        successful = sum(1 for r in self.results if r.get('status') == 'success')
-        failed = sum(1 for r in self.results if r.get('status') == 'failed')
+        successful = sum(1 for r in self.results if r.get("status") == "success")
+        failed = sum(1 for r in self.results if r.get("status") == "failed")
 
         table = Table(title="Batch Operation Summary")
         table.add_column("Metric", style="cyan")
@@ -317,5 +280,5 @@ class BatchOperation:
         if failed > 0:
             console.print("\n[bold red]Failed Images:[/bold red]")
             for result in self.results:
-                if result.get('status') == 'failed':
+                if result.get("status") == "failed":
                     console.print(f"  • {result.get('image')}: {result.get('error')}")
