@@ -92,6 +92,43 @@ class ConfigurationManager:
         self.modules["gaming_launchers"] = ModuleConfig(priority=90)
         self.modules["winget_packages"] = ModuleConfig(priority=95)
 
+        # Windows Update Control
+        self.modules["disable_windows_update"] = ModuleConfig(priority=12)
+        self.modules["defer_feature_updates"] = ModuleConfig(priority=12)
+        self.modules["defer_quality_updates"] = ModuleConfig(priority=12)
+        self.modules["disable_driver_updates"] = ModuleConfig(priority=12)
+        self.modules["metered_connection"] = ModuleConfig(priority=12)
+        self.modules["disable_update_service"] = ModuleConfig(priority=12)
+
+        # Service Management
+        self.modules["service_preset_gaming"] = ModuleConfig(priority=18)
+        self.modules["service_preset_performance"] = ModuleConfig(priority=18)
+        self.modules["service_preset_privacy"] = ModuleConfig(priority=18)
+        self.modules["service_preset_enterprise"] = ModuleConfig(priority=18)
+        self.modules["service_preset_minimal"] = ModuleConfig(priority=18)
+
+        # Application Installation - Gaming
+        self.modules["install_steam"] = ModuleConfig(priority=92)
+        self.modules["install_epic_games"] = ModuleConfig(priority=92)
+        self.modules["install_gog_galaxy"] = ModuleConfig(priority=92)
+        self.modules["install_discord"] = ModuleConfig(priority=92)
+
+        # Application Installation - Development
+        self.modules["install_vscode"] = ModuleConfig(priority=92)
+        self.modules["install_git"] = ModuleConfig(priority=92)
+        self.modules["install_python"] = ModuleConfig(priority=92)
+        self.modules["install_nodejs"] = ModuleConfig(priority=92)
+
+        # Application Installation - Browsers
+        self.modules["install_chrome"] = ModuleConfig(priority=92)
+        self.modules["install_firefox"] = ModuleConfig(priority=92)
+        self.modules["install_brave"] = ModuleConfig(priority=92)
+
+        # Application Installation - Utilities
+        self.modules["install_7zip"] = ModuleConfig(priority=92)
+        self.modules["install_vlc"] = ModuleConfig(priority=92)
+        self.modules["install_powertoys"] = ModuleConfig(priority=92)
+
         # System optimization
         self.modules["performance_optimize"] = ModuleConfig(priority=35)
         self.modules["network_optimize"] = ModuleConfig(priority=35)
@@ -221,6 +258,37 @@ class ConfigurationManager:
             "storage_optimize": self._optimize_storage,
             "ram_optimize": self._optimize_ram,
             "startup_optimize": self._optimize_startup,
+            # Windows Update Control
+            "disable_windows_update": self._disable_windows_update,
+            "defer_feature_updates": self._defer_feature_updates,
+            "defer_quality_updates": self._defer_quality_updates,
+            "disable_driver_updates": self._disable_driver_updates,
+            "metered_connection": self._enable_metered_connection,
+            "disable_update_service": self._disable_update_service,
+            # Service Management
+            "service_preset_gaming": lambda p: self._apply_service_preset(p, "gaming"),
+            "service_preset_performance": lambda p: self._apply_service_preset(p, "performance"),
+            "service_preset_privacy": lambda p: self._apply_service_preset(p, "privacy"),
+            "service_preset_enterprise": lambda p: self._apply_service_preset(p, "enterprise"),
+            "service_preset_minimal": lambda p: self._apply_service_preset(p, "minimal"),
+            # Application Installation - Gaming
+            "install_steam": lambda p: self._install_app(p, "steam"),
+            "install_epic_games": lambda p: self._install_app(p, "epic-games"),
+            "install_gog_galaxy": lambda p: self._install_app(p, "gog-galaxy"),
+            "install_discord": lambda p: self._install_app(p, "discord"),
+            # Application Installation - Development
+            "install_vscode": lambda p: self._install_app(p, "vscode"),
+            "install_git": lambda p: self._install_app(p, "git"),
+            "install_python": lambda p: self._install_app(p, "python"),
+            "install_nodejs": lambda p: self._install_app(p, "nodejs"),
+            # Application Installation - Browsers
+            "install_chrome": lambda p: self._install_app(p, "chrome"),
+            "install_firefox": lambda p: self._install_app(p, "firefox"),
+            "install_brave": lambda p: self._install_app(p, "brave"),
+            # Application Installation - Utilities
+            "install_7zip": lambda p: self._install_app(p, "7zip"),
+            "install_vlc": lambda p: self._install_app(p, "vlc"),
+            "install_powertoys": lambda p: self._install_app(p, "powertoys"),
         }
 
         executor = module_executors.get(module_name)
@@ -561,6 +629,180 @@ class ConfigurationManager:
         """Optimize startup."""
         self._log("[INFO] Startup optimization applied")
         return True
+
+    # Windows Update Control methods
+    def _disable_windows_update(self, image_path: Path) -> bool:
+        """Disable Windows Update completely."""
+        try:
+            from deployforge.updates_control import (
+                WindowsUpdateController,
+                UpdatePolicy,
+            )
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.set_update_policy(UpdatePolicy.DISABLED)
+            controller.unmount(save_changes=True)
+            self._log("[OK] Windows Update disabled")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to disable Windows Update: {e}")
+            return False
+
+    def _defer_feature_updates(self, image_path: Path) -> bool:
+        """Defer feature updates for maximum period."""
+        try:
+            from deployforge.updates_control import WindowsUpdateController
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.defer_feature_updates(days=365)
+            controller.unmount(save_changes=True)
+            self._log("[OK] Feature updates deferred for 365 days")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to defer feature updates: {e}")
+            return False
+
+    def _defer_quality_updates(self, image_path: Path) -> bool:
+        """Defer quality updates for maximum period."""
+        try:
+            from deployforge.updates_control import WindowsUpdateController
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.defer_quality_updates(days=30)
+            controller.unmount(save_changes=True)
+            self._log("[OK] Quality updates deferred for 30 days")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to defer quality updates: {e}")
+            return False
+
+    def _disable_driver_updates(self, image_path: Path) -> bool:
+        """Disable automatic driver updates."""
+        try:
+            from deployforge.updates_control import WindowsUpdateController
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.disable_driver_updates()
+            controller.unmount(save_changes=True)
+            self._log("[OK] Driver updates disabled")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to disable driver updates: {e}")
+            return False
+
+    def _enable_metered_connection(self, image_path: Path) -> bool:
+        """Enable metered connection behavior."""
+        try:
+            from deployforge.updates_control import WindowsUpdateController
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.set_metered_connection(enabled=True)
+            controller.unmount(save_changes=True)
+            self._log("[OK] Metered connection behavior enabled")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to enable metered connection: {e}")
+            return False
+
+    def _disable_update_service(self, image_path: Path) -> bool:
+        """Disable Windows Update service completely."""
+        try:
+            from deployforge.updates_control import WindowsUpdateController
+
+            controller = WindowsUpdateController(image_path)
+            controller.mount()
+            controller.disable_windows_update_service()
+            controller.unmount(save_changes=True)
+            self._log("[OK] Windows Update service disabled")
+            return True
+        except ImportError:
+            self._log("[WARN] Windows Update control module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to disable update service: {e}")
+            return False
+
+    # Service Management methods
+    def _apply_service_preset(self, image_path: Path, preset_name: str) -> bool:
+        """Apply service configuration preset."""
+        try:
+            from deployforge.services import ServiceManager, ServicePreset
+
+            manager = ServiceManager(image_path)
+            manager.mount()
+
+            # Map preset name to ServicePreset enum
+            preset_map = {
+                "gaming": ServicePreset.GAMING,
+                "performance": ServicePreset.PERFORMANCE,
+                "privacy": ServicePreset.PRIVACY,
+                "enterprise": ServicePreset.ENTERPRISE,
+                "minimal": ServicePreset.MINIMAL,
+            }
+
+            preset = preset_map.get(preset_name)
+            if preset:
+                manager.apply_preset(preset)
+                manager.unmount(save_changes=True)
+                self._log(f"[OK] Applied {preset_name} service preset")
+                return True
+            else:
+                self._log(f"[WARN] Unknown service preset: {preset_name}")
+                return False
+
+        except ImportError:
+            self._log("[WARN] Service management module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to apply service preset: {e}")
+            return False
+
+    # Application Installation methods
+    def _install_app(self, image_path: Path, app_id: str) -> bool:
+        """Install a single application."""
+        try:
+            from deployforge.installer import ApplicationInstaller
+
+            installer = ApplicationInstaller(image_path)
+            installer.mount()
+
+            result = installer.install_application(app_id)
+
+            installer.unmount(save_changes=True)
+
+            if result.success:
+                self._log(f"[OK] Installed {result.app_name}")
+                return True
+            else:
+                self._log(f"[WARN] Failed to install {result.app_name}: {result.error}")
+                return False
+
+        except ImportError:
+            self._log("[WARN] Application installer module not available")
+            return False
+        except Exception as e:
+            self._log(f"[ERROR] Failed to install application: {e}")
+            return False
 
     # Callback helpers
     def set_progress_callback(self, callback: Callable[[int, str], None]):
