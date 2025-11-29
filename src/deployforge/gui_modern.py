@@ -887,8 +887,20 @@ class AdvancedOptionsPanel(QWidget):
             "disable_reserved_storage": "Disable Windows reserved storage",
             "trim_ssd": "Enable TRIM for SSD optimization",
             "disable_defrag_schedule": "Disable automatic defragmentation",
-            # System Optimization - Services
-            "disable_windows_update": "Disable Windows Update service",
+            # Windows Update Control
+            "disable_windows_update": "Disable Windows Update completely (no updates)",
+            "defer_feature_updates": "Defer Windows feature updates for 365 days",
+            "defer_quality_updates": "Defer quality/security updates for 30 days",
+            "disable_driver_updates": "Prevent automatic driver updates via Windows Update",
+            "metered_connection": "Enable metered connection to limit update downloads",
+            "disable_update_service": "Disable Windows Update service at system level",
+            # Service Management Presets
+            "service_preset_gaming": "Apply gaming-optimized service configuration preset",
+            "service_preset_performance": "Apply performance-focused service preset",
+            "service_preset_privacy": "Apply privacy-focused service preset (disable telemetry services)",
+            "service_preset_enterprise": "Apply enterprise-grade service security preset",
+            "service_preset_minimal": "Apply minimal services preset (maximum performance)",
+            # System Services
             "disable_print_spooler": "Disable Print Spooler service",
             "disable_bluetooth": "Disable Bluetooth support",
             "disable_windows_search": "Disable Windows Search service",
@@ -1116,9 +1128,24 @@ class AdvancedOptionsPanel(QWidget):
                 ],
             ),
             (
-                "🔌 Services Management",
+                "⚙️ Windows Update Control",
                 [
                     ("disable_windows_update", "Disable Windows Update"),
+                    ("defer_feature_updates", "Defer Feature Updates (365 days)"),
+                    ("defer_quality_updates", "Defer Quality Updates (30 days)"),
+                    ("disable_driver_updates", "Disable Driver Updates"),
+                    ("metered_connection", "Enable Metered Connection"),
+                    ("disable_update_service", "Disable Update Service"),
+                ],
+            ),
+            (
+                "🔌 Services Management",
+                [
+                    ("service_preset_gaming", "Gaming Service Preset"),
+                    ("service_preset_performance", "Performance Service Preset"),
+                    ("service_preset_privacy", "Privacy Service Preset"),
+                    ("service_preset_enterprise", "Enterprise Service Preset"),
+                    ("service_preset_minimal", "Minimal Service Preset"),
                     ("disable_print_spooler", "Disable Print Spooler"),
                     ("disable_bluetooth", "Disable Bluetooth"),
                     ("disable_windows_search", "Disable Windows Search Service"),

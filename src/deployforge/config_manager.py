@@ -107,27 +107,27 @@ class ConfigurationManager:
         self.modules["service_preset_enterprise"] = ModuleConfig(priority=18)
         self.modules["service_preset_minimal"] = ModuleConfig(priority=18)
 
-        # Application Installation - Gaming
-        self.modules["install_steam"] = ModuleConfig(priority=92)
-        self.modules["install_epic_games"] = ModuleConfig(priority=92)
-        self.modules["install_gog_galaxy"] = ModuleConfig(priority=92)
-        self.modules["install_discord"] = ModuleConfig(priority=92)
+        # Application Installation - Gaming (match GUI checkbox names)
+        self.modules["steam"] = ModuleConfig(priority=92)
+        self.modules["epic_games"] = ModuleConfig(priority=92)
+        self.modules["gog_galaxy"] = ModuleConfig(priority=92)
+        self.modules["discord_gaming"] = ModuleConfig(priority=92)
 
-        # Application Installation - Development
-        self.modules["install_vscode"] = ModuleConfig(priority=92)
-        self.modules["install_git"] = ModuleConfig(priority=92)
-        self.modules["install_python"] = ModuleConfig(priority=92)
-        self.modules["install_nodejs"] = ModuleConfig(priority=92)
+        # Application Installation - Development (match GUI checkbox names)
+        self.modules["vscode"] = ModuleConfig(priority=92)
+        self.modules["git"] = ModuleConfig(priority=92)
+        self.modules["python"] = ModuleConfig(priority=92)
+        self.modules["nodejs"] = ModuleConfig(priority=92)
 
-        # Application Installation - Browsers
-        self.modules["install_chrome"] = ModuleConfig(priority=92)
-        self.modules["install_firefox"] = ModuleConfig(priority=92)
-        self.modules["install_brave"] = ModuleConfig(priority=92)
+        # Application Installation - Browsers (match GUI checkbox names)
+        self.modules["chrome"] = ModuleConfig(priority=92)
+        self.modules["firefox"] = ModuleConfig(priority=92)
+        self.modules["brave"] = ModuleConfig(priority=92)
 
-        # Application Installation - Utilities
-        self.modules["install_7zip"] = ModuleConfig(priority=92)
-        self.modules["install_vlc"] = ModuleConfig(priority=92)
-        self.modules["install_powertoys"] = ModuleConfig(priority=92)
+        # Application Installation - Utilities (match GUI checkbox names)
+        self.modules["7zip"] = ModuleConfig(priority=92)
+        self.modules["vlc"] = ModuleConfig(priority=92)
+        self.modules["powertoys"] = ModuleConfig(priority=92)
 
         # System optimization
         self.modules["performance_optimize"] = ModuleConfig(priority=35)
@@ -271,24 +271,24 @@ class ConfigurationManager:
             "service_preset_privacy": lambda p: self._apply_service_preset(p, "privacy"),
             "service_preset_enterprise": lambda p: self._apply_service_preset(p, "enterprise"),
             "service_preset_minimal": lambda p: self._apply_service_preset(p, "minimal"),
-            # Application Installation - Gaming
-            "install_steam": lambda p: self._install_app(p, "steam"),
-            "install_epic_games": lambda p: self._install_app(p, "epic-games"),
-            "install_gog_galaxy": lambda p: self._install_app(p, "gog-galaxy"),
-            "install_discord": lambda p: self._install_app(p, "discord"),
-            # Application Installation - Development
-            "install_vscode": lambda p: self._install_app(p, "vscode"),
-            "install_git": lambda p: self._install_app(p, "git"),
-            "install_python": lambda p: self._install_app(p, "python"),
-            "install_nodejs": lambda p: self._install_app(p, "nodejs"),
-            # Application Installation - Browsers
-            "install_chrome": lambda p: self._install_app(p, "chrome"),
-            "install_firefox": lambda p: self._install_app(p, "firefox"),
-            "install_brave": lambda p: self._install_app(p, "brave"),
-            # Application Installation - Utilities
-            "install_7zip": lambda p: self._install_app(p, "7zip"),
-            "install_vlc": lambda p: self._install_app(p, "vlc"),
-            "install_powertoys": lambda p: self._install_app(p, "powertoys"),
+            # Application Installation - Gaming (match GUI checkbox names)
+            "steam": lambda p: self._install_app(p, "steam"),
+            "epic_games": lambda p: self._install_app(p, "epic-games"),
+            "gog_galaxy": lambda p: self._install_app(p, "gog-galaxy"),
+            "discord_gaming": lambda p: self._install_app(p, "discord"),
+            # Application Installation - Development (match GUI checkbox names)
+            "vscode": lambda p: self._install_app(p, "vscode"),
+            "git": lambda p: self._install_app(p, "git"),
+            "python": lambda p: self._install_app(p, "python"),
+            "nodejs": lambda p: self._install_app(p, "nodejs"),
+            # Application Installation - Browsers (match GUI checkbox names)
+            "chrome": lambda p: self._install_app(p, "chrome"),
+            "firefox": lambda p: self._install_app(p, "firefox"),
+            "brave": lambda p: self._install_app(p, "brave"),
+            # Application Installation - Utilities (match GUI checkbox names)
+            "7zip": lambda p: self._install_app(p, "7zip"),
+            "vlc": lambda p: self._install_app(p, "vlc"),
+            "powertoys": lambda p: self._install_app(p, "powertoys"),
         }
 
         executor = module_executors.get(module_name)
