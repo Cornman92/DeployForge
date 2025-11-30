@@ -41,6 +41,7 @@ import logging
 import subprocess
 import tempfile
 import shutil
+import time
 import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -76,7 +77,27 @@ class InstallStatus(Enum):
 
 @dataclass
 class InstallProgress:
-    """Installation progress information"""
+    """
+    Installation progress information with time estimates.
+
+    Attributes:
+        app_id: Application identifier
+        app_name: Display name
+        status: Current installation status
+        progress_percent: Overall progress (0-100)
+        current_step: Human-readable description of current step
+        total_steps: Total number of steps
+        current_step_index: Current step number (0-based)
+        method: Installation method being used
+        error_message: Error description if failed
+        start_time: Unix timestamp when started
+        end_time: Unix timestamp when completed/failed
+        estimated_time_remaining: Estimated seconds until completion
+        elapsed_time: Seconds elapsed since start
+        download_speed: Current download speed in bytes/sec (if downloading)
+        bytes_downloaded: Bytes downloaded so far
+        total_bytes: Total bytes to download
+    """
 
     app_id: str
     app_name: str
@@ -89,6 +110,11 @@ class InstallProgress:
     error_message: Optional[str] = None
     start_time: Optional[float] = None
     end_time: Optional[float] = None
+    estimated_time_remaining: Optional[float] = None  # seconds
+    elapsed_time: Optional[float] = None  # seconds
+    download_speed: Optional[float] = None  # bytes/sec
+    bytes_downloaded: Optional[int] = None
+    total_bytes: Optional[int] = None
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -102,7 +128,54 @@ class InstallProgress:
             "current_step_index": self.current_step_index,
             "method": self.method.value if self.method else None,
             "error_message": self.error_message,
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "estimated_time_remaining": self.estimated_time_remaining,
+            "elapsed_time": self.elapsed_time,
+            "download_speed": self.download_speed,
+            "bytes_downloaded": self.bytes_downloaded,
+            "total_bytes": self.total_bytes,
         }
+
+    def get_eta_formatted(self) -> str:
+        """
+        Get formatted ETA string.
+
+        Returns:
+            Human-readable ETA like "2m 30s" or "45s" or "Unknown"
+        """
+        if self.estimated_time_remaining is None:
+            return "Unknown"
+
+        seconds = int(self.estimated_time_remaining)
+        if seconds < 60:
+            return f"{seconds}s"
+        elif seconds < 3600:
+            minutes = seconds // 60
+            secs = seconds % 60
+            return f"{minutes}m {secs}s"
+        else:
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            return f"{hours}h {minutes}m"
+
+    def get_speed_formatted(self) -> str:
+        """
+        Get formatted download speed.
+
+        Returns:
+            Human-readable speed like "1.5 MB/s" or "512 KB/s"
+        """
+        if self.download_speed is None:
+            return "Unknown"
+
+        speed = self.download_speed
+        if speed < 1024:
+            return f"{speed:.0f} B/s"
+        elif speed < 1024 * 1024:
+            return f"{speed / 1024:.1f} KB/s"
+        else:
+            return f"{speed / (1024 * 1024):.1f} MB/s"
 
 
 class ProgressCallback(Protocol):
@@ -135,6 +208,63 @@ class InstallResult:
             "error_message": self.error_message,
             "duration_seconds": self.duration_seconds,
             "attempts": self.attempts,
+        }
+
+
+@dataclass
+class InstallEstimate:
+    """
+    Installation time estimates based on historical data.
+
+    Tracks average installation times per method and app category
+    to provide better progress estimates.
+
+    Attributes:
+        method: Installation method
+        app_category: Application category (Gaming, Development, etc.)
+        avg_duration: Average installation time in seconds
+        sample_count: Number of samples in average
+        min_duration: Fastest observed installation
+        max_duration: Slowest observed installation
+    """
+
+    method: InstallMethod
+    app_category: str
+    avg_duration: float  # seconds
+    sample_count: int = 1
+    min_duration: float = 0.0
+    max_duration: float = 0.0
+
+    def update(self, duration: float) -> None:
+        """
+        Update estimate with new observation.
+
+        Uses incremental average calculation to update estimate.
+
+        Args:
+            duration: Observed installation duration in seconds
+        """
+        # Update min/max
+        if self.min_duration == 0 or duration < self.min_duration:
+            self.min_duration = duration
+        if duration > self.max_duration:
+            self.max_duration = duration
+
+        # Incremental average update
+        self.avg_duration = (self.avg_duration * self.sample_count + duration) / (
+            self.sample_count + 1
+        )
+        self.sample_count += 1
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return {
+            "method": self.method.value,
+            "app_category": self.app_category,
+            "avg_duration": self.avg_duration,
+            "sample_count": self.sample_count,
+            "min_duration": self.min_duration,
+            "max_duration": self.max_duration,
         }
 
 
@@ -209,11 +339,97 @@ class ApplicationInstaller:
         self.max_retries = max_retries
         self.results: Dict[str, InstallResult] = {}
 
+        # Time estimation tracking
+        self.estimates: Dict[tuple, InstallEstimate] = {}
+        self._initialize_default_estimates()
+
         # Create cache directory if specified
         if self.offline_cache:
             self.offline_cache.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"Initialized ApplicationInstaller for {image_path}")
+
+    def _initialize_default_estimates(self) -> None:
+        """Initialize default time estimates for common scenarios."""
+        # Default estimates based on typical installation times (in seconds)
+        defaults = [
+            # WinGet installations (fastest)
+            (InstallMethod.WINGET, "Gaming", 45.0),
+            (InstallMethod.WINGET, "Development", 60.0),
+            (InstallMethod.WINGET, "Browsers", 30.0),
+            (InstallMethod.WINGET, "Utilities", 25.0),
+            (InstallMethod.WINGET, "Creative", 90.0),
+            (InstallMethod.WINGET, "Productivity", 50.0),
+            (InstallMethod.WINGET, "Communication", 40.0),
+            (InstallMethod.WINGET, "Security", 35.0),
+            # Chocolatey installations (medium)
+            (InstallMethod.CHOCOLATEY, "Gaming", 60.0),
+            (InstallMethod.CHOCOLATEY, "Development", 75.0),
+            (InstallMethod.CHOCOLATEY, "Browsers", 40.0),
+            (InstallMethod.CHOCOLATEY, "Utilities", 35.0),
+            (InstallMethod.CHOCOLATEY, "Creative", 120.0),
+            (InstallMethod.CHOCOLATEY, "Productivity", 65.0),
+            (InstallMethod.CHOCOLATEY, "Communication", 50.0),
+            (InstallMethod.CHOCOLATEY, "Security", 45.0),
+            # Direct download (slowest, includes download time)
+            (InstallMethod.DIRECT_DOWNLOAD, "Gaming", 180.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Development", 240.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Browsers", 120.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Utilities", 90.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Creative", 300.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Productivity", 150.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Communication", 140.0),
+            (InstallMethod.DIRECT_DOWNLOAD, "Security", 100.0),
+        ]
+
+        for method, category, duration in defaults:
+            key = (method, category)
+            self.estimates[key] = InstallEstimate(
+                method=method,
+                app_category=category,
+                avg_duration=duration,
+                min_duration=duration * 0.5,
+                max_duration=duration * 2.0,
+            )
+
+    def _get_estimated_duration(self, method: InstallMethod, category: str) -> float:
+        """
+        Get estimated installation duration.
+
+        Args:
+            method: Installation method
+            category: Application category
+
+        Returns:
+            Estimated duration in seconds (defaults to 60s if no estimate)
+        """
+        key = (method, category)
+        estimate = self.estimates.get(key)
+        if estimate:
+            return estimate.avg_duration
+        # Default fallback
+        return 60.0
+
+    def _update_estimate(self, method: InstallMethod, category: str, duration: float) -> None:
+        """
+        Update time estimate with observed duration.
+
+        Args:
+            method: Installation method used
+            category: Application category
+            duration: Actual installation duration in seconds
+        """
+        key = (method, category)
+        if key in self.estimates:
+            self.estimates[key].update(duration)
+        else:
+            self.estimates[key] = InstallEstimate(
+                method=method,
+                app_category=category,
+                avg_duration=duration,
+                min_duration=duration,
+                max_duration=duration,
+            )
 
     def mount(self, mount_point: Optional[Path] = None) -> Path:
         """
@@ -256,9 +472,7 @@ class ApplicationInstaller:
                     timeout=300,
                 )
             else:
-                raise NotImplementedError(
-                    f"Mounting {self.image_path.suffix} not yet implemented"
-                )
+                raise NotImplementedError(f"Mounting {self.image_path.suffix} not yet implemented")
 
             self.is_mounted = True
             logger.info("Image mounted successfully")
@@ -363,6 +577,10 @@ class ApplicationInstaller:
 
         logger.info(f"Installing {app.name} (ID: {app_id})")
 
+        # Get estimated duration for this app/method combination
+        # (Will be refined as we determine which method succeeds)
+        estimated_duration = self._get_estimated_duration(InstallMethod.WINGET, app.category)
+
         # Initialize progress
         if progress_callback:
             progress = InstallProgress(
@@ -374,6 +592,8 @@ class ApplicationInstaller:
                 total_steps=3,
                 current_step_index=0,
                 start_time=start_time,
+                estimated_time_remaining=estimated_duration,
+                elapsed_time=0.0,
             )
             progress_callback(progress)
 
@@ -382,7 +602,9 @@ class ApplicationInstaller:
 
         # Try installation methods in priority order
         methods_to_try = (
-            [method] if method else [InstallMethod.WINGET, InstallMethod.CHOCOLATEY, InstallMethod.DIRECT_DOWNLOAD]
+            [method]
+            if method
+            else [InstallMethod.WINGET, InstallMethod.CHOCOLATEY, InstallMethod.DIRECT_DOWNLOAD]
         )
 
         for install_method in methods_to_try:
@@ -391,68 +613,135 @@ class ApplicationInstaller:
             try:
                 if install_method == InstallMethod.WINGET and app.winget_id:
                     if progress_callback:
+                        elapsed = time.time() - start_time
+                        est_duration = self._get_estimated_duration(
+                            InstallMethod.WINGET, app.category
+                        )
                         progress.current_step = f"Installing via WinGet ({app.winget_id})"
                         progress.current_step_index = 1
                         progress.progress_percent = 33
                         progress.method = InstallMethod.WINGET
                         progress.status = InstallStatus.INSTALLING
+                        progress.elapsed_time = elapsed
+                        progress.estimated_time_remaining = max(0, est_duration - elapsed)
                         progress_callback(progress)
 
                     success = self._install_via_winget(app, progress_callback)
                     if success:
+                        actual_duration = time.time() - start_time
+                        # Update estimate with actual duration
+                        self._update_estimate(InstallMethod.WINGET, app.category, actual_duration)
+
                         result = InstallResult(
                             app_id=app_id,
                             app_name=app.name,
                             success=True,
                             method=InstallMethod.WINGET,
-                            duration_seconds=time.time() - start_time,
+                            duration_seconds=actual_duration,
                             attempts=attempts,
                         )
                         self.results[app_id] = result
+
+                        # Final progress update
+                        if progress_callback:
+                            progress.status = InstallStatus.COMPLETE
+                            progress.progress_percent = 100
+                            progress.elapsed_time = actual_duration
+                            progress.estimated_time_remaining = 0.0
+                            progress.end_time = time.time()
+                            progress_callback(progress)
+
                         return result
 
                 elif install_method == InstallMethod.CHOCOLATEY and app.chocolatey_id:
                     if progress_callback:
+                        elapsed = time.time() - start_time
+                        est_duration = self._get_estimated_duration(
+                            InstallMethod.CHOCOLATEY, app.category
+                        )
                         progress.current_step = f"Installing via Chocolatey ({app.chocolatey_id})"
                         progress.current_step_index = 2
                         progress.progress_percent = 66
                         progress.method = InstallMethod.CHOCOLATEY
                         progress.status = InstallStatus.INSTALLING
+                        progress.elapsed_time = elapsed
+                        progress.estimated_time_remaining = max(0, est_duration - elapsed)
                         progress_callback(progress)
 
                     success = self._install_via_chocolatey(app, progress_callback)
                     if success:
+                        actual_duration = time.time() - start_time
+                        # Update estimate with actual duration
+                        self._update_estimate(
+                            InstallMethod.CHOCOLATEY, app.category, actual_duration
+                        )
+
                         result = InstallResult(
                             app_id=app_id,
                             app_name=app.name,
                             success=True,
                             method=InstallMethod.CHOCOLATEY,
-                            duration_seconds=time.time() - start_time,
+                            duration_seconds=actual_duration,
                             attempts=attempts,
                         )
                         self.results[app_id] = result
+
+                        # Final progress update
+                        if progress_callback:
+                            progress.status = InstallStatus.COMPLETE
+                            progress.progress_percent = 100
+                            progress.elapsed_time = actual_duration
+                            progress.estimated_time_remaining = 0.0
+                            progress.end_time = time.time()
+                            progress_callback(progress)
+
                         return result
 
                 elif install_method == InstallMethod.DIRECT_DOWNLOAD and app.download_url:
                     if progress_callback:
+                        elapsed = time.time() - start_time
+                        est_duration = self._get_estimated_duration(
+                            InstallMethod.DIRECT_DOWNLOAD, app.category
+                        )
                         progress.current_step = "Downloading installer"
                         progress.current_step_index = 3
                         progress.progress_percent = 50
                         progress.method = InstallMethod.DIRECT_DOWNLOAD
                         progress.status = InstallStatus.DOWNLOADING
+                        progress.elapsed_time = elapsed
+                        progress.estimated_time_remaining = max(0, est_duration - elapsed)
                         progress_callback(progress)
 
-                    success = self._install_via_download(app, progress_callback)
+                    # Pass progress object for detailed download tracking
+                    success = self._install_via_download(
+                        app, progress_callback, progress if progress_callback else None
+                    )
                     if success:
+                        actual_duration = time.time() - start_time
+                        # Update estimate with actual duration
+                        self._update_estimate(
+                            InstallMethod.DIRECT_DOWNLOAD, app.category, actual_duration
+                        )
+
                         result = InstallResult(
                             app_id=app_id,
                             app_name=app.name,
                             success=True,
                             method=InstallMethod.DIRECT_DOWNLOAD,
-                            duration_seconds=time.time() - start_time,
+                            duration_seconds=actual_duration,
                             attempts=attempts,
                         )
                         self.results[app_id] = result
+
+                        # Final progress update
+                        if progress_callback:
+                            progress.status = InstallStatus.COMPLETE
+                            progress.progress_percent = 100
+                            progress.elapsed_time = actual_duration
+                            progress.estimated_time_remaining = 0.0
+                            progress.end_time = time.time()
+                            progress_callback(progress)
+
                         return result
 
             except Exception as e:
@@ -596,9 +885,7 @@ class ApplicationInstaller:
             ]
 
             # Run installation
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=600, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Successfully installed {app.name} via WinGet")
@@ -642,9 +929,7 @@ class ApplicationInstaller:
             cmd = ["choco", "install", app.chocolatey_id, "-y", "--no-progress"]
 
             # Run installation
-            result = subprocess.run(
-                cmd, capture_output=True, text=True, timeout=600, check=False
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=False)
 
             if result.returncode == 0:
                 logger.info(f"Successfully installed {app.name} via Chocolatey")
@@ -661,7 +946,10 @@ class ApplicationInstaller:
             return False
 
     def _install_via_download(
-        self, app: "ApplicationDefinition", progress_callback: Optional[ProgressCallback]
+        self,
+        app: "ApplicationDefinition",
+        progress_callback: Optional[ProgressCallback],
+        progress_obj: Optional[InstallProgress] = None,
     ) -> bool:
         """
         Install application via direct download.
@@ -669,6 +957,7 @@ class ApplicationInstaller:
         Args:
             app: Application definition with download_url
             progress_callback: Optional progress callback
+            progress_obj: Optional progress object for detailed tracking
 
         Returns:
             True if installation succeeded, False otherwise
@@ -679,8 +968,17 @@ class ApplicationInstaller:
         logger.info(f"Installing {app.name} via direct download")
 
         try:
-            # Download installer
-            installer_path = self._download_file(app.download_url, app.name, progress_callback)
+            # Download installer with detailed progress tracking
+            installer_path = self._download_file(
+                app.download_url, app.name, progress_callback, progress_obj
+            )
+
+            # Update progress for installation phase
+            if progress_callback and progress_obj:
+                progress_obj.status = InstallStatus.INSTALLING
+                progress_obj.current_step = "Running installer..."
+                progress_obj.progress_percent = 75
+                progress_callback(progress_obj)
 
             # Run installer
             cmd = [str(installer_path)]
@@ -705,9 +1003,24 @@ class ApplicationInstaller:
             return False
 
     def _download_file(
-        self, url: str, app_name: str, progress_callback: Optional[ProgressCallback]
+        self,
+        url: str,
+        app_name: str,
+        progress_callback: Optional[ProgressCallback],
+        progress_obj: Optional[InstallProgress] = None,
     ) -> Path:
-        """Download file from URL with progress tracking"""
+        """
+        Download file from URL with detailed progress tracking.
+
+        Args:
+            url: Download URL
+            app_name: Application name (for filename fallback)
+            progress_callback: Optional progress callback
+            progress_obj: Optional progress object to update
+
+        Returns:
+            Path to downloaded file
+        """
         filename = url.split("/")[-1] or f"{app_name}_installer.exe"
         download_path = Path(tempfile.gettempdir()) / filename
 
@@ -718,15 +1031,44 @@ class ApplicationInstaller:
 
         total_size = int(response.headers.get("content-length", 0))
         downloaded = 0
+        start_time = time.time()
+        last_update_time = start_time
 
         with open(download_path, "wb") as f:
             for chunk in response.iter_content(chunk_size=8192):
                 f.write(chunk)
                 downloaded += len(chunk)
+                current_time = time.time()
 
-                if progress_callback and total_size:
-                    percent = int((downloaded / total_size) * 100)
-                    # Update progress (simplified for now)
+                # Update progress every 0.5 seconds to avoid callback spam
+                if progress_callback and progress_obj and (current_time - last_update_time >= 0.5):
+                    elapsed = current_time - start_time
+                    speed = downloaded / elapsed if elapsed > 0 else 0
+
+                    # Update progress object with download details
+                    progress_obj.bytes_downloaded = downloaded
+                    progress_obj.total_bytes = total_size
+                    progress_obj.download_speed = speed
+
+                    if total_size > 0:
+                        percent = int((downloaded / total_size) * 100)
+                        progress_obj.progress_percent = percent
+
+                        # Estimate remaining time based on current speed
+                        if speed > 0:
+                            remaining_bytes = total_size - downloaded
+                            progress_obj.estimated_time_remaining = remaining_bytes / speed
+
+                    progress_obj.current_step = (
+                        f"Downloading {downloaded // (1024*1024)}/"
+                        f"{total_size // (1024*1024)} MB "
+                        f"at {progress_obj.get_speed_formatted()}"
+                    )
+
+                    progress_callback(progress_obj)
+                    last_update_time = current_time
+
+        logger.info(f"Download complete: {downloaded} bytes in {time.time() - start_time:.1f}s")
 
         return download_path
 
