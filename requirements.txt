@@ -19,7 +19,7 @@ pydantic==2.5.3
 
 # System utilities
 psutil==5.9.7
-requests==2.31.0
+requests==2.32.4
 
 # Platform-specific dependencies
 # Windows: None (uses built-in DISM)
