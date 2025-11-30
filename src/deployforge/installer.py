@@ -9,10 +9,18 @@ This module provides a robust application installation system using multiple met
 Features:
 - Automatic fallback mechanism
 - Dependency resolution
-- Progress tracking with callbacks
-- Error handling and recovery
+- Progress tracking with time estimates and ETA
+- Enhanced error handling with exponential backoff retry
 - Offline installation support
 - Parallel installation capability
+- Download speed and progress tracking
+- Historical time estimation for better UX
+
+Retry Logic:
+- Configurable exponential backoff (default: 2s, 4s, 8s, 16s...)
+- Automatic retry on network errors and timeouts
+- Progress updates during retry delays
+- Maximum 60s delay cap to avoid excessive waiting
 
 Platform Support:
 - Windows: Full support (WinGet, Chocolatey, direct download)
@@ -20,18 +28,34 @@ Platform Support:
 
 Example:
     from pathlib import Path
-    from deployforge.installer import ApplicationInstaller
+    from deployforge.installer import ApplicationInstaller, RetryConfig
 
-    installer = ApplicationInstaller(Path("install.wim"))
+    # Create installer with custom retry configuration
+    retry_config = RetryConfig(
+        max_retries=5,
+        initial_delay=3.0,
+        backoff_factor=2.0
+    )
+    installer = ApplicationInstaller(
+        Path("install.wim"),
+        retry_config=retry_config
+    )
     installer.mount()
 
-    # Install single application
-    installer.install_application("vscode", progress_callback=my_callback)
+    # Install single application with progress tracking
+    def progress_handler(progress):
+        print(f"{progress.app_name}: {progress.progress_percent}%")
+        print(f"ETA: {progress.get_eta_formatted()}")
+        if progress.download_speed:
+            print(f"Speed: {progress.get_speed_formatted()}")
 
-    # Install multiple applications
+    installer.install_application("vscode", progress_callback=progress_handler)
+
+    # Install multiple applications in parallel
     installer.install_applications(
         ["vscode", "git", "nodejs"],
-        parallel=True
+        parallel=True,
+        max_workers=3
     )
 
     installer.unmount(save_changes=True)
@@ -212,6 +236,52 @@ class InstallResult:
 
 
 @dataclass
+class RetryConfig:
+    """
+    Configuration for retry logic with exponential backoff.
+
+    Attributes:
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 2)
+        max_delay: Maximum delay between retries in seconds (default: 60)
+        backoff_factor: Multiplier for exponential backoff (default: 2)
+        retry_on_network_error: Whether to retry on network errors (default: True)
+        retry_on_timeout: Whether to retry on timeout errors (default: True)
+    """
+
+    max_retries: int = 3
+    initial_delay: float = 2.0
+    max_delay: float = 60.0
+    backoff_factor: float = 2.0
+    retry_on_network_error: bool = True
+    retry_on_timeout: bool = True
+
+    def get_delay(self, attempt: int) -> float:
+        """
+        Calculate delay for given attempt using exponential backoff.
+
+        Args:
+            attempt: Attempt number (0-based)
+
+        Returns:
+            Delay in seconds (capped at max_delay)
+        """
+        delay = self.initial_delay * (self.backoff_factor**attempt)
+        return min(delay, self.max_delay)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return {
+            "max_retries": self.max_retries,
+            "initial_delay": self.initial_delay,
+            "max_delay": self.max_delay,
+            "backoff_factor": self.backoff_factor,
+            "retry_on_network_error": self.retry_on_network_error,
+            "retry_on_timeout": self.retry_on_timeout,
+        }
+
+
+@dataclass
 class InstallEstimate:
     """
     Installation time estimates based on historical data.
@@ -322,7 +392,7 @@ class ApplicationInstaller:
         self,
         image_path: Path,
         offline_cache: Optional[Path] = None,
-        max_retries: int = 3,
+        retry_config: Optional[RetryConfig] = None,
     ):
         """
         Initialize application installer.
@@ -330,13 +400,13 @@ class ApplicationInstaller:
         Args:
             image_path: Path to Windows image file (WIM/ESD/VHD/VHDX)
             offline_cache: Optional path to cache downloaded installers
-            max_retries: Maximum retry attempts for failed downloads/installs
+            retry_config: Optional retry configuration (uses defaults if not provided)
         """
         self.image_path = image_path
         self.mount_point: Optional[Path] = None
         self.is_mounted = False
         self.offline_cache = offline_cache
-        self.max_retries = max_retries
+        self.retry_config = retry_config or RetryConfig()
         self.results: Dict[str, InstallResult] = {}
 
         # Time estimation tracking
@@ -347,7 +417,10 @@ class ApplicationInstaller:
         if self.offline_cache:
             self.offline_cache.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"Initialized ApplicationInstaller for {image_path}")
+        logger.info(
+            f"Initialized ApplicationInstaller for {image_path} "
+            f"(max_retries={self.retry_config.max_retries})"
+        )
 
     def _initialize_default_estimates(self) -> None:
         """Initialize default time estimates for common scenarios."""
@@ -430,6 +503,120 @@ class ApplicationInstaller:
                 min_duration=duration,
                 max_duration=duration,
             )
+
+    def _retry_with_backoff(
+        self,
+        operation: Callable,
+        operation_name: str,
+        progress_callback: Optional[ProgressCallback] = None,
+        progress_obj: Optional[InstallProgress] = None,
+    ) -> Any:
+        """
+        Execute operation with exponential backoff retry logic.
+
+        Args:
+            operation: Callable to execute (should return bool or result)
+            operation_name: Human-readable name for logging
+            progress_callback: Optional progress callback
+            progress_obj: Optional progress object to update
+
+        Returns:
+            Result from operation if successful, None if all retries exhausted
+
+        Raises:
+            Exception: Re-raises last exception if all retries fail
+        """
+        last_exception = None
+
+        for attempt in range(self.retry_config.max_retries + 1):
+            try:
+                logger.info(
+                    f"Attempting {operation_name} "
+                    f"(attempt {attempt + 1}/{self.retry_config.max_retries + 1})"
+                )
+
+                result = operation()
+
+                if result:  # Success
+                    if attempt > 0:
+                        logger.info(f"{operation_name} succeeded after {attempt + 1} attempts")
+                    return result
+
+                # Operation returned False/None but no exception
+                # Retry if we have attempts left
+                if attempt < self.retry_config.max_retries:
+                    delay = self.retry_config.get_delay(attempt)
+                    logger.warning(
+                        f"{operation_name} returned failure, " f"retrying in {delay:.1f}s..."
+                    )
+
+                    # Update progress during wait
+                    if progress_callback and progress_obj:
+                        progress_obj.current_step = (
+                            f"Retrying {operation_name} in {delay:.0f}s "
+                            f"(attempt {attempt + 2}/{self.retry_config.max_retries + 1})"
+                        )
+                        progress_callback(progress_obj)
+
+                    time.sleep(delay)
+                else:
+                    logger.error(f"{operation_name} failed after all retry attempts")
+                    return None
+
+            except (requests.exceptions.RequestException, ConnectionError) as e:
+                last_exception = e
+                if (
+                    self.retry_config.retry_on_network_error
+                    and attempt < self.retry_config.max_retries
+                ):
+                    delay = self.retry_config.get_delay(attempt)
+                    logger.warning(
+                        f"{operation_name} network error: {e}, " f"retrying in {delay:.1f}s..."
+                    )
+
+                    # Update progress during wait
+                    if progress_callback and progress_obj:
+                        progress_obj.current_step = (
+                            f"Network error, retrying in {delay:.0f}s "
+                            f"(attempt {attempt + 2}/{self.retry_config.max_retries + 1})"
+                        )
+                        progress_callback(progress_obj)
+
+                    time.sleep(delay)
+                else:
+                    logger.error(f"{operation_name} failed with network error: {e}")
+                    raise
+
+            except subprocess.TimeoutExpired as e:
+                last_exception = e
+                if self.retry_config.retry_on_timeout and attempt < self.retry_config.max_retries:
+                    delay = self.retry_config.get_delay(attempt)
+                    logger.warning(
+                        f"{operation_name} timed out: {e}, " f"retrying in {delay:.1f}s..."
+                    )
+
+                    # Update progress during wait
+                    if progress_callback and progress_obj:
+                        progress_obj.current_step = (
+                            f"Timeout, retrying in {delay:.0f}s "
+                            f"(attempt {attempt + 2}/{self.retry_config.max_retries + 1})"
+                        )
+                        progress_callback(progress_obj)
+
+                    time.sleep(delay)
+                else:
+                    logger.error(f"{operation_name} failed with timeout: {e}")
+                    raise
+
+            except Exception as e:
+                # Don't retry on unexpected exceptions
+                logger.error(f"{operation_name} failed with unexpected error: {e}")
+                raise
+
+        # All retries exhausted
+        if last_exception:
+            raise last_exception
+        return None
 
     def mount(self, mount_point: Optional[Path] = None) -> Path:
         """
