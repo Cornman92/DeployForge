@@ -62,6 +62,7 @@ Example:
 """
 
 import logging
+import os
 import subprocess
 import tempfile
 import shutil
@@ -232,6 +233,42 @@ class InstallResult:
             "error_message": self.error_message,
             "duration_seconds": self.duration_seconds,
             "attempts": self.attempts,
+        }
+
+
+@dataclass
+class VerificationResult:
+    """
+    Result of post-installation verification.
+
+    Attributes:
+        app_id: Application identifier
+        app_name: Application display name
+        is_installed: Whether app was verified as installed
+        verification_method: Method used for verification
+        install_path: Detected installation path (if found)
+        version: Detected version (if available)
+        error_message: Error description if verification failed
+    """
+
+    app_id: str
+    app_name: str
+    is_installed: bool
+    verification_method: Optional[str] = None
+    install_path: Optional[Path] = None
+    version: Optional[str] = None
+    error_message: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return {
+            "app_id": self.app_id,
+            "app_name": self.app_name,
+            "is_installed": self.is_installed,
+            "verification_method": self.verification_method,
+            "install_path": str(self.install_path) if self.install_path else None,
+            "version": self.version,
+            "error_message": self.error_message,
         }
 
 
@@ -1300,3 +1337,286 @@ class ApplicationInstaller:
             return result.returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
+
+    def verify_installation(
+        self, app_id: str, method: Optional[InstallMethod] = None
+    ) -> VerificationResult:
+        """
+        Verify that an application was successfully installed.
+
+        Tries multiple verification methods in order:
+        1. WinGet list (if WinGet was used or available)
+        2. Chocolatey list (if Chocolatey was used or available)
+        3. Registry check (Windows only)
+        4. Common installation paths
+
+        Args:
+            app_id: Application identifier to verify
+            method: Optional installation method used (helps prioritize verification)
+
+        Returns:
+            VerificationResult with installation status and details
+
+        Example:
+            result = installer.verify_installation("vscode")
+            if result.is_installed:
+                print(f"Verified: {result.app_name} at {result.install_path}")
+            else:
+                print(f"Not found: {result.error_message}")
+        """
+        from deployforge.app_catalog import get_app
+
+        try:
+            app = get_app(app_id)
+        except ValueError as e:
+            return VerificationResult(
+                app_id=app_id,
+                app_name=app_id,
+                is_installed=False,
+                error_message=str(e),
+            )
+
+        logger.info(f"Verifying installation of {app.name}")
+
+        # Try verification methods in priority order
+        verification_methods = [
+            (self._verify_via_winget, "WinGet"),
+            (self._verify_via_chocolatey, "Chocolatey"),
+            (self._verify_via_registry, "Registry"),
+            (self._verify_via_path, "Path Search"),
+        ]
+
+        # Prioritize the method that was used for installation
+        if method == InstallMethod.WINGET:
+            verification_methods.insert(0, (self._verify_via_winget, "WinGet"))
+        elif method == InstallMethod.CHOCOLATEY:
+            verification_methods.insert(0, (self._verify_via_chocolatey, "Chocolatey"))
+
+        for verify_func, method_name in verification_methods:
+            result = verify_func(app)
+            if result and result.is_installed:
+                logger.info(
+                    f"Verified {app.name} installation via {method_name}: "
+                    f"{result.install_path or 'path unknown'}"
+                )
+                return result
+
+        # Not found by any method
+        logger.warning(f"Could not verify installation of {app.name}")
+        return VerificationResult(
+            app_id=app_id,
+            app_name=app.name,
+            is_installed=False,
+            error_message="Application not found by any verification method",
+        )
+
+    def _verify_via_winget(self, app: "ApplicationDefinition") -> Optional[VerificationResult]:
+        """Verify installation using WinGet"""
+        if not app.winget_id or not self._is_winget_available():
+            return None
+
+        try:
+            result = subprocess.run(
+                ["winget", "list", "--id", app.winget_id],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+
+            if result.returncode == 0 and app.winget_id.lower() in result.stdout.lower():
+                # Parse version if available (basic parsing)
+                version = None
+                for line in result.stdout.split("\n"):
+                    if app.winget_id.lower() in line.lower():
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            version = parts[1]
+                        break
+
+                return VerificationResult(
+                    app_id=app.id,
+                    app_name=app.name,
+                    is_installed=True,
+                    verification_method="WinGet",
+                    version=version,
+                )
+        except Exception as e:
+            logger.debug(f"WinGet verification failed for {app.name}: {e}")
+
+        return None
+
+    def _verify_via_chocolatey(self, app: "ApplicationDefinition") -> Optional[VerificationResult]:
+        """Verify installation using Chocolatey"""
+        if not app.chocolatey_id or not self._is_chocolatey_available():
+            return None
+
+        try:
+            result = subprocess.run(
+                ["choco", "list", "--local-only", "--exact", app.chocolatey_id],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+
+            if result.returncode == 0 and app.chocolatey_id.lower() in result.stdout.lower():
+                # Parse version if available
+                version = None
+                for line in result.stdout.split("\n"):
+                    if app.chocolatey_id.lower() in line.lower():
+                        parts = line.split()
+                        if len(parts) >= 2:
+                            version = parts[1]
+                        break
+
+                return VerificationResult(
+                    app_id=app.id,
+                    app_name=app.name,
+                    is_installed=True,
+                    verification_method="Chocolatey",
+                    version=version,
+                )
+        except Exception as e:
+            logger.debug(f"Chocolatey verification failed for {app.name}: {e}")
+
+        return None
+
+    def _verify_via_registry(self, app: "ApplicationDefinition") -> Optional[VerificationResult]:
+        """
+        Verify installation via Windows Registry.
+
+        Checks common registry locations for installed programs.
+        """
+        if platform.system() != "Windows":
+            return None
+
+        # Common registry paths for installed programs
+        reg_paths = [
+            r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+            r"HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
+            r"HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall",
+        ]
+
+        try:
+            for reg_path in reg_paths:
+                result = subprocess.run(
+                    ["reg", "query", reg_path, "/s", "/f", app.name],
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    check=False,
+                )
+
+                if result.returncode == 0 and app.name.lower() in result.stdout.lower():
+                    # Try to extract install location
+                    install_path = None
+                    for line in result.stdout.split("\n"):
+                        if "InstallLocation" in line or "InstallPath" in line:
+                            parts = line.split("REG_SZ")
+                            if len(parts) > 1:
+                                path_str = parts[1].strip()
+                                if path_str:
+                                    install_path = Path(path_str)
+                            break
+
+                    return VerificationResult(
+                        app_id=app.id,
+                        app_name=app.name,
+                        is_installed=True,
+                        verification_method="Registry",
+                        install_path=install_path,
+                    )
+        except Exception as e:
+            logger.debug(f"Registry verification failed for {app.name}: {e}")
+
+        return None
+
+    def _verify_via_path(self, app: "ApplicationDefinition") -> Optional[VerificationResult]:
+        """
+        Verify installation by searching common installation paths.
+
+        Checks Program Files, AppData, and other common locations.
+        """
+        if platform.system() != "Windows":
+            return None
+
+        # Common installation directories
+        search_paths = []
+
+        # Add Program Files paths
+        program_files = Path(os.environ.get("ProgramFiles", "C:\\Program Files"))
+        program_files_x86 = Path(os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)"))
+        local_appdata = Path(os.environ.get("LOCALAPPDATA", ""))
+        appdata = Path(os.environ.get("APPDATA", ""))
+
+        search_paths.extend(
+            [
+                program_files,
+                program_files_x86,
+                local_appdata / "Programs",
+                appdata,
+            ]
+        )
+
+        # Search for app directory
+        app_name_lower = app.name.lower().replace(" ", "")
+
+        for base_path in search_paths:
+            if not base_path.exists():
+                continue
+
+            try:
+                for item in base_path.iterdir():
+                    if item.is_dir():
+                        item_name_lower = item.name.lower().replace(" ", "")
+                        if app_name_lower in item_name_lower or item_name_lower in app_name_lower:
+                            # Found potential installation directory
+                            return VerificationResult(
+                                app_id=app.id,
+                                app_name=app.name,
+                                is_installed=True,
+                                verification_method="Path Search",
+                                install_path=item,
+                            )
+            except (PermissionError, OSError):
+                # Skip directories we can't access
+                continue
+
+        return None
+
+    def verify_installations(
+        self, app_ids: List[str], methods: Optional[Dict[str, InstallMethod]] = None
+    ) -> Dict[str, VerificationResult]:
+        """
+        Verify multiple application installations.
+
+        Args:
+            app_ids: List of application identifiers to verify
+            methods: Optional dict mapping app_id to InstallMethod used
+
+        Returns:
+            Dictionary mapping app_id to VerificationResult
+
+        Example:
+            methods = {"vscode": InstallMethod.WINGET, "git": InstallMethod.CHOCOLATEY}
+            results = installer.verify_installations(["vscode", "git"], methods)
+
+            for app_id, result in results.items():
+                if result.is_installed:
+                    print(f"✓ {result.app_name}")
+                else:
+                    print(f"✗ {result.app_name}: {result.error_message}")
+        """
+        logger.info(f"Verifying {len(app_ids)} installations")
+
+        results = {}
+        for app_id in app_ids:
+            method = methods.get(app_id) if methods else None
+            result = self.verify_installation(app_id, method)
+            results[app_id] = result
+
+        successful = sum(1 for r in results.values() if r.is_installed)
+        logger.info(f"Verification complete: {successful}/{len(app_ids)} apps verified")
+
+        return results
