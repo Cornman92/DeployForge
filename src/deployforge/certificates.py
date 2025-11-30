@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class CertificateStore(Enum):
     """Certificate store locations"""
+
     ROOT = "Root"  # Trusted Root Certification Authorities
     CA = "CA"  # Intermediate Certification Authorities
     MY = "My"  # Personal
@@ -34,6 +35,7 @@ class CertificateStore(Enum):
 
 class CertificateFormat(Enum):
     """Certificate file formats"""
+
     CER = "cer"  # DER or Base64 encoded certificate
     CRT = "crt"  # Same as CER
     PFX = "pfx"  # PKCS#12 (contains private key)
@@ -45,6 +47,7 @@ class CertificateFormat(Enum):
 @dataclass
 class Certificate:
     """Represents a certificate to be installed"""
+
     file_path: Path
     store: CertificateStore
     description: str = ""
@@ -54,7 +57,7 @@ class Certificate:
             raise FileNotFoundError(f"Certificate file not found: {self.file_path}")
 
         # Detect format from extension
-        ext = self.file_path.suffix.lower().lstrip('.')
+        ext = self.file_path.suffix.lower().lstrip(".")
         try:
             self.format = CertificateFormat(ext)
         except ValueError:
@@ -64,16 +67,17 @@ class Certificate:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'file_path': str(self.file_path),
-            'store': self.store.value,
-            'format': self.format.value,
-            'description': self.description
+            "file_path": str(self.file_path),
+            "store": self.store.value,
+            "format": self.format.value,
+            "description": self.description,
         }
 
 
 @dataclass
 class AutoEnrollmentConfig:
     """Configuration for certificate auto-enrollment"""
+
     enabled: bool = True
     ca_server: Optional[str] = None
     policy_server: Optional[str] = None
@@ -85,19 +89,20 @@ class AutoEnrollmentConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'enabled': self.enabled,
-            'ca_server': self.ca_server,
-            'policy_server': self.policy_server,
-            'enroll_on_behalf': self.enroll_on_behalf,
-            'renew_expired_certificates': self.renew_expired_certificates,
-            'renew_pending_certificates': self.renew_pending_certificates,
-            'update_certificates_that_use_templates': self.update_certificates_that_use_templates
+            "enabled": self.enabled,
+            "ca_server": self.ca_server,
+            "policy_server": self.policy_server,
+            "enroll_on_behalf": self.enroll_on_behalf,
+            "renew_expired_certificates": self.renew_expired_certificates,
+            "renew_pending_certificates": self.renew_pending_certificates,
+            "update_certificates_that_use_templates": self.update_certificates_that_use_templates,
         }
 
 
 @dataclass
 class CRLDistributionConfig:
     """CRL Distribution Point configuration"""
+
     enabled: bool = True
     crl_urls: List[str] = field(default_factory=list)
     ocsp_urls: List[str] = field(default_factory=list)
@@ -106,10 +111,10 @@ class CRLDistributionConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'enabled': self.enabled,
-            'crl_urls': self.crl_urls,
-            'ocsp_urls': self.ocsp_urls,
-            'cache_timeout_minutes': self.cache_timeout_minutes
+            "enabled": self.enabled,
+            "crl_urls": self.crl_urls,
+            "ocsp_urls": self.ocsp_urls,
+            "cache_timeout_minutes": self.cache_timeout_minutes,
         }
 
 
@@ -160,7 +165,7 @@ class CertificateManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_cert_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_cert_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -168,19 +173,29 @@ class CertificateManager:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
-            elif self.image_path.suffix.lower() in ['.vhd', '.vhdx']:
+            elif self.image_path.suffix.lower() in [".vhd", ".vhdx"]:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 raise ValueError(f"Unsupported image format: {self.image_path.suffix}")
@@ -207,11 +222,11 @@ class CertificateManager:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -285,7 +300,9 @@ class CertificateManager:
         self.add_certificate(cert_file, CertificateStore.TRUSTED_PUBLISHER, description)
         logger.info(f"Added trusted publisher: {cert_file.name}")
 
-    def add_code_signing_cert(self, pfx_file: Path, password: Optional[str] = None, description: str = ""):
+    def add_code_signing_cert(
+        self, pfx_file: Path, password: Optional[str] = None, description: str = ""
+    ):
         """
         Add a code signing certificate (with private key).
 
@@ -294,7 +311,7 @@ class CertificateManager:
             password: Optional password for PFX
             description: Optional description
         """
-        if pfx_file.suffix.lower() not in ['.pfx', '.p12']:
+        if pfx_file.suffix.lower() not in [".pfx", ".p12"]:
             raise ValueError("Code signing certificates must be in PFX/P12 format")
 
         self.add_certificate(pfx_file, CertificateStore.MY, description)
@@ -309,7 +326,7 @@ class CertificateManager:
         self,
         ca_server: Optional[str] = None,
         policy_server: Optional[str] = None,
-        enabled: bool = True
+        enabled: bool = True,
     ):
         """
         Configure certificate auto-enrollment.
@@ -323,9 +340,7 @@ class CertificateManager:
             raise RuntimeError("Image must be mounted first")
 
         self.auto_enrollment = AutoEnrollmentConfig(
-            enabled=enabled,
-            ca_server=ca_server,
-            policy_server=policy_server
+            enabled=enabled, ca_server=ca_server, policy_server=policy_server
         )
 
         # Configure via registry
@@ -337,7 +352,7 @@ class CertificateManager:
         self,
         crl_urls: Optional[List[str]] = None,
         ocsp_urls: Optional[List[str]] = None,
-        cache_timeout_minutes: int = 1440
+        cache_timeout_minutes: int = 1440,
     ):
         """
         Configure CRL distribution points and OCSP.
@@ -354,7 +369,7 @@ class CertificateManager:
             enabled=True,
             crl_urls=crl_urls or [],
             ocsp_urls=ocsp_urls or [],
-            cache_timeout_minutes=cache_timeout_minutes
+            cache_timeout_minutes=cache_timeout_minutes,
         )
 
         # Configure via registry
@@ -370,10 +385,10 @@ class CertificateManager:
         script_path = script_dir / "install_certificates.ps1"
 
         # Append to existing script or create new
-        mode = 'a' if script_path.exists() else 'w'
+        mode = "a" if script_path.exists() else "w"
 
         with open(script_path, mode) as f:
-            if mode == 'w':
+            if mode == "w":
                 f.write("# Certificate Installation Script\n")
                 f.write("# Generated by DeployForge\n\n")
                 f.write("Set-Location $PSScriptRoot\n\n")
@@ -382,9 +397,13 @@ class CertificateManager:
 
             f.write(f"\n# Install {cert_filename} to {store.value}\n")
             f.write(f"Write-Host 'Installing certificate: {cert_filename}'\n")
-            f.write(f"$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2\n")
+            f.write(
+                f"$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2\n"
+            )
             f.write(f"$cert.Import('{cert_path}')\n")
-            f.write(f"$store = New-Object System.Security.Cryptography.X509Certificates.X509Store('{store.value}', 'LocalMachine')\n")
+            f.write(
+                f"$store = New-Object System.Security.Cryptography.X509Certificates.X509Store('{store.value}', 'LocalMachine')\n"
+            )
             f.write(f"$store.Open('ReadWrite')\n")
             f.write(f"$store.Add($cert)\n")
             f.write(f"$store.Close()\n")
@@ -392,14 +411,16 @@ class CertificateManager:
 
         # Add to SetupComplete.cmd
         setupcomplete_path = script_dir / "SetupComplete.cmd"
-        mode = 'a' if setupcomplete_path.exists() else 'w'
+        mode = "a" if setupcomplete_path.exists() else "w"
 
         with open(setupcomplete_path, mode) as f:
-            if mode == 'w':
+            if mode == "w":
                 f.write("@echo off\n")
                 f.write("REM Certificate installation\n")
 
-            f.write("powershell.exe -ExecutionPolicy Bypass -File \"%~dp0install_certificates.ps1\"\n")
+            f.write(
+                'powershell.exe -ExecutionPolicy Bypass -File "%~dp0install_certificates.ps1"\n'
+            )
 
     def _create_pfx_import_script(self, pfx_filename: str, password: str):
         """Create script to import PFX with password"""
@@ -408,10 +429,10 @@ class CertificateManager:
 
         script_path = script_dir / "install_pfx_certificates.ps1"
 
-        mode = 'a' if script_path.exists() else 'w'
+        mode = "a" if script_path.exists() else "w"
 
         with open(script_path, mode) as f:
-            if mode == 'w':
+            if mode == "w":
                 f.write("# PFX Certificate Installation Script\n")
                 f.write("# Generated by DeployForge\n\n")
 
@@ -419,20 +440,26 @@ class CertificateManager:
 
             f.write(f"\n# Import {pfx_filename}\n")
             f.write(f"Write-Host 'Importing PFX certificate: {pfx_filename}'\n")
-            f.write(f"$password = ConvertTo-SecureString -String '{password}' -AsPlainText -Force\n")
-            f.write(f"Import-PfxCertificate -FilePath '{cert_path}' -CertStoreLocation 'Cert:\\LocalMachine\\My' -Password $password\n")
+            f.write(
+                f"$password = ConvertTo-SecureString -String '{password}' -AsPlainText -Force\n"
+            )
+            f.write(
+                f"Import-PfxCertificate -FilePath '{cert_path}' -CertStoreLocation 'Cert:\\LocalMachine\\My' -Password $password\n"
+            )
             f.write(f"Write-Host 'PFX certificate imported successfully'\n\n")
 
         # Add to SetupComplete.cmd
         setupcomplete_path = script_dir / "SetupComplete.cmd"
-        mode = 'a' if setupcomplete_path.exists() else 'w'
+        mode = "a" if setupcomplete_path.exists() else "w"
 
         with open(setupcomplete_path, mode) as f:
-            if mode == 'w':
+            if mode == "w":
                 f.write("@echo off\n")
                 f.write("REM PFX certificate installation\n")
 
-            f.write("powershell.exe -ExecutionPolicy Bypass -File \"%~dp0install_pfx_certificates.ps1\"\n")
+            f.write(
+                'powershell.exe -ExecutionPolicy Bypass -File "%~dp0install_pfx_certificates.ps1"\n'
+            )
 
     def _configure_auto_enrollment_registry(self):
         """Configure auto-enrollment via registry"""
@@ -444,46 +471,75 @@ class CertificateManager:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Configure auto-enrollment policy
             policy_key = f"{hive_key}\\ControlSet001\\Services\\CertSvc\\Configuration"
 
             if self.auto_enrollment.enabled:
                 # Enable auto-enrollment
-                subprocess.run([
-                    'reg', 'add', policy_key,
-                    '/v', 'EnableAutoEnrollment',
-                    '/t', 'REG_DWORD',
-                    '/d', '1',
-                    '/f'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        policy_key,
+                        "/v",
+                        "EnableAutoEnrollment",
+                        "/t",
+                        "REG_DWORD",
+                        "/d",
+                        "1",
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
                 # Set CA server
                 if self.auto_enrollment.ca_server:
-                    subprocess.run([
-                        'reg', 'add', policy_key,
-                        '/v', 'CAServer',
-                        '/t', 'REG_SZ',
-                        '/d', self.auto_enrollment.ca_server,
-                        '/f'
-                    ], check=True, capture_output=True)
+                    subprocess.run(
+                        [
+                            "reg",
+                            "add",
+                            policy_key,
+                            "/v",
+                            "CAServer",
+                            "/t",
+                            "REG_SZ",
+                            "/d",
+                            self.auto_enrollment.ca_server,
+                            "/f",
+                        ],
+                        check=True,
+                        capture_output=True,
+                    )
 
                 # Set policy server
                 if self.auto_enrollment.policy_server:
-                    subprocess.run([
-                        'reg', 'add', policy_key,
-                        '/v', 'PolicyServer',
-                        '/t', 'REG_SZ',
-                        '/d', self.auto_enrollment.policy_server,
-                        '/f'
-                    ], check=True, capture_output=True)
+                    subprocess.run(
+                        [
+                            "reg",
+                            "add",
+                            policy_key,
+                            "/v",
+                            "PolicyServer",
+                            "/t",
+                            "REG_SZ",
+                            "/d",
+                            self.auto_enrollment.policy_server,
+                            "/f",
+                        ],
+                        check=True,
+                        capture_output=True,
+                    )
 
             logger.info("Auto-enrollment registry configuration applied")
 
         finally:
             # Unload hive
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _configure_crl_registry(self):
         """Configure CRL distribution via registry"""
@@ -495,25 +551,36 @@ class CertificateManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Configure CRL settings
             crl_key = f"{hive_key}\\Policies\\Microsoft\\SystemCertificates\\AuthRoot"
 
             # Set cache timeout
-            subprocess.run([
-                'reg', 'add', crl_key,
-                '/v', 'ChainCacheResyncFiletime',
-                '/t', 'REG_DWORD',
-                '/d', str(self.crl_config.cache_timeout_minutes * 60),
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    crl_key,
+                    "/v",
+                    "ChainCacheResyncFiletime",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    str(self.crl_config.cache_timeout_minutes * 60),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("CRL distribution registry configuration applied")
 
         finally:
             # Unload hive
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def export_manifest(self, output_path: Path):
         """
@@ -523,12 +590,12 @@ class CertificateManager:
             output_path: Path to save manifest JSON
         """
         manifest = {
-            'certificates': [cert.to_dict() for cert in self.certificates],
-            'auto_enrollment': self.auto_enrollment.to_dict() if self.auto_enrollment else None,
-            'crl_config': self.crl_config.to_dict() if self.crl_config else None
+            "certificates": [cert.to_dict() for cert in self.certificates],
+            "auto_enrollment": self.auto_enrollment.to_dict() if self.auto_enrollment else None,
+            "crl_config": self.crl_config.to_dict() if self.crl_config else None,
         }
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(manifest, f, indent=2)
 
         logger.info(f"Certificate manifest exported to {output_path}")
@@ -540,34 +607,34 @@ class CertificateManager:
         Args:
             manifest_path: Path to manifest JSON
         """
-        with open(manifest_path, 'r') as f:
+        with open(manifest_path, "r") as f:
             manifest = json.load(f)
 
         # Import certificates
-        for cert_data in manifest.get('certificates', []):
-            cert_file = Path(cert_data['file_path'])
-            store = CertificateStore(cert_data['store'])
-            description = cert_data.get('description', '')
+        for cert_data in manifest.get("certificates", []):
+            cert_file = Path(cert_data["file_path"])
+            store = CertificateStore(cert_data["store"])
+            description = cert_data.get("description", "")
             self.add_certificate(cert_file, store, description)
 
         # Import auto-enrollment config
-        if manifest.get('auto_enrollment'):
-            ae_data = manifest['auto_enrollment']
-            if ae_data.get('enabled'):
+        if manifest.get("auto_enrollment"):
+            ae_data = manifest["auto_enrollment"]
+            if ae_data.get("enabled"):
                 self.configure_auto_enrollment(
-                    ca_server=ae_data.get('ca_server'),
-                    policy_server=ae_data.get('policy_server'),
-                    enabled=ae_data['enabled']
+                    ca_server=ae_data.get("ca_server"),
+                    policy_server=ae_data.get("policy_server"),
+                    enabled=ae_data["enabled"],
                 )
 
         # Import CRL config
-        if manifest.get('crl_config'):
-            crl_data = manifest['crl_config']
-            if crl_data.get('enabled'):
+        if manifest.get("crl_config"):
+            crl_data = manifest["crl_config"]
+            if crl_data.get("enabled"):
                 self.configure_crl_distribution(
-                    crl_urls=crl_data.get('crl_urls', []),
-                    ocsp_urls=crl_data.get('ocsp_urls', []),
-                    cache_timeout_minutes=crl_data.get('cache_timeout_minutes', 1440)
+                    crl_urls=crl_data.get("crl_urls", []),
+                    ocsp_urls=crl_data.get("ocsp_urls", []),
+                    cache_timeout_minutes=crl_data.get("cache_timeout_minutes", 1440),
                 )
 
         logger.info(f"Certificate manifest imported from {manifest_path}")
@@ -578,7 +645,7 @@ def configure_enterprise_pki(
     root_ca_cert: Path,
     intermediate_ca_certs: Optional[List[Path]] = None,
     ca_server: Optional[str] = None,
-    enable_auto_enrollment: bool = True
+    enable_auto_enrollment: bool = True,
 ) -> CertificateManager:
     """
     Configure enterprise PKI in one step.

@@ -79,10 +79,10 @@ class LanguageCode(Enum):
 class LanguagePackType(Enum):
     """Types of language packs"""
 
-    FULL = "Full"                # Complete language pack
-    PARTIAL = "Partial"          # Partial language pack (some components)
-    LIP = "LIP"                  # Language Interface Pack
-    FEATURES_ON_DEMAND = "FOD"   # Features on Demand
+    FULL = "Full"  # Complete language pack
+    PARTIAL = "Partial"  # Partial language pack (some components)
+    LIP = "LIP"  # Language Interface Pack
+    FEATURES_ON_DEMAND = "FOD"  # Features on Demand
 
 
 class KeyboardLayout(Enum):
@@ -120,13 +120,13 @@ class LanguagePack:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'language': self.language,
-            'display_name': self.display_name,
-            'type': self.type.value,
-            'package_path': str(self.package_path) if self.package_path else None,
-            'is_installed': self.is_installed,
-            'is_default': self.is_default,
-            'features': self.features
+            "language": self.language,
+            "display_name": self.display_name,
+            "type": self.type.value,
+            "package_path": str(self.package_path) if self.package_path else None,
+            "is_installed": self.is_installed,
+            "is_default": self.is_default,
+            "features": self.features,
         }
 
 
@@ -144,12 +144,12 @@ class LanguageSettings:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'default_language': self.default_language,
-            'fallback_language': self.fallback_language,
-            'installed_languages': self.installed_languages,
-            'keyboard_layouts': self.keyboard_layouts,
-            'time_zone': self.time_zone,
-            'location': self.location
+            "default_language": self.default_language,
+            "fallback_language": self.fallback_language,
+            "installed_languages": self.installed_languages,
+            "keyboard_layouts": self.keyboard_layouts,
+            "time_zone": self.time_zone,
+            "location": self.location,
         }
 
 
@@ -158,32 +158,32 @@ class LanguageManager:
 
     # Time zone mappings
     TIME_ZONES = {
-        'en-US': 'Pacific Standard Time',
-        'en-GB': 'GMT Standard Time',
-        'de-DE': 'W. Europe Standard Time',
-        'fr-FR': 'Romance Standard Time',
-        'es-ES': 'Romance Standard Time',
-        'it-IT': 'W. Europe Standard Time',
-        'ja-JP': 'Tokyo Standard Time',
-        'ko-KR': 'Korea Standard Time',
-        'zh-CN': 'China Standard Time',
-        'zh-TW': 'Taipei Standard Time',
-        'ru-RU': 'Russian Standard Time',
-        'ar-SA': 'Arab Standard Time',
+        "en-US": "Pacific Standard Time",
+        "en-GB": "GMT Standard Time",
+        "de-DE": "W. Europe Standard Time",
+        "fr-FR": "Romance Standard Time",
+        "es-ES": "Romance Standard Time",
+        "it-IT": "W. Europe Standard Time",
+        "ja-JP": "Tokyo Standard Time",
+        "ko-KR": "Korea Standard Time",
+        "zh-CN": "China Standard Time",
+        "zh-TW": "Taipei Standard Time",
+        "ru-RU": "Russian Standard Time",
+        "ar-SA": "Arab Standard Time",
     }
 
     # GeoID mappings (location codes)
     GEO_IDS = {
-        'en-US': '244',  # United States
-        'en-GB': '242',  # United Kingdom
-        'de-DE': '94',   # Germany
-        'fr-FR': '84',   # France
-        'es-ES': '217',  # Spain
-        'it-IT': '118',  # Italy
-        'ja-JP': '122',  # Japan
-        'ko-KR': '134',  # Korea
-        'zh-CN': '45',   # China
-        'zh-TW': '237',  # Taiwan
+        "en-US": "244",  # United States
+        "en-GB": "242",  # United Kingdom
+        "de-DE": "94",  # Germany
+        "fr-FR": "84",  # France
+        "es-ES": "217",  # Spain
+        "it-IT": "118",  # Italy
+        "ja-JP": "122",  # Japan
+        "ko-KR": "134",  # Korea
+        "zh-CN": "45",  # China
+        "zh-TW": "237",  # Taiwan
     }
 
     def __init__(self, image_path: Path):
@@ -220,33 +220,34 @@ class LanguageManager:
         packs = []
 
         try:
-            result = subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Get-Intl'
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", "/Get-Intl"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             # Parse DISM output
             current_lang = None
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 line = line.strip()
 
-                if 'Default system UI language' in line:
-                    current_lang = line.split(':')[-1].strip()
+                if "Default system UI language" in line:
+                    current_lang = line.split(":")[-1].strip()
 
-                elif 'Installed language(s)' in line:
+                elif "Installed language(s)" in line:
                     # Next lines contain installed languages
                     continue
 
                 elif line and current_lang:
                     # Language code line
-                    if len(line.split()) == 1 and '-' in line:
+                    if len(line.split()) == 1 and "-" in line:
                         pack = LanguagePack(
                             language=line,
                             display_name=self._get_language_display_name(line),
                             type=LanguagePackType.FULL,
                             is_installed=True,
-                            is_default=(line == current_lang)
+                            is_default=(line == current_lang),
                         )
                         packs.append(pack)
 
@@ -265,27 +266,23 @@ class LanguageManager:
         """Get display name for language code"""
         # Simplified mapping
         names = {
-            'en-US': 'English (United States)',
-            'en-GB': 'English (United Kingdom)',
-            'de-DE': 'Deutsch (Deutschland)',
-            'fr-FR': 'Français (France)',
-            'es-ES': 'Español (España)',
-            'it-IT': 'Italiano (Italia)',
-            'ja-JP': '日本語 (日本)',
-            'ko-KR': '한국어 (대한민국)',
-            'zh-CN': '中文(简体)',
-            'zh-TW': '中文(繁體)',
-            'pt-BR': 'Português (Brasil)',
-            'ru-RU': 'Русский (Россия)',
+            "en-US": "English (United States)",
+            "en-GB": "English (United Kingdom)",
+            "de-DE": "Deutsch (Deutschland)",
+            "fr-FR": "Français (France)",
+            "es-ES": "Español (España)",
+            "it-IT": "Italiano (Italia)",
+            "ja-JP": "日本語 (日本)",
+            "ko-KR": "한국어 (대한민국)",
+            "zh-CN": "中文(简体)",
+            "zh-TW": "中文(繁體)",
+            "pt-BR": "Português (Brasil)",
+            "ru-RU": "Русский (Россия)",
         }
 
         return names.get(language_code, language_code)
 
-    def add_language_pack(
-        self,
-        language_pack_path: Path,
-        language_code: Optional[str] = None
-    ):
+    def add_language_pack(self, language_pack_path: Path, language_code: Optional[str] = None):
         """
         Install language pack to image
 
@@ -302,12 +299,16 @@ class LanguageManager:
         logger.info(f"Installing language pack: {language_pack_path}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Add-Package',
-                f'/PackagePath:{language_pack_path}'
-            ], check=True, timeout=600)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Add-Package",
+                    f"/PackagePath:{language_pack_path}",
+                ],
+                check=True,
+                timeout=600,
+            )
 
             logger.info(f"Language pack installed: {language_pack_path}")
 
@@ -328,29 +329,36 @@ class LanguageManager:
 
         if self.platform == "Windows":
             # Get package identity first
-            result = subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Get-Packages'
-            ], capture_output=True, text=True, timeout=60)
+            result = subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", "/Get-Packages"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
 
             # Find language pack package identity
             package_identity = None
-            for line in result.stdout.split('\n'):
-                if f'Language.Basic~~~{language_code}' in line or \
-                   f'LanguagePack-{language_code}' in line.lower():
+            for line in result.stdout.split("\n"):
+                if (
+                    f"Language.Basic~~~{language_code}" in line
+                    or f"LanguagePack-{language_code}" in line.lower()
+                ):
                     # Extract package identity
-                    if 'Package Identity' in line:
-                        package_identity = line.split(':')[-1].strip()
+                    if "Package Identity" in line:
+                        package_identity = line.split(":")[-1].strip()
                         break
 
             if package_identity:
-                subprocess.run([
-                    'dism',
-                    f'/Image:{self.mount_point}',
-                    '/Remove-Package',
-                    f'/PackageName:{package_identity}'
-                ], check=True, timeout=600)
+                subprocess.run(
+                    [
+                        "dism",
+                        f"/Image:{self.mount_point}",
+                        "/Remove-Package",
+                        f"/PackageName:{package_identity}",
+                    ],
+                    check=True,
+                    timeout=600,
+                )
 
                 logger.info(f"Language pack removed: {language_code}")
             else:
@@ -372,11 +380,11 @@ class LanguageManager:
         logger.info(f"Setting default language: {language_code}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Set-AllIntl:{language_code}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", "/Set-AllIntl:{language_code}"],
+                check=True,
+                timeout=120,
+            )
 
             logger.info(f"Default language set to: {language_code}")
 
@@ -396,11 +404,11 @@ class LanguageManager:
         logger.info(f"Setting UI language: {language_code}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                f'/Set-UILang:{language_code}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", f"/Set-UILang:{language_code}"],
+                check=True,
+                timeout=120,
+            )
 
         else:
             logger.warning("Setting UI language on Linux is not supported")
@@ -418,11 +426,11 @@ class LanguageManager:
         logger.info(f"Setting input locale: {locale}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                f'/Set-InputLocale:{locale}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", f"/Set-InputLocale:{locale}"],
+                check=True,
+                timeout=120,
+            )
 
         else:
             logger.warning("Setting input locale on Linux is not supported")
@@ -440,11 +448,11 @@ class LanguageManager:
         logger.info(f"Setting time zone: {timezone}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                f'/Set-TimeZone:{timezone}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", f"/Set-TimeZone:{timezone}"],
+                check=True,
+                timeout=120,
+            )
 
         else:
             logger.warning("Setting time zone on Linux is not supported")
@@ -463,11 +471,11 @@ class LanguageManager:
 
         # Set all international settings at once
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                f'/Set-AllIntl:{settings.default_language}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["dism", f"/Image:{self.mount_point}", f"/Set-AllIntl:{settings.default_language}"],
+                check=True,
+                timeout=120,
+            )
 
             # Set time zone
             if settings.time_zone:
@@ -484,9 +492,7 @@ class LanguageManager:
             logger.warning("Applying language settings on Linux is not supported")
 
     def install_multiple_languages(
-        self,
-        language_packs: List[Path],
-        default_language: Optional[str] = None
+        self, language_packs: List[Path], default_language: Optional[str] = None
     ):
         """
         Install multiple language packs at once
@@ -519,11 +525,11 @@ class LanguageManager:
         packs = self.get_installed_languages()
 
         config = {
-            'installed_languages': [p.to_dict() for p in packs],
-            'default_language': next((p.language for p in packs if p.is_default), None)
+            "installed_languages": [p.to_dict() for p in packs],
+            "default_language": next((p.language for p in packs if p.is_default), None),
         }
 
-        with open(output_path, 'w', encoding='utf-8') as f:
+        with open(output_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Language configuration exported to {output_path}")
@@ -538,15 +544,15 @@ class LanguageManager:
         Returns:
             LanguageSettings object
         """
-        with open(config_path, 'r', encoding='utf-8') as f:
+        with open(config_path, "r", encoding="utf-8") as f:
             config = json.load(f)
 
         settings = LanguageSettings(
-            default_language=config.get('default_language', 'en-US'),
-            installed_languages=config.get('installed_languages', []),
-            keyboard_layouts=config.get('keyboard_layouts', []),
-            time_zone=config.get('time_zone', 'Pacific Standard Time'),
-            location=config.get('location', '244')
+            default_language=config.get("default_language", "en-US"),
+            installed_languages=config.get("installed_languages", []),
+            keyboard_layouts=config.get("keyboard_layouts", []),
+            time_zone=config.get("time_zone", "Pacific Standard Time"),
+            location=config.get("location", "244"),
         )
 
         logger.info(f"Language configuration imported from {config_path}")
@@ -564,10 +570,7 @@ class LanguageManager:
         Returns:
             Time zone name
         """
-        return LanguageManager.TIME_ZONES.get(
-            language_code,
-            'Pacific Standard Time'
-        )
+        return LanguageManager.TIME_ZONES.get(language_code, "Pacific Standard Time")
 
     @staticmethod
     def get_geo_id(language_code: str) -> str:
@@ -580,12 +583,11 @@ class LanguageManager:
         Returns:
             GeoID string
         """
-        return LanguageManager.GEO_IDS.get(language_code, '244')
+        return LanguageManager.GEO_IDS.get(language_code, "244")
 
 
 def create_multilingual_config(
-    languages: List[str],
-    default_language: str = "en-US"
+    languages: List[str], default_language: str = "en-US"
 ) -> LanguageSettings:
     """
     Create multi-language configuration
@@ -598,9 +600,7 @@ def create_multilingual_config(
         LanguageSettings object
     """
     settings = LanguageSettings(
-        default_language=default_language,
-        fallback_language="en-US",
-        installed_languages=languages
+        default_language=default_language, fallback_language="en-US", installed_languages=languages
     )
 
     # Set time zone based on default language
@@ -611,14 +611,14 @@ def create_multilingual_config(
     for lang in languages:
         # Simplified keyboard layout mapping
         layout_map = {
-            'en-US': '0409:00000409',
-            'en-GB': '0809:00000809',
-            'de-DE': '0407:00000407',
-            'fr-FR': '040c:0000040c',
-            'es-ES': '0c0a:0000040a',
-            'ja-JP': '0411:00000411',
-            'ko-KR': '0412:00000412',
-            'zh-CN': '0804:00000804',
+            "en-US": "0409:00000409",
+            "en-GB": "0809:00000809",
+            "de-DE": "0407:00000407",
+            "fr-FR": "040c:0000040c",
+            "es-ES": "0c0a:0000040a",
+            "ja-JP": "0411:00000411",
+            "ko-KR": "0412:00000412",
+            "zh-CN": "0804:00000804",
         }
 
         layout = layout_map.get(lang)
@@ -636,8 +636,7 @@ def create_european_multilingual() -> LanguageSettings:
         LanguageSettings with common European languages
     """
     return create_multilingual_config(
-        languages=['en-GB', 'de-DE', 'fr-FR', 'es-ES', 'it-IT'],
-        default_language='en-GB'
+        languages=["en-GB", "de-DE", "fr-FR", "es-ES", "it-IT"], default_language="en-GB"
     )
 
 
@@ -649,6 +648,5 @@ def create_asian_multilingual() -> LanguageSettings:
         LanguageSettings with common Asian languages
     """
     return create_multilingual_config(
-        languages=['en-US', 'ja-JP', 'ko-KR', 'zh-CN', 'zh-TW'],
-        default_language='en-US'
+        languages=["en-US", "ja-JP", "ko-KR", "zh-CN", "zh-TW"], default_language="en-US"
     )

@@ -7,9 +7,7 @@ from typing import Optional
 
 
 def setup_logging(
-    level: str = "INFO",
-    log_file: Optional[Path] = None,
-    verbose: bool = False
+    level: str = "INFO", log_file: Optional[Path] = None, verbose: bool = False
 ) -> None:
     """
     Configure logging for DeployForge.
@@ -24,8 +22,7 @@ def setup_logging(
 
     # Create formatter
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # Configure root logger
@@ -52,5 +49,5 @@ def setup_logging(
         root_logger.addHandler(file_handler)
 
     # Set third-party loggers to WARNING
-    logging.getLogger('urllib3').setLevel(logging.WARNING)
-    logging.getLogger('requests').setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)

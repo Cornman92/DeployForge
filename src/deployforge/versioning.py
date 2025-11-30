@@ -30,6 +30,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ImageCommit:
     """Represents a versioned image commit"""
+
     commit_id: str
     version: str
     message: str
@@ -43,21 +44,22 @@ class ImageCommit:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'commit_id': self.commit_id,
-            'version': self.version,
-            'message': self.message,
-            'image_path': str(self.image_path),
-            'image_hash': self.image_hash,
-            'parent_commit': self.parent_commit,
-            'tags': self.tags,
-            'metadata': self.metadata,
-            'timestamp': self.timestamp
+            "commit_id": self.commit_id,
+            "version": self.version,
+            "message": self.message,
+            "image_path": str(self.image_path),
+            "image_hash": self.image_hash,
+            "parent_commit": self.parent_commit,
+            "tags": self.tags,
+            "metadata": self.metadata,
+            "timestamp": self.timestamp,
         }
 
 
 @dataclass
 class ImageBranch:
     """Represents an image variant branch"""
+
     name: str
     head_commit: str
     description: str = ""
@@ -66,10 +68,10 @@ class ImageBranch:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'head_commit': self.head_commit,
-            'description': self.description,
-            'created_at': self.created_at
+            "name": self.name,
+            "head_commit": self.head_commit,
+            "description": self.description,
+            "created_at": self.created_at,
         }
 
 
@@ -128,11 +130,7 @@ class ImageRepository:
         self.refs_dir.mkdir(parents=True, exist_ok=True)
 
         # Create initial branch
-        main_branch = ImageBranch(
-            name="main",
-            head_commit="",
-            description="Main production branch"
-        )
+        main_branch = ImageBranch(name="main", head_commit="", description="Main production branch")
         self.branches["main"] = main_branch
 
         # Save state
@@ -148,7 +146,7 @@ class ImageRepository:
         version: str,
         message: str,
         tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> str:
         """
         Commit image version.
@@ -177,7 +175,9 @@ class ImageRepository:
 
         # Get parent commit
         current_branch = self.branches.get(self.current_branch)
-        parent_commit = current_branch.head_commit if current_branch and current_branch.head_commit else None
+        parent_commit = (
+            current_branch.head_commit if current_branch and current_branch.head_commit else None
+        )
 
         # Store image in objects directory
         object_path = self.objects_dir / f"{commit_id}.wim"
@@ -192,7 +192,7 @@ class ImageRepository:
             image_hash=image_hash,
             parent_commit=parent_commit,
             tags=tags or [],
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # Store commit
@@ -215,7 +215,7 @@ class ImageRepository:
         output_path: Path,
         version: Optional[str] = None,
         commit_id: Optional[str] = None,
-        tag: Optional[str] = None
+        tag: Optional[str] = None,
     ) -> bool:
         """
         Checkout specific version.
@@ -263,11 +263,7 @@ class ImageRepository:
 
         return True
 
-    def tag(
-        self,
-        commit_id: str,
-        tag_name: str
-    ):
+    def tag(self, commit_id: str, tag_name: str):
         """
         Add tag to commit.
 
@@ -289,10 +285,7 @@ class ImageRepository:
             logger.info(f"Tagged {commit_id} as '{tag_name}'")
 
     def branch(
-        self,
-        name: str,
-        from_commit: Optional[str] = None,
-        description: str = ""
+        self, name: str, from_commit: Optional[str] = None, description: str = ""
     ) -> ImageBranch:
         """
         Create new branch.
@@ -315,11 +308,7 @@ class ImageRepository:
             current_branch = self.branches.get(self.current_branch)
             from_commit = current_branch.head_commit if current_branch else ""
 
-        branch = ImageBranch(
-            name=name,
-            head_commit=from_commit,
-            description=description
-        )
+        branch = ImageBranch(name=name, head_commit=from_commit, description=description)
 
         self.branches[name] = branch
         self._save_branches()
@@ -345,11 +334,7 @@ class ImageRepository:
 
         logger.info(f"Switched to branch '{branch_name}'")
 
-    def log(
-        self,
-        limit: int = 10,
-        branch: Optional[str] = None
-    ) -> List[ImageCommit]:
+    def log(self, limit: int = 10, branch: Optional[str] = None) -> List[ImageCommit]:
         """
         Get commit history.
 
@@ -384,11 +369,7 @@ class ImageRepository:
 
         return history
 
-    def diff(
-        self,
-        version1: str,
-        version2: str
-    ) -> Dict[str, Any]:
+    def diff(self, version1: str, version2: str) -> Dict[str, Any]:
         """
         Compare two versions.
 
@@ -422,26 +403,23 @@ class ImageRepository:
         size_diff = size2 - size1
 
         diff_info = {
-            'version1': version1,
-            'version2': version2,
-            'commit1': commit1.commit_id,
-            'commit2': commit2.commit_id,
-            'size1_bytes': size1,
-            'size2_bytes': size2,
-            'size_diff_bytes': size_diff,
-            'size_diff_mb': size_diff / (1024 ** 2),
-            'hash1': commit1.image_hash,
-            'hash2': commit2.image_hash,
-            'changed': commit1.image_hash != commit2.image_hash
+            "version1": version1,
+            "version2": version2,
+            "commit1": commit1.commit_id,
+            "commit2": commit2.commit_id,
+            "size1_bytes": size1,
+            "size2_bytes": size2,
+            "size_diff_bytes": size_diff,
+            "size_diff_mb": size_diff / (1024**2),
+            "hash1": commit1.image_hash,
+            "hash2": commit2.image_hash,
+            "changed": commit1.image_hash != commit2.image_hash,
         }
 
         return diff_info
 
     def generate_changelog(
-        self,
-        from_version: str,
-        to_version: str,
-        output_path: Optional[Path] = None
+        self, from_version: str, to_version: str, output_path: Optional[Path] = None
     ) -> str:
         """
         Generate changelog between versions.
@@ -457,10 +435,7 @@ class ImageRepository:
         self._load_commits()
 
         # Get all commits
-        all_commits = sorted(
-            self.commits.values(),
-            key=lambda c: c.timestamp
-        )
+        all_commits = sorted(self.commits.values(), key=lambda c: c.timestamp)
 
         # Find version range
         start_idx = None
@@ -482,10 +457,10 @@ class ImageRepository:
             f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
             "## Changes",
-            ""
+            "",
         ]
 
-        for commit in all_commits[start_idx + 1:end_idx + 1]:
+        for commit in all_commits[start_idx + 1 : end_idx + 1]:
             changelog_lines.append(f"### Version {commit.version} ({commit.timestamp[:10]})")
             changelog_lines.append(f"- {commit.message}")
 
@@ -497,7 +472,7 @@ class ImageRepository:
         changelog = "\n".join(changelog_lines)
 
         if output_path:
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 f.write(changelog)
 
             logger.info(f"Changelog saved to {output_path}")
@@ -532,11 +507,11 @@ class ImageRepository:
         self._load_branches()
         return list(self.branches.values())
 
-    def _calculate_hash(self, file_path: Path, algorithm: str = 'sha256') -> str:
+    def _calculate_hash(self, file_path: Path, algorithm: str = "sha256") -> str:
         """Calculate file hash"""
         hash_obj = hashlib.new(algorithm)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hash_obj.update(chunk)
 
@@ -544,12 +519,9 @@ class ImageRepository:
 
     def _save_commits(self):
         """Save commits to file"""
-        commits_data = {
-            cid: commit.to_dict()
-            for cid, commit in self.commits.items()
-        }
+        commits_data = {cid: commit.to_dict() for cid, commit in self.commits.items()}
 
-        with open(self.commits_file, 'w') as f:
+        with open(self.commits_file, "w") as f:
             json.dump(commits_data, f, indent=2)
 
     def _load_commits(self):
@@ -557,21 +529,18 @@ class ImageRepository:
         if not self.commits_file.exists():
             return
 
-        with open(self.commits_file, 'r') as f:
+        with open(self.commits_file, "r") as f:
             commits_data = json.load(f)
 
         for cid, data in commits_data.items():
-            data['image_path'] = Path(data['image_path'])
+            data["image_path"] = Path(data["image_path"])
             self.commits[cid] = ImageCommit(**data)
 
     def _save_branches(self):
         """Save branches to file"""
-        branches_data = {
-            name: branch.to_dict()
-            for name, branch in self.branches.items()
-        }
+        branches_data = {name: branch.to_dict() for name, branch in self.branches.items()}
 
-        with open(self.branches_file, 'w') as f:
+        with open(self.branches_file, "w") as f:
             json.dump(branches_data, f, indent=2)
 
     def _load_branches(self):
@@ -579,7 +548,7 @@ class ImageRepository:
         if not self.branches_file.exists():
             return
 
-        with open(self.branches_file, 'r') as f:
+        with open(self.branches_file, "r") as f:
             branches_data = json.load(f)
 
         for name, data in branches_data.items():
@@ -587,7 +556,7 @@ class ImageRepository:
 
     def _save_head(self, branch: str):
         """Save HEAD reference"""
-        with open(self.head_file, 'w') as f:
+        with open(self.head_file, "w") as f:
             f.write(branch)
 
     def _load_head(self) -> str:
@@ -595,16 +564,12 @@ class ImageRepository:
         if not self.head_file.exists():
             return "main"
 
-        with open(self.head_file, 'r') as f:
+        with open(self.head_file, "r") as f:
             return f.read().strip()
 
 
 def create_versioned_build(
-    repo_path: Path,
-    image: Path,
-    version: str,
-    message: str,
-    tags: Optional[List[str]] = None
+    repo_path: Path, image: Path, version: str, message: str, tags: Optional[List[str]] = None
 ) -> str:
     """
     Create versioned build in repository.
@@ -638,23 +603,14 @@ def create_versioned_build(
         repo._load_branches()
 
     # Commit
-    commit_id = repo.commit(
-        image=image,
-        version=version,
-        message=message,
-        tags=tags
-    )
+    commit_id = repo.commit(image=image, version=version, message=message, tags=tags)
 
     logger.info(f"Created versioned build: {version} ({commit_id})")
 
     return commit_id
 
 
-def rollback_to_version(
-    repo_path: Path,
-    version: str,
-    output_path: Path
-) -> bool:
+def rollback_to_version(repo_path: Path, version: str, output_path: Path) -> bool:
     """
     Rollback to specific version.
 
@@ -676,10 +632,7 @@ def rollback_to_version(
     repo = ImageRepository(repo_path)
     repo._load_commits()
 
-    success = repo.checkout(
-        output_path=output_path,
-        version=version
-    )
+    success = repo.checkout(output_path=output_path, version=version)
 
     if success:
         logger.info(f"Rolled back to version {version}")

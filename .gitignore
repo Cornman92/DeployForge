@@ -35,6 +35,22 @@ ENV/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# Emacs
+*~
+\#*\#
+.\#*
 
 # OS
 .DS_Store
@@ -49,6 +65,25 @@ logs/
 .coverage
 htmlcov/
 .tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Linting
+.ruff_cache/
+
+# Security scanning
+.safety/
+bandit-report.txt
+bandit-output.json
 
 # Mount points
 mounts/
@@ -60,4 +95,24 @@ temp/
 *.wim
 *.esd
 *.ppkg
+*.vhd
+*.vhdx
 images/
+
+# Documentation builds
+docs/_build/
+docs/_static/
+docs/_templates/
+site/
+.readthedocs.yml
+
+# Distribution
+*.whl
+*.tar.gz
+*.zip
+
+# Local configuration
+.env
+.env.local
+*.local
+config.local.*

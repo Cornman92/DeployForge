@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AnsibleModuleResult:
     """Ansible module execution result"""
+
     changed: bool
     failed: bool = False
     msg: str = ""
@@ -32,12 +33,7 @@ class AnsibleModuleResult:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to Ansible JSON output format"""
-        return {
-            'changed': self.changed,
-            'failed': self.failed,
-            'msg': self.msg,
-            'meta': self.meta
-        }
+        return {"changed": self.changed, "failed": self.failed, "msg": self.msg, "meta": self.meta}
 
 
 class AnsibleModule:
@@ -143,12 +139,12 @@ options:
         """
         try:
             # Validate required parameters
-            if 'base_image' not in self.params:
+            if "base_image" not in self.params:
                 self.result.failed = True
                 self.result.msg = "base_image is required"
                 return self.result
 
-            if 'output' not in self.params:
+            if "output" not in self.params:
                 self.result.failed = True
                 self.result.msg = "output is required"
                 return self.result
@@ -160,8 +156,8 @@ options:
                 self.result.changed = True
                 self.result.msg = f"Image built successfully: {self.params['output']}"
                 self.result.meta = {
-                    'output_path': self.params['output'],
-                    'format': self.params.get('output_format', 'wim')
+                    "output_path": self.params["output"],
+                    "format": self.params.get("output_format", "wim"),
                 }
             else:
                 self.result.failed = True
@@ -180,14 +176,14 @@ options:
         # Create deployment config from Ansible parameters
         config = DeploymentConfig(
             version="1.0",
-            name=self.params.get('name', 'Ansible Build'),
-            base_image_source=Path(self.params['base_image']),
-            output_path=Path(self.params['output']),
-            output_format=self.params.get('output_format', 'wim'),
-            driver_paths=[Path(d) for d in self.params.get('drivers', [])],
-            update_paths=[Path(u) for u in self.params.get('updates', [])],
-            applications=self.params.get('applications', []),
-            security_baseline=self.params.get('security_baseline')
+            name=self.params.get("name", "Ansible Build"),
+            base_image_source=Path(self.params["base_image"]),
+            output_path=Path(self.params["output"]),
+            output_format=self.params.get("output_format", "wim"),
+            driver_paths=[Path(d) for d in self.params.get("drivers", [])],
+            update_paths=[Path(u) for u in self.params.get("updates", [])],
+            applications=self.params.get("applications", []),
+            security_baseline=self.params.get("security_baseline"),
         )
 
         # Build
@@ -195,7 +191,15 @@ options:
         builder.config = config
 
         # Execute build stages
-        for stage_name in ['init', 'base', 'drivers', 'updates', 'applications', 'security', 'finalize']:
+        for stage_name in [
+            "init",
+            "base",
+            "drivers",
+            "updates",
+            "applications",
+            "security",
+            "finalize",
+        ]:
             if not builder._execute_stage(stage_name):
                 return False
 
@@ -238,37 +242,37 @@ class TerraformProvider:
                     "base_image": {
                         "type": "string",
                         "required": True,
-                        "description": "Path to base Windows image"
+                        "description": "Path to base Windows image",
                     },
                     "output_path": {
                         "type": "string",
                         "required": True,
-                        "description": "Path for output image"
+                        "description": "Path for output image",
                     },
                     "output_format": {
                         "type": "string",
                         "default": "wim",
-                        "description": "Output format (wim or vhdx)"
+                        "description": "Output format (wim or vhdx)",
                     },
                     "drivers": {
                         "type": "list",
                         "elem": {"type": "string"},
                         "optional": True,
-                        "description": "Driver paths to inject"
+                        "description": "Driver paths to inject",
                     },
                     "applications": {
                         "type": "list",
                         "optional": True,
-                        "description": "Applications to install"
+                        "description": "Applications to install",
                     },
                     "security_baseline": {
                         "type": "string",
                         "optional": True,
-                        "description": "Security baseline to apply"
-                    }
-                }
+                        "description": "Security baseline to apply",
+                    },
+                },
             }
-        }
+        },
     }
 
     def __init__(self):
@@ -294,12 +298,12 @@ class TerraformProvider:
         deploy_config = DeploymentConfig(
             version="1.0",
             name=resource_id,
-            base_image_source=Path(config['base_image']),
-            output_path=Path(config['output_path']),
-            output_format=config.get('output_format', 'wim'),
-            driver_paths=[Path(d) for d in config.get('drivers', [])],
-            applications=config.get('applications', []),
-            security_baseline=config.get('security_baseline')
+            base_image_source=Path(config["base_image"]),
+            output_path=Path(config["output_path"]),
+            output_format=config.get("output_format", "wim"),
+            driver_paths=[Path(d) for d in config.get("drivers", [])],
+            applications=config.get("applications", []),
+            security_baseline=config.get("security_baseline"),
         )
 
         # Build image
@@ -307,16 +311,16 @@ class TerraformProvider:
         builder.config = deploy_config
 
         success = True
-        for stage in ['init', 'base', 'drivers', 'applications', 'security', 'finalize']:
+        for stage in ["init", "base", "drivers", "applications", "security", "finalize"]:
             if not builder._execute_stage(stage):
                 success = False
                 break
 
         # Store resource state
         state = {
-            'id': resource_id,
-            'output_path': str(deploy_config.output_path),
-            'created': success
+            "id": resource_id,
+            "output_path": str(deploy_config.output_path),
+            "created": success,
         }
 
         self.resources[resource_id] = state
@@ -362,7 +366,7 @@ class TerraformProvider:
         """
         if resource_id in self.resources:
             state = self.resources[resource_id]
-            output_path = Path(state['output_path'])
+            output_path = Path(state["output_path"])
 
             # Delete image file
             if output_path.exists():
@@ -382,11 +386,7 @@ class AnsiblePlaybookGenerator:
     """
 
     @staticmethod
-    def generate_playbook(
-        deployment_name: str,
-        tasks: List[Dict[str, Any]],
-        output_path: Path
-    ):
+    def generate_playbook(deployment_name: str, tasks: List[Dict[str, Any]], output_path: Path):
         """
         Generate Ansible playbook.
 
@@ -396,15 +396,10 @@ class AnsiblePlaybookGenerator:
             output_path: Path to save playbook
         """
         playbook = [
-            {
-                'name': deployment_name,
-                'hosts': 'localhost',
-                'gather_facts': False,
-                'tasks': tasks
-            }
+            {"name": deployment_name, "hosts": "localhost", "gather_facts": False, "tasks": tasks}
         ]
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             yaml.dump(playbook, f, default_flow_style=False, sort_keys=False)
 
         logger.info(f"Generated Ansible playbook: {output_path}")
@@ -429,22 +424,22 @@ class AnsiblePlaybookGenerator:
 
         # Build image task
         task = {
-            'name': f'Build {config.name}',
-            'deployforge.image': {
-                'base_image': str(config.base_image_source),
-                'output': str(config.output_path),
-                'output_format': config.output_format
-            }
+            "name": f"Build {config.name}",
+            "deployforge.image": {
+                "base_image": str(config.base_image_source),
+                "output": str(config.output_path),
+                "output_format": config.output_format,
+            },
         }
 
         if config.driver_paths:
-            task['deployforge.image']['drivers'] = [str(p) for p in config.driver_paths]
+            task["deployforge.image"]["drivers"] = [str(p) for p in config.driver_paths]
 
         if config.applications:
-            task['deployforge.image']['applications'] = config.applications
+            task["deployforge.image"]["applications"] = config.applications
 
         if config.security_baseline:
-            task['deployforge.image']['security_baseline'] = config.security_baseline
+            task["deployforge.image"]["security_baseline"] = config.security_baseline
 
         tasks.append(task)
 
@@ -457,11 +452,7 @@ class TerraformConfigGenerator:
     """
 
     @staticmethod
-    def generate_config(
-        resource_name: str,
-        config: Dict[str, Any],
-        output_path: Path
-    ):
+    def generate_config(resource_name: str, config: Dict[str, Any], output_path: Path):
         """
         Generate Terraform configuration.
 
@@ -489,27 +480,27 @@ resource "deployforge_image" "{resource_name}" {{
   output_format   = "{config.get('output_format', 'wim')}"
 """
 
-        if config.get('drivers'):
+        if config.get("drivers"):
             tf_config += f"  drivers         = {json.dumps(config['drivers'])}\n"
 
-        if config.get('applications'):
+        if config.get("applications"):
             tf_config += "  applications = [\n"
-            for app in config['applications']:
+            for app in config["applications"]:
                 tf_config += "    {\n"
                 for key, value in app.items():
                     if isinstance(value, str):
                         tf_config += f'      {key} = "{value}"\n'
                     else:
-                        tf_config += f'      {key} = {json.dumps(value)}\n'
+                        tf_config += f"      {key} = {json.dumps(value)}\n"
                 tf_config += "    },\n"
             tf_config += "  ]\n"
 
-        if config.get('security_baseline'):
+        if config.get("security_baseline"):
             tf_config += f'  security_baseline = "{config["security_baseline"]}"\n'
 
         tf_config += "}\n"
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(tf_config)
 
         logger.info(f"Generated Terraform configuration: {output_path}")
@@ -529,21 +520,21 @@ resource "deployforge_image" "{resource_name}" {{
         config = loader.load(config_path)
 
         tf_config = {
-            'base_image': str(config.base_image_source),
-            'output_path': str(config.output_path),
-            'output_format': config.output_format,
-            'drivers': [str(p) for p in config.driver_paths] if config.driver_paths else None,
-            'applications': config.applications if config.applications else None,
-            'security_baseline': config.security_baseline
+            "base_image": str(config.base_image_source),
+            "output_path": str(config.output_path),
+            "output_format": config.output_format,
+            "drivers": [str(p) for p in config.driver_paths] if config.driver_paths else None,
+            "applications": config.applications if config.applications else None,
+            "security_baseline": config.security_baseline,
         }
 
         # Remove None values
         tf_config = {k: v for k, v in tf_config.items() if v is not None}
 
         TerraformConfigGenerator.generate_config(
-            resource_name=config.name.lower().replace(' ', '_'),
+            resource_name=config.name.lower().replace(" ", "_"),
             config=tf_config,
-            output_path=output_path
+            output_path=output_path,
         )
 
 
@@ -581,25 +572,25 @@ def generate_ansible_module_package(output_dir: Path):
 
     # Create galaxy.yml
     galaxy = {
-        'namespace': 'deployforge',
-        'name': 'image',
-        'version': '1.0.0',
-        'readme': 'README.md',
-        'authors': ['DeployForge Team'],
-        'description': 'Ansible collection for Windows image deployment',
-        'license': ['MIT'],
-        'tags': ['windows', 'deployment', 'imaging']
+        "namespace": "deployforge",
+        "name": "image",
+        "version": "1.0.0",
+        "readme": "README.md",
+        "authors": ["DeployForge Team"],
+        "description": "Ansible collection for Windows image deployment",
+        "license": ["MIT"],
+        "tags": ["windows", "deployment", "imaging"],
     }
 
-    with open(module_dir / 'galaxy.yml', 'w') as f:
+    with open(module_dir / "galaxy.yml", "w") as f:
         yaml.dump(galaxy, f)
 
     # Create plugin structure
-    plugins_dir = module_dir / 'plugins' / 'modules'
+    plugins_dir = module_dir / "plugins" / "modules"
     plugins_dir.mkdir(parents=True, exist_ok=True)
 
     # Create module file
-    module_file = plugins_dir / 'image.py'
+    module_file = plugins_dir / "image.py"
     module_file.write_text(AnsibleModule.DOCUMENTATION + "\n\n" + AnsibleModule.EXAMPLES)
 
     logger.info(f"Generated Ansible module package: {module_dir}")
@@ -617,21 +608,19 @@ def generate_terraform_provider_package(output_dir: Path):
 
     # Create schema file
     schema_file = provider_dir / "schema.json"
-    with open(schema_file, 'w') as f:
+    with open(schema_file, "w") as f:
         json.dump(TerraformProvider.SCHEMA, f, indent=2)
 
     # Create example configuration
     example_file = provider_dir / "example.tf"
     example_config = {
-        'base_image': '/path/to/windows11.iso',
-        'output_path': '/path/to/output.wim',
-        'security_baseline': 'CIS-Windows-11'
+        "base_image": "/path/to/windows11.iso",
+        "output_path": "/path/to/output.wim",
+        "security_baseline": "CIS-Windows-11",
     }
 
     TerraformConfigGenerator.generate_config(
-        resource_name='example',
-        config=example_config,
-        output_path=example_file
+        resource_name="example", config=example_config, output_path=example_file
     )
 
     logger.info(f"Generated Terraform provider package: {provider_dir}")
@@ -654,9 +643,7 @@ def create_ansible_playbook_from_config(config_path: Path, output_path: Path):
     """
     tasks = AnsiblePlaybookGenerator.from_deployment_config(config_path)
     AnsiblePlaybookGenerator.generate_playbook(
-        deployment_name="DeployForge Build",
-        tasks=tasks,
-        output_path=output_path
+        deployment_name="DeployForge Build", tasks=tasks, output_path=output_path
     )
 
 

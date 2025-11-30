@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Checkpoint:
     """Represents a checkpoint/backup of an image."""
+
     id: str
     image_path: str
     backup_path: str
@@ -41,6 +42,7 @@ class Checkpoint:
 @dataclass
 class Transaction:
     """Represents a transaction with rollback capability."""
+
     id: str
     checkpoint: Checkpoint
     operations: List[str]
@@ -59,20 +61,16 @@ class RollbackManager:
         Args:
             backup_dir: Directory for storing backups
         """
-        self.backup_dir = backup_dir or Path.home() / '.deployforge' / 'backups'
+        self.backup_dir = backup_dir or Path.home() / ".deployforge" / "backups"
         self.backup_dir.mkdir(parents=True, exist_ok=True)
 
-        self.checkpoints_file = self.backup_dir / 'checkpoints.json'
+        self.checkpoints_file = self.backup_dir / "checkpoints.json"
         self.checkpoints: Dict[str, Checkpoint] = {}
         self.transactions: Dict[str, Transaction] = {}
 
         self._load_checkpoints()
 
-    def create_checkpoint(
-        self,
-        image_path: Path,
-        description: str = ""
-    ) -> Checkpoint:
+    def create_checkpoint(self, image_path: Path, description: str = "") -> Checkpoint:
         """
         Create a checkpoint (backup) of an image.
 
@@ -115,11 +113,11 @@ class RollbackManager:
                 created_at=datetime.now().isoformat(),
                 description=description or f"Backup of {image_path.name}",
                 metadata={
-                    'original_name': image_path.name,
-                    'original_size': image_path.stat().st_size
+                    "original_name": image_path.name,
+                    "original_size": image_path.stat().st_size,
                 },
                 size_mb=size_mb,
-                checksum=checksum
+                checksum=checksum,
             )
 
             # Store checkpoint
@@ -209,10 +207,7 @@ class RollbackManager:
 
         logger.info(f"Checkpoint deleted")
 
-    def list_checkpoints(
-        self,
-        image_path: Optional[Path] = None
-    ) -> List[Checkpoint]:
+    def list_checkpoints(self, image_path: Optional[Path] = None) -> List[Checkpoint]:
         """
         List all checkpoints.
 
@@ -274,12 +269,7 @@ class RollbackManager:
         return self.checkpoints.get(checkpoint_id)
 
     @contextmanager
-    def transaction(
-        self,
-        image_path: Path,
-        description: str = "",
-        auto_cleanup: bool = True
-    ):
+    def transaction(self, image_path: Path, description: str = "", auto_cleanup: bool = True):
         """
         Transaction context manager with automatic rollback.
 
@@ -307,8 +297,8 @@ class RollbackManager:
             id=transaction_id,
             checkpoint=checkpoint,
             operations=[],
-            status='pending',
-            started_at=datetime.now().isoformat()
+            status="pending",
+            started_at=datetime.now().isoformat(),
         )
 
         self.transactions[transaction_id] = transaction
@@ -318,7 +308,7 @@ class RollbackManager:
             yield transaction
 
             # Mark as committed
-            transaction.status = 'committed'
+            transaction.status = "committed"
             transaction.completed_at = datetime.now().isoformat()
 
             logger.info(f"Transaction committed: {transaction_id}")
@@ -332,7 +322,7 @@ class RollbackManager:
             # Rollback on error
             logger.error(f"Transaction failed, rolling back: {e}")
 
-            transaction.status = 'rolled_back'
+            transaction.status = "rolled_back"
             transaction.completed_at = datetime.now().isoformat()
 
             try:
@@ -362,8 +352,8 @@ class RollbackManager:
         """Calculate SHA256 checksum of file."""
         sha256 = hashlib.sha256()
 
-        with open(file_path, 'rb') as f:
-            for chunk in iter(lambda: f.read(8192), b''):
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
                 sha256.update(chunk)
 
         return sha256.hexdigest()
@@ -397,7 +387,7 @@ class RollbackManager:
         """Load checkpoints from disk."""
         if self.checkpoints_file.exists():
             try:
-                with open(self.checkpoints_file, 'r') as f:
+                with open(self.checkpoints_file, "r") as f:
                     data = json.load(f)
 
                 for checkpoint_data in data:
@@ -414,7 +404,7 @@ class RollbackManager:
         try:
             data = [asdict(c) for c in self.checkpoints.values()]
 
-            with open(self.checkpoints_file, 'w') as f:
+            with open(self.checkpoints_file, "w") as f:
                 json.dump(data, f, indent=2)
 
         except Exception as e:
@@ -447,11 +437,7 @@ def restore_checkpoint(checkpoint_id: str) -> bool:
 
 
 @contextmanager
-def safe_operation(
-    image_path: Path,
-    description: str = "",
-    auto_cleanup: bool = True
-):
+def safe_operation(image_path: Path, description: str = "", auto_cleanup: bool = True):
     """
     Safe operation context manager.
 

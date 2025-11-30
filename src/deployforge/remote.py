@@ -70,10 +70,10 @@ class HTTPRepository(RemoteRepository):
             response = requests.get(url, stream=True)
             response.raise_for_status()
 
-            total_size = int(response.headers.get('content-length', 0))
+            total_size = int(response.headers.get("content-length", 0))
             downloaded = 0
 
-            with open(local_path, 'wb') as f:
+            with open(local_path, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     if chunk:
                         f.write(chunk)
@@ -100,8 +100,8 @@ class HTTPRepository(RemoteRepository):
         logger.info(f"Uploading to {url}...")
 
         try:
-            with open(local_path, 'rb') as f:
-                response = requests.post(url, files={'file': f})
+            with open(local_path, "rb") as f:
+                response = requests.post(url, files={"file": f})
                 response.raise_for_status()
 
             logger.info(f"Uploaded {local_path.name} successfully")
@@ -113,12 +113,12 @@ class HTTPRepository(RemoteRepository):
     def list_images(self, prefix: str = "") -> list:
         """List images via HTTP API."""
         url = f"{self.repository_url}/list"
-        params = {'prefix': prefix} if prefix else {}
+        params = {"prefix": prefix} if prefix else {}
 
         try:
             response = requests.get(url, params=params)
             response.raise_for_status()
-            return response.json().get('images', [])
+            return response.json().get("images", [])
 
         except requests.RequestException as e:
             logger.error(f"HTTP list failed: {e}")
@@ -128,8 +128,12 @@ class HTTPRepository(RemoteRepository):
 class S3Repository(RemoteRepository):
     """Amazon S3 remote repository."""
 
-    def __init__(self, repository_url: str, access_key: Optional[str] = None,
-                 secret_key: Optional[str] = None):
+    def __init__(
+        self,
+        repository_url: str,
+        access_key: Optional[str] = None,
+        secret_key: Optional[str] = None,
+    ):
         """
         Initialize S3 repository.
 
@@ -146,10 +150,9 @@ class S3Repository(RemoteRepository):
         # Try to import boto3
         try:
             import boto3
+
             self.s3_client = boto3.client(
-                's3',
-                aws_access_key_id=access_key,
-                aws_secret_access_key=secret_key
+                "s3", aws_access_key_id=access_key, aws_secret_access_key=secret_key
             )
             self.boto3_available = True
         except ImportError:
@@ -167,11 +170,7 @@ class S3Repository(RemoteRepository):
         logger.info(f"Downloading s3://{self.bucket}/{remote_path}...")
 
         try:
-            self.s3_client.download_file(
-                self.bucket,
-                remote_path,
-                str(local_path)
-            )
+            self.s3_client.download_file(self.bucket, remote_path, str(local_path))
 
             logger.info(f"Downloaded to {local_path}")
 
@@ -192,11 +191,7 @@ class S3Repository(RemoteRepository):
         logger.info(f"Uploading to s3://{self.bucket}/{remote_path}...")
 
         try:
-            self.s3_client.upload_file(
-                str(local_path),
-                self.bucket,
-                remote_path
-            )
+            self.s3_client.upload_file(str(local_path), self.bucket, remote_path)
 
             logger.info(f"Uploaded {local_path.name} successfully")
 
@@ -210,12 +205,9 @@ class S3Repository(RemoteRepository):
             raise ImportError("boto3 is required for S3 support")
 
         try:
-            response = self.s3_client.list_objects_v2(
-                Bucket=self.bucket,
-                Prefix=prefix
-            )
+            response = self.s3_client.list_objects_v2(Bucket=self.bucket, Prefix=prefix)
 
-            return [obj['Key'] for obj in response.get('Contents', [])]
+            return [obj["Key"] for obj in response.get("Contents", [])]
 
         except Exception as e:
             logger.error(f"S3 list failed: {e}")
@@ -239,10 +231,13 @@ class AzureBlobRepository(RemoteRepository):
         # Try to import azure
         try:
             from azure.storage.blob import BlobServiceClient
+
             self.blob_service = BlobServiceClient.from_connection_string(connection_string)
             self.azure_available = True
         except ImportError:
-            logger.warning("azure-storage-blob not available. Install with: pip install azure-storage-blob")
+            logger.warning(
+                "azure-storage-blob not available. Install with: pip install azure-storage-blob"
+            )
             self.azure_available = False
 
     def download(self, remote_path: str, local_path: Path) -> None:
@@ -257,16 +252,15 @@ class AzureBlobRepository(RemoteRepository):
 
         try:
             # Extract container and blob name
-            parts = remote_path.split('/', 1)
+            parts = remote_path.split("/", 1)
             container_name = parts[0]
             blob_name = parts[1] if len(parts) > 1 else ""
 
             blob_client = self.blob_service.get_blob_client(
-                container=container_name,
-                blob=blob_name
+                container=container_name, blob=blob_name
             )
 
-            with open(local_path, 'wb') as f:
+            with open(local_path, "wb") as f:
                 blob_data = blob_client.download_blob()
                 blob_data.readinto(f)
 
@@ -289,16 +283,15 @@ class AzureBlobRepository(RemoteRepository):
         logger.info(f"Uploading to Azure Blob: {remote_path}...")
 
         try:
-            parts = remote_path.split('/', 1)
+            parts = remote_path.split("/", 1)
             container_name = parts[0]
             blob_name = parts[1] if len(parts) > 1 else local_path.name
 
             blob_client = self.blob_service.get_blob_client(
-                container=container_name,
-                blob=blob_name
+                container=container_name, blob=blob_name
             )
 
-            with open(local_path, 'rb') as f:
+            with open(local_path, "rb") as f:
                 blob_client.upload_blob(f, overwrite=True)
 
             logger.info(f"Uploaded {local_path.name} successfully")
@@ -314,7 +307,7 @@ class AzureBlobRepository(RemoteRepository):
 
         try:
             # Assume first part is container
-            parts = prefix.split('/', 1)
+            parts = prefix.split("/", 1)
             container_name = parts[0] if parts else ""
             blob_prefix = parts[1] if len(parts) > 1 else ""
 
@@ -344,11 +337,11 @@ def get_repository(url: str, **kwargs) -> RemoteRepository:
     """
     parsed = urlparse(url)
 
-    if parsed.scheme in ['http', 'https']:
+    if parsed.scheme in ["http", "https"]:
         return HTTPRepository(url)
-    elif parsed.scheme == 's3':
+    elif parsed.scheme == "s3":
         return S3Repository(url, **kwargs)
-    elif parsed.scheme in ['azure', 'https'] and 'blob.core.windows.net' in url:
+    elif parsed.scheme in ["azure", "https"] and "blob.core.windows.net" in url:
         return AzureBlobRepository(url, **kwargs)
     else:
         raise ValueError(f"Unsupported repository scheme: {parsed.scheme}")

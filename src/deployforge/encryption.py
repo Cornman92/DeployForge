@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class EncryptionMethod(Enum):
     """BitLocker encryption methods"""
+
     AES_128_CBC = "aes128"
     AES_256_CBC = "aes256"
     XTS_AES_128 = "xts-aes128"
@@ -36,6 +37,7 @@ class EncryptionMethod(Enum):
 
 class RecoveryKeyType(Enum):
     """Recovery key types"""
+
     PASSWORD = "password"
     NUMERICAL_PASSWORD = "numerical"
     EXTERNAL_KEY = "external"
@@ -46,6 +48,7 @@ class BitLockerConfig:
     """
     BitLocker configuration settings.
     """
+
     enabled: bool = True
     encryption_method: EncryptionMethod = EncryptionMethod.XTS_AES_256
     require_tpm: bool = True
@@ -62,18 +65,18 @@ class BitLockerConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'enabled': self.enabled,
-            'encryption_method': self.encryption_method.value,
-            'require_tpm': self.require_tpm,
-            'tpm_and_pin': self.tpm_and_pin,
-            'tpm_and_startup_key': self.tpm_and_startup_key,
-            'save_recovery_key_to_ad': self.save_recovery_key_to_ad,
-            'recovery_key_type': self.recovery_key_type.value,
-            'fips_compliance': self.fips_compliance,
-            'hardware_encryption': self.hardware_encryption,
-            'used_space_only': self.used_space_only,
-            'network_unlock': self.network_unlock,
-            'min_pin_length': self.min_pin_length
+            "enabled": self.enabled,
+            "encryption_method": self.encryption_method.value,
+            "require_tpm": self.require_tpm,
+            "tpm_and_pin": self.tpm_and_pin,
+            "tpm_and_startup_key": self.tpm_and_startup_key,
+            "save_recovery_key_to_ad": self.save_recovery_key_to_ad,
+            "recovery_key_type": self.recovery_key_type.value,
+            "fips_compliance": self.fips_compliance,
+            "hardware_encryption": self.hardware_encryption,
+            "used_space_only": self.used_space_only,
+            "network_unlock": self.network_unlock,
+            "min_pin_length": self.min_pin_length,
         }
 
 
@@ -126,7 +129,7 @@ class BitLockerManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_bitlocker_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_bitlocker_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -134,19 +137,29 @@ class BitLockerManager:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
 
             self._mounted = True
@@ -171,11 +184,11 @@ class BitLockerManager:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -227,7 +240,7 @@ class BitLockerManager:
             EncryptionMethod.AES_128_CBC: 1,
             EncryptionMethod.AES_256_CBC: 2,
             EncryptionMethod.XTS_AES_128: 6,
-            EncryptionMethod.XTS_AES_256: 7
+            EncryptionMethod.XTS_AES_256: 7,
         }
 
         method_value = method_map[method]
@@ -237,23 +250,34 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Set encryption method
             policy_key = f"{hive_key}\\Policies\\Microsoft\\FVE"
 
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'EncryptionMethodWithXtsOs',
-                '/t', 'REG_DWORD',
-                '/d', str(method_value),
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    policy_key,
+                    "/v",
+                    "EncryptionMethodWithXtsOs",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    str(method_value),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info(f"Set encryption method to {method.value}")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _configure_tpm(self, config: BitLockerConfig):
         """Configure TPM settings"""
@@ -261,52 +285,90 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             policy_key = f"{hive_key}\\Policies\\Microsoft\\FVE"
 
             # Require TPM
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'UseTPM',
-                '/t', 'REG_DWORD',
-                '/d', '1' if config.require_tpm else '0',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    policy_key,
+                    "/v",
+                    "UseTPM",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1" if config.require_tpm else "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # TPM + PIN
             if config.tpm_and_pin:
-                subprocess.run([
-                    'reg', 'add', policy_key,
-                    '/v', 'UseTPMPIN',
-                    '/t', 'REG_DWORD',
-                    '/d', '1',
-                    '/f'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        policy_key,
+                        "/v",
+                        "UseTPMPIN",
+                        "/t",
+                        "REG_DWORD",
+                        "/d",
+                        "1",
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
                 # Minimum PIN length
-                subprocess.run([
-                    'reg', 'add', policy_key,
-                    '/v', 'MinimumPIN',
-                    '/t', 'REG_DWORD',
-                    '/d', str(config.min_pin_length),
-                    '/f'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        policy_key,
+                        "/v",
+                        "MinimumPIN",
+                        "/t",
+                        "REG_DWORD",
+                        "/d",
+                        str(config.min_pin_length),
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             # TPM + Startup Key
             if config.tpm_and_startup_key:
-                subprocess.run([
-                    'reg', 'add', policy_key,
-                    '/v', 'UseTPMKey',
-                    '/t', 'REG_DWORD',
-                    '/d', '1',
-                    '/f'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        policy_key,
+                        "/v",
+                        "UseTPMKey",
+                        "/t",
+                        "REG_DWORD",
+                        "/d",
+                        "1",
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             logger.info("TPM configuration applied")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _configure_ad_backup(self):
         """Configure Active Directory backup for recovery keys"""
@@ -314,32 +376,52 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             policy_key = f"{hive_key}\\Policies\\Microsoft\\FVE"
 
             # Enable AD backup
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'OSActiveDirectoryBackup',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    policy_key,
+                    "/v",
+                    "OSActiveDirectoryBackup",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Require backup before enabling BitLocker
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'OSRequireActiveDirectoryBackup',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    policy_key,
+                    "/v",
+                    "OSRequireActiveDirectoryBackup",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("AD backup configuration applied")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _enable_fips_mode(self):
         """Enable FIPS compliance mode"""
@@ -347,22 +429,22 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             policy_key = f"{hive_key}\\ControlSet001\\Control\\Lsa\\FipsAlgorithmPolicy"
 
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'Enabled',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "add", policy_key, "/v", "Enabled", "/t", "REG_DWORD", "/d", "1", "/f"],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("FIPS mode enabled")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _configure_network_unlock(self):
         """Configure network unlock"""
@@ -370,22 +452,22 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             policy_key = f"{hive_key}\\Policies\\Microsoft\\FVE"
 
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'OSManageNKP',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "add", policy_key, "/v", "OSManageNKP", "/t", "REG_DWORD", "/d", "1", "/f"],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Network unlock configured")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def _configure_used_space_encryption(self):
         """Configure used space only encryption"""
@@ -393,22 +475,33 @@ class BitLockerManager:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             policy_key = f"{hive_key}\\Policies\\Microsoft\\FVE"
 
-            subprocess.run([
-                'reg', 'add', policy_key,
-                '/v', 'EncryptionType',
-                '/t', 'REG_DWORD',
-                '/d', '1',  # 1 = Used space only, 0 = Full disk
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    policy_key,
+                    "/v",
+                    "EncryptionType",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",  # 1 = Used space only, 0 = Full disk
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Used space encryption configured")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def generate_recovery_password(self) -> str:
         """
@@ -420,10 +513,10 @@ class BitLockerManager:
         # Generate 48-digit numerical password (8 groups of 6 digits)
         groups = []
         for _ in range(8):
-            group = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+            group = "".join([str(secrets.randbelow(10)) for _ in range(6)])
             groups.append(group)
 
-        password = '-'.join(groups)
+        password = "-".join(groups)
 
         logger.info("Generated recovery password")
 
@@ -436,7 +529,7 @@ class BitLockerManager:
 
         manifest_path = manifest_dir / "bitlocker_config.json"
 
-        with open(manifest_path, 'w') as f:
+        with open(manifest_path, "w") as f:
             json.dump(config.to_dict(), f, indent=2)
 
         logger.info(f"Saved configuration manifest to {manifest_path}")
@@ -447,7 +540,7 @@ def configure_enterprise_bitlocker(
     encryption_method: str = "xts-aes256",
     require_tpm: bool = True,
     save_to_ad: bool = True,
-    fips_compliance: bool = False
+    fips_compliance: bool = False,
 ) -> BitLockerManager:
     """
     Configure BitLocker with enterprise settings.
@@ -479,7 +572,7 @@ def configure_enterprise_bitlocker(
         require_tpm=require_tpm,
         save_recovery_key_to_ad=save_to_ad,
         fips_compliance=fips_compliance,
-        used_space_only=True
+        used_space_only=True,
     )
 
     manager.configure_bitlocker(config)
@@ -491,9 +584,7 @@ def configure_enterprise_bitlocker(
 
 
 def create_bitlocker_deployment_script(
-    output_path: Path,
-    config: BitLockerConfig,
-    recovery_password: Optional[str] = None
+    output_path: Path, config: BitLockerConfig, recovery_password: Optional[str] = None
 ):
     """
     Create PowerShell script for BitLocker deployment.
@@ -552,9 +643,9 @@ Write-Host "BitLocker configuration complete"
 """
 
     # Replace placeholders
-    script = script.replace("{encryption_method}", config.encryption_method.value.replace('-', ''))
+    script = script.replace("{encryption_method}", config.encryption_method.value.replace("-", ""))
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(script)
 
     logger.info(f"BitLocker deployment script created: {output_path}")

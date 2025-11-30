@@ -1,13 +1,22 @@
-# DeployForge v1.7.0 🚀
+# DeployForge 🚀
 
 **Enterprise Windows Deployment Suite** - Complete automation with a beautiful modern GUI.
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![CI Status](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/Cornman92/DeployForge/actions)
-[![Version](https://img.shields.io/badge/version-1.7.0-success)](https://github.com/Cornman92/DeployForge)
-[![Features](https://img.shields.io/badge/features-150%2B-blueviolet)](https://github.com/Cornman92/DeployForge)
-[![Enhanced Modules](https://img.shields.io/badge/enhanced%20modules-9%2F9-brightgreen)](https://github.com/Cornman92/DeployForge)
+[![Python Version](https://img.shields.io/badge/python-3.9%20|%203.10%20|%203.11%20|%203.12-blue)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/Cornman92/DeployForge/releases)
+[![Status](https://img.shields.io/badge/status-beta-yellow.svg)](https://github.com/Cornman92/DeployForge)
+[![Platform](https://img.shields.io/badge/platform-Windows%20|%20Linux%20|%20macOS-lightgrey.svg)](https://github.com/Cornman92/DeployForge)
+
+[![Features](https://img.shields.io/badge/features-150%2B-blueviolet.svg)](https://github.com/Cornman92/DeployForge)
+[![Enhanced Modules](https://img.shields.io/badge/enhanced%20modules-9%2F9-brightgreen.svg)](https://github.com/Cornman92/DeployForge)
+[![Code Lines](https://img.shields.io/badge/code-29,163%2B%20lines-informational.svg)](https://github.com/Cornman92/DeployForge)
+
+[![Issues](https://img.shields.io/github/issues/Cornman92/DeployForge)](https://github.com/Cornman92/DeployForge/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/Cornman92/DeployForge)](https://github.com/Cornman92/DeployForge/pulls)
+[![Stars](https://img.shields.io/github/stars/Cornman92/DeployForge?style=social)](https://github.com/Cornman92/DeployForge/stargazers)
+
+**Quick Links:** [Installation](#installation) | [Quick Start](#quick-start) | [Documentation](#documentation) | [Contributing](CONTRIBUTING.md) | [Roadmap](ROADMAP.md)
 
 DeployForge is a comprehensive, enterprise-grade tool for managing Windows deployment images. Beautiful modern GUI with **150+ features** across 16 categories, **9 world-class enhanced backend modules** (+4,500 lines), complete integration, and full automation support.
 

@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class JobStatus(Enum):
     """Job execution status"""
+
     PENDING = "pending"
     QUEUED = "queued"
     RUNNING = "running"
@@ -42,6 +43,7 @@ class JobStatus(Enum):
 
 class JobPriority(Enum):
     """Job priority levels"""
+
     LOW = 1
     NORMAL = 2
     HIGH = 3
@@ -50,6 +52,7 @@ class JobPriority(Enum):
 
 class NotificationType(Enum):
     """Notification type"""
+
     EMAIL = "email"
     WEBHOOK = "webhook"
     LOG = "log"
@@ -63,6 +66,7 @@ class CronSchedule:
     Format: minute hour day month weekday
     Example: '0 2 * * *' = Every day at 2:00 AM
     """
+
     expression: str
 
     def __post_init__(self):
@@ -88,13 +92,8 @@ class CronSchedule:
         minute, hour, day, month, weekday = self.expression.split()
 
         # For now, simple daily schedule
-        if minute == '0' and hour != '*':
-            next_run = from_time.replace(
-                hour=int(hour),
-                minute=0,
-                second=0,
-                microsecond=0
-            )
+        if minute == "0" and hour != "*":
+            next_run = from_time.replace(hour=int(hour), minute=0, second=0, microsecond=0)
 
             if next_run <= from_time:
                 next_run += timedelta(days=1)
@@ -110,6 +109,7 @@ class Job:
     """
     Represents a scheduled or queued job.
     """
+
     id: str
     name: str
     task: str
@@ -128,25 +128,26 @@ class Job:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         data = asdict(self)
-        data['priority'] = self.priority.value
-        data['status'] = self.status.value
+        data["priority"] = self.priority.value
+        data["status"] = self.status.value
         if self.schedule:
-            data['schedule'] = self.schedule.expression
+            data["schedule"] = self.schedule.expression
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'Job':
+    def from_dict(cls, data: Dict[str, Any]) -> "Job":
         """Create from dictionary"""
-        data['priority'] = JobPriority(data.get('priority', 2))
-        data['status'] = JobStatus(data.get('status', 'pending'))
-        if 'schedule' in data and isinstance(data['schedule'], str):
-            data['schedule'] = CronSchedule(data['schedule'])
+        data["priority"] = JobPriority(data.get("priority", 2))
+        data["status"] = JobStatus(data.get("status", "pending"))
+        if "schedule" in data and isinstance(data["schedule"], str):
+            data["schedule"] = CronSchedule(data["schedule"])
         return cls(**data)
 
 
 @dataclass
 class NotificationConfig:
     """Notification configuration"""
+
     type: NotificationType
     recipients: List[str] = field(default_factory=list)
     webhook_url: Optional[str] = None
@@ -156,11 +157,11 @@ class NotificationConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'type': self.type.value,
-            'recipients': self.recipients,
-            'webhook_url': self.webhook_url,
-            'on_success': self.on_success,
-            'on_failure': self.on_failure
+            "type": self.type.value,
+            "recipients": self.recipients,
+            "webhook_url": self.webhook_url,
+            "on_success": self.on_success,
+            "on_failure": self.on_failure,
         }
 
 
@@ -183,12 +184,12 @@ class JobQueue:
             storage_path: Path for file-based storage
         """
         self.backend = backend
-        self.storage_path = storage_path or Path('.deployforge/jobs')
+        self.storage_path = storage_path or Path(".deployforge/jobs")
         self.jobs: Dict[str, Job] = {}
         self.queue: queue.PriorityQueue = queue.PriorityQueue()
         self._lock = threading.Lock()
 
-        if backend == 'file':
+        if backend == "file":
             self.storage_path.mkdir(parents=True, exist_ok=True)
             self._load_jobs()
 
@@ -197,7 +198,7 @@ class JobQueue:
         task: str,
         config: Optional[Dict[str, Any]] = None,
         priority: JobPriority = JobPriority.NORMAL,
-        name: Optional[str] = None
+        name: Optional[str] = None,
     ) -> str:
         """
         Add job to queue.
@@ -219,17 +220,15 @@ class JobQueue:
             task=task,
             config=config or {},
             priority=priority,
-            status=JobStatus.QUEUED
+            status=JobStatus.QUEUED,
         )
 
         with self._lock:
             self.jobs[job_id] = job
             # Priority queue: (priority, timestamp, job)
-            self.queue.put((
-                -priority.value,  # Negative for higher priority first
-                time.time(),
-                job
-            ))
+            self.queue.put(
+                (-priority.value, time.time(), job)  # Negative for higher priority first
+            )
 
         self._save_job(job)
 
@@ -295,14 +294,12 @@ class JobQueue:
                 if job.retry_count < job.max_retries:
                     job.retry_count += 1
                     job.status = JobStatus.RETRY
-                    logger.warning(f"Job {job_id} failed, retrying ({job.retry_count}/{job.max_retries})")
+                    logger.warning(
+                        f"Job {job_id} failed, retrying ({job.retry_count}/{job.max_retries})"
+                    )
 
                     # Re-queue for retry
-                    self.queue.put((
-                        -job.priority.value,
-                        time.time(),
-                        job
-                    ))
+                    self.queue.put((-job.priority.value, time.time(), job))
                 else:
                     job.status = JobStatus.FAILED
                     job.completed_at = datetime.now().isoformat()
@@ -337,11 +334,7 @@ class JobQueue:
         with self._lock:
             return self.jobs.get(job_id)
 
-    def list_jobs(
-        self,
-        status: Optional[JobStatus] = None,
-        limit: int = 100
-    ) -> List[Job]:
+    def list_jobs(self, status: Optional[JobStatus] = None, limit: int = 100) -> List[Job]:
         """
         List jobs.
 
@@ -386,28 +379,24 @@ class JobQueue:
 
     def _save_job(self, job: Job):
         """Save job to persistent storage"""
-        if self.backend == 'file':
+        if self.backend == "file":
             job_file = self.storage_path / f"{job.id}.json"
-            with open(job_file, 'w') as f:
+            with open(job_file, "w") as f:
                 json.dump(job.to_dict(), f, indent=2)
 
     def _load_jobs(self):
         """Load jobs from persistent storage"""
-        if self.backend == 'file':
-            for job_file in self.storage_path.glob('*.json'):
+        if self.backend == "file":
+            for job_file in self.storage_path.glob("*.json"):
                 try:
-                    with open(job_file, 'r') as f:
+                    with open(job_file, "r") as f:
                         data = json.load(f)
                         job = Job.from_dict(data)
                         self.jobs[job.id] = job
 
                         # Re-queue pending/retry jobs
                         if job.status in [JobStatus.QUEUED, JobStatus.RETRY]:
-                            self.queue.put((
-                                -job.priority.value,
-                                time.time(),
-                                job
-                            ))
+                            self.queue.put((-job.priority.value, time.time(), job))
 
                     logger.info(f"Loaded job {job.id}")
 
@@ -449,7 +438,7 @@ class JobScheduler:
         schedule: CronSchedule,
         task: str,
         config: Optional[Dict[str, Any]] = None,
-        priority: JobPriority = JobPriority.NORMAL
+        priority: JobPriority = JobPriority.NORMAL,
     ) -> str:
         """
         Add scheduled job.
@@ -472,7 +461,7 @@ class JobScheduler:
             task=task,
             config=config or {},
             priority=priority,
-            schedule=schedule
+            schedule=schedule,
         )
 
         with self._lock:
@@ -531,7 +520,7 @@ class JobScheduler:
                                 task=job.task,
                                 config=job.config,
                                 priority=job.priority,
-                                name=job.name
+                                name=job.name,
                             )
 
                             logger.info(f"Scheduled job triggered: {job.name}")
@@ -553,7 +542,7 @@ class JobWorker:
         self,
         job_queue: JobQueue,
         task_handlers: Dict[str, Callable],
-        notification_config: Optional[NotificationConfig] = None
+        notification_config: Optional[NotificationConfig] = None,
     ):
         """
         Initialize worker.
@@ -656,9 +645,7 @@ class JobWorker:
 
 
 def create_scheduled_build(
-    schedule: str,
-    config_path: Path,
-    priority: JobPriority = JobPriority.NORMAL
+    schedule: str, config_path: Path, priority: JobPriority = JobPriority.NORMAL
 ) -> tuple[JobScheduler, JobWorker]:
     """
     Create a scheduled build workflow.
@@ -682,35 +669,33 @@ def create_scheduled_build(
     from deployforge.iac import build_from_config
 
     # Create job queue
-    job_queue = JobQueue(backend='file')
+    job_queue = JobQueue(backend="file")
 
     # Create scheduler
     scheduler = JobScheduler(job_queue)
 
     # Add scheduled build job
     scheduler.add_job(
-        name='scheduled-build',
+        name="scheduled-build",
         schedule=CronSchedule(schedule),
-        task='build-image',
-        config={'config_path': str(config_path)},
-        priority=priority
+        task="build-image",
+        config={"config_path": str(config_path)},
+        priority=priority,
     )
 
     # Create worker with build handler
     def build_handler(config: Dict[str, Any]) -> Dict[str, Any]:
         """Handle build task"""
-        config_path = Path(config['config_path'])
+        config_path = Path(config["config_path"])
         success = build_from_config(config_path)
-        return {'success': success}
+        return {"success": success}
 
     worker = JobWorker(
         job_queue=job_queue,
-        task_handlers={'build-image': build_handler},
+        task_handlers={"build-image": build_handler},
         notification_config=NotificationConfig(
-            type=NotificationType.LOG,
-            on_success=True,
-            on_failure=True
-        )
+            type=NotificationType.LOG, on_success=True, on_failure=True
+        ),
     )
 
     return scheduler, worker

@@ -39,6 +39,7 @@ logger = logging.getLogger(__name__)
 
 class BrowserProfile(Enum):
     """Browser configuration profiles"""
+
     PRIVACY_FOCUSED = "privacy-focused"  # Privacy-centric browsers with hardened settings
     PERFORMANCE = "performance"  # Speed-optimized browsers
     DEVELOPER = "developer"  # Multiple browsers for cross-browser testing
@@ -49,6 +50,7 @@ class BrowserProfile(Enum):
 
 class Browser(Enum):
     """Supported browsers with WinGet package IDs"""
+
     # Mainstream browsers
     CHROME = "Google.Chrome"
     FIREFOX = "Mozilla.Firefox"
@@ -79,6 +81,7 @@ class Browser(Enum):
 
 class SearchEngine(Enum):
     """Default search engines"""
+
     GOOGLE = "google"
     DUCKDUCKGO = "duckduckgo"
     BING = "bing"
@@ -90,6 +93,7 @@ class SearchEngine(Enum):
 @dataclass
 class BrowserConfiguration:
     """Browser configuration settings"""
+
     # Browsers to install
     browsers: List[str] = field(default_factory=lambda: ["chrome", "firefox"])
 
@@ -126,27 +130,27 @@ class BrowserConfiguration:
     def to_dict(self) -> Dict[str, Any]:
         """Convert configuration to dictionary"""
         return {
-            'browsers': self.browsers,
-            'privacy': {
-                'block_third_party_cookies': self.block_third_party_cookies,
-                'do_not_track': self.enable_do_not_track,
-                'disable_telemetry': self.disable_telemetry,
-                'tracking_protection': self.enable_tracking_protection,
+            "browsers": self.browsers,
+            "privacy": {
+                "block_third_party_cookies": self.block_third_party_cookies,
+                "do_not_track": self.enable_do_not_track,
+                "disable_telemetry": self.disable_telemetry,
+                "tracking_protection": self.enable_tracking_protection,
             },
-            'performance': {
-                'hardware_acceleration': self.hardware_acceleration,
-                'preload_pages': self.preload_pages,
-                'background_apps': self.background_apps,
+            "performance": {
+                "hardware_acceleration": self.hardware_acceleration,
+                "preload_pages": self.preload_pages,
+                "background_apps": self.background_apps,
             },
-            'defaults': {
-                'browser': self.default_browser,
-                'search_engine': self.default_search_engine,
-                'homepage': self.homepage,
+            "defaults": {
+                "browser": self.default_browser,
+                "search_engine": self.default_search_engine,
+                "homepage": self.homepage,
             },
-            'security': {
-                'safe_browsing': self.enable_safe_browsing,
-                'block_malicious': self.block_malicious_sites,
-            }
+            "security": {
+                "safe_browsing": self.enable_safe_browsing,
+                "block_malicious": self.block_malicious_sites,
+            },
         }
 
 
@@ -164,37 +168,37 @@ class BrowserBundler:
     """
 
     BROWSER_PACKAGES = {
-        'chrome': Browser.CHROME.value,
-        'firefox': Browser.FIREFOX.value,
-        'edge': Browser.EDGE.value,
-        'brave': Browser.BRAVE.value,
-        'opera': Browser.OPERA.value,
-        'opera_gx': Browser.OPERA_GX.value,
-        'vivaldi': Browser.VIVALDI.value,
-        'tor': Browser.TOR_BROWSER.value,
-        'librewolf': Browser.LIBREWOLF.value,
-        'waterfox': Browser.WATERFOX.value,
-        'chrome_dev': Browser.CHROME_DEV.value,
-        'chrome_canary': Browser.CHROME_CANARY.value,
-        'firefox_dev': Browser.FIREFOX_DEVELOPER.value,
-        'firefox_nightly': Browser.FIREFOX_NIGHTLY.value,
-        'edge_dev': Browser.EDGE_DEV.value,
-        'chromium': Browser.CHROMIUM.value,
-        'ungoogled_chromium': Browser.UNGOOGLED_CHROMIUM.value,
+        "chrome": Browser.CHROME.value,
+        "firefox": Browser.FIREFOX.value,
+        "edge": Browser.EDGE.value,
+        "brave": Browser.BRAVE.value,
+        "opera": Browser.OPERA.value,
+        "opera_gx": Browser.OPERA_GX.value,
+        "vivaldi": Browser.VIVALDI.value,
+        "tor": Browser.TOR_BROWSER.value,
+        "librewolf": Browser.LIBREWOLF.value,
+        "waterfox": Browser.WATERFOX.value,
+        "chrome_dev": Browser.CHROME_DEV.value,
+        "chrome_canary": Browser.CHROME_CANARY.value,
+        "firefox_dev": Browser.FIREFOX_DEVELOPER.value,
+        "firefox_nightly": Browser.FIREFOX_NIGHTLY.value,
+        "edge_dev": Browser.EDGE_DEV.value,
+        "chromium": Browser.CHROMIUM.value,
+        "ungoogled_chromium": Browser.UNGOOGLED_CHROMIUM.value,
     }
 
     COMMON_EXTENSIONS = {
-        'chrome': {
-            'ublock_origin': 'cjpalhdlnbpafiamejdnhcphjbkeiagm',
-            'privacy_badger': 'pkehgijcmpdhfbdbbnkijodmdjhbjlgp',
-            'https_everywhere': 'gcbommkclmclpchllfjekcdonpmejbdp',
-            'lastpass': 'hdokiejnpimakedhajhdlcegeplioahd',
+        "chrome": {
+            "ublock_origin": "cjpalhdlnbpafiamejdnhcphjbkeiagm",
+            "privacy_badger": "pkehgijcmpdhfbdbbnkijodmdjhbjlgp",
+            "https_everywhere": "gcbommkclmclpchllfjekcdonpmejbdp",
+            "lastpass": "hdokiejnpimakedhajhdlcegeplioahd",
         },
-        'firefox': {
-            'ublock_origin': 'uBlock0@raymondhill.net',
-            'privacy_badger': 'jid1-MnnxcxisBPnSXQ@jetpack',
-            'https_everywhere': 'https-everywhere@eff.org',
-        }
+        "firefox": {
+            "ublock_origin": "uBlock0@raymondhill.net",
+            "privacy_badger": "jid1-MnnxcxisBPnSXQ@jetpack",
+            "https_everywhere": "https-everywhere@eff.org",
+        },
     }
 
     def __init__(self, image_path: Path, index: int = 1):
@@ -221,7 +225,7 @@ class BrowserBundler:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_browser_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_browser_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -229,19 +233,29 @@ class BrowserBundler:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
 
             self._mounted = True
@@ -261,11 +275,11 @@ class BrowserBundler:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -275,8 +289,11 @@ class BrowserBundler:
             logger.error(f"Failed to unmount image: {e.stderr.decode()}")
             raise
 
-    def apply_profile(self, profile: BrowserProfile,
-                     progress_callback: Optional[Callable[[int, str], None]] = None):
+    def apply_profile(
+        self,
+        profile: BrowserProfile,
+        progress_callback: Optional[Callable[[int, str], None]] = None,
+    ):
         """
         Apply a browser profile with recommended browsers and settings.
 
@@ -291,54 +308,61 @@ class BrowserBundler:
 
         profiles = {
             BrowserProfile.PRIVACY_FOCUSED: {
-                'browsers': ['firefox', 'brave', 'tor', 'librewolf'],
-                'block_third_party_cookies': True,
-                'enable_do_not_track': True,
-                'disable_telemetry': True,
-                'tracking_protection': True,
-                'default_search': SearchEngine.DUCKDUCKGO.value,
+                "browsers": ["firefox", "brave", "tor", "librewolf"],
+                "block_third_party_cookies": True,
+                "enable_do_not_track": True,
+                "disable_telemetry": True,
+                "tracking_protection": True,
+                "default_search": SearchEngine.DUCKDUCKGO.value,
             },
             BrowserProfile.PERFORMANCE: {
-                'browsers': ['chrome', 'edge'],
-                'hardware_acceleration': True,
-                'preload_pages': True,
-                'default_search': SearchEngine.GOOGLE.value,
+                "browsers": ["chrome", "edge"],
+                "hardware_acceleration": True,
+                "preload_pages": True,
+                "default_search": SearchEngine.GOOGLE.value,
             },
             BrowserProfile.DEVELOPER: {
-                'browsers': ['chrome', 'firefox', 'edge', 'chrome_dev', 'firefox_dev'],
-                'enable_dev_tools': True,
-                'allow_insecure_localhost': True,
-                'default_search': SearchEngine.GOOGLE.value,
+                "browsers": ["chrome", "firefox", "edge", "chrome_dev", "firefox_dev"],
+                "enable_dev_tools": True,
+                "allow_insecure_localhost": True,
+                "default_search": SearchEngine.GOOGLE.value,
             },
             BrowserProfile.ENTERPRISE: {
-                'browsers': ['edge', 'chrome'],
-                'configure_enterprise_policies': True,
-                'enable_sync': False,
-                'default_search': SearchEngine.BING.value,
+                "browsers": ["edge", "chrome"],
+                "configure_enterprise_policies": True,
+                "enable_sync": False,
+                "default_search": SearchEngine.BING.value,
             },
             BrowserProfile.MINIMAL: {
-                'browsers': ['chrome'],
-                'default_search': SearchEngine.GOOGLE.value,
+                "browsers": ["chrome"],
+                "default_search": SearchEngine.GOOGLE.value,
             },
             BrowserProfile.COMPLETE: {
-                'browsers': ['chrome', 'firefox', 'edge', 'brave', 'opera', 'vivaldi'],
-                'default_search': SearchEngine.GOOGLE.value,
+                "browsers": ["chrome", "firefox", "edge", "brave", "opera", "vivaldi"],
+                "default_search": SearchEngine.GOOGLE.value,
             },
         }
 
         profile_config = profiles.get(profile, profiles[BrowserProfile.MINIMAL])
 
         # Update configuration
-        self.config.browsers = profile_config.get('browsers', ['chrome'])
-        self.config.block_third_party_cookies = profile_config.get('block_third_party_cookies', False)
-        self.config.enable_do_not_track = profile_config.get('enable_do_not_track', False)
-        self.config.disable_telemetry = profile_config.get('disable_telemetry', False)
-        self.config.default_search_engine = profile_config.get('default_search', SearchEngine.GOOGLE.value)
+        self.config.browsers = profile_config.get("browsers", ["chrome"])
+        self.config.block_third_party_cookies = profile_config.get(
+            "block_third_party_cookies", False
+        )
+        self.config.enable_do_not_track = profile_config.get("enable_do_not_track", False)
+        self.config.disable_telemetry = profile_config.get("disable_telemetry", False)
+        self.config.default_search_engine = profile_config.get(
+            "default_search", SearchEngine.GOOGLE.value
+        )
 
-        logger.info(f"Profile configuration: {len(self.config.browsers)} browsers, Search: {self.config.default_search_engine}")
+        logger.info(
+            f"Profile configuration: {len(self.config.browsers)} browsers, Search: {self.config.default_search_engine}"
+        )
 
-    def install_browsers(self, browsers: List[str],
-                         progress_callback: Optional[Callable[[int, str], None]] = None):
+    def install_browsers(
+        self, browsers: List[str], progress_callback: Optional[Callable[[int, str], None]] = None
+    ):
         """
         Install browsers via WinGet.
 
@@ -361,11 +385,13 @@ class BrowserBundler:
             if browser in self.BROWSER_PACKAGES:
                 package_id = self.BROWSER_PACKAGES[browser]
                 script_lines.append(f"Write-Host 'Installing {browser}...'\n")
-                script_lines.append(f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n")
+                script_lines.append(
+                    f"winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements\n\n"
+                )
                 logger.info(f"Configured browser installation: {browser}")
 
         script_path = scripts_dir / "install_browsers.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Browser installation script created: {len(browsers)} browsers")
@@ -381,29 +407,39 @@ class BrowserBundler:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         default_policies = policies or {
-            'DefaultSearchProviderEnabled': 1,
-            'DefaultSearchProviderName': 'Google',
-            'SafeBrowsingEnabled': 1,
-            'PasswordManagerEnabled': 1,
-            'AutofillAddressEnabled': 0,
-            'AutofillCreditCardEnabled': 0,
-            'SyncDisabled': 1 if not self.config.enable_sync else 0,
-            'BlockThirdPartyCookies': 1 if self.config.block_third_party_cookies else 0,
+            "DefaultSearchProviderEnabled": 1,
+            "DefaultSearchProviderName": "Google",
+            "SafeBrowsingEnabled": 1,
+            "PasswordManagerEnabled": 1,
+            "AutofillAddressEnabled": 0,
+            "AutofillCreditCardEnabled": 0,
+            "SyncDisabled": 1 if not self.config.enable_sync else 0,
+            "BlockThirdPartyCookies": 1 if self.config.block_third_party_cookies else 0,
         }
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             for policy, value in default_policies.items():
-                value_type = 'REG_DWORD' if isinstance(value, int) else 'REG_SZ'
-                subprocess.run([
-                    'reg', 'add',
-                    f'{hive_key}\\Policies\\Google\\Chrome',
-                    '/v', policy,
-                    '/t', value_type,
-                    '/d', str(value),
-                    '/f'
-                ], check=True, capture_output=True)
+                value_type = "REG_DWORD" if isinstance(value, int) else "REG_SZ"
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        f"{hive_key}\\Policies\\Google\\Chrome",
+                        "/v",
+                        policy,
+                        "/t",
+                        value_type,
+                        "/d",
+                        str(value),
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             logger.info(f"Chrome policies configured: {len(default_policies)} settings")
 
@@ -412,7 +448,7 @@ class BrowserBundler:
             raise
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_firefox_policies(self, policies: Optional[Dict[str, Any]] = None):
         """Configure Firefox enterprise policies via policies.json"""
@@ -434,21 +470,21 @@ class BrowserBundler:
                     "Value": self.config.enable_tracking_protection,
                     "Locked": False,
                     "Cryptomining": True,
-                    "Fingerprinting": True
+                    "Fingerprinting": True,
                 },
                 "Cookies": {
-                    "AcceptThirdParty": "never" if self.config.block_third_party_cookies else "always",
-                    "RejectTracker": True
+                    "AcceptThirdParty": "never"
+                    if self.config.block_third_party_cookies
+                    else "always",
+                    "RejectTracker": True,
                 },
                 "HardwareAcceleration": self.config.hardware_acceleration,
-                "Homepage": {
-                    "StartPage": "homepage" if self.config.homepage else "none"
-                }
+                "Homepage": {"StartPage": "homepage" if self.config.homepage else "none"},
             }
         }
 
         policies_file = firefox_dir / "policies.json"
-        with open(policies_file, 'w') as f:
+        with open(policies_file, "w") as f:
             json.dump(default_policies, f, indent=2)
 
         logger.info("Firefox policies configured")
@@ -464,25 +500,37 @@ class BrowserBundler:
         hive_key = "HKLM\\TEMP_SOFTWARE"
 
         default_policies = policies or {
-            'PersonalizationReportingEnabled': 0,
-            'DiagnosticData': 0 if self.config.disable_telemetry else 1,
-            'TrackingPrevention': 2 if self.config.enable_tracking_protection else 0,  # 0=Off, 1=Basic, 2=Balanced, 3=Strict
-            'SyncDisabled': 1 if not self.config.enable_sync else 0,
-            'HardwareAccelerationModeEnabled': 1 if self.config.hardware_acceleration else 0,
+            "PersonalizationReportingEnabled": 0,
+            "DiagnosticData": 0 if self.config.disable_telemetry else 1,
+            "TrackingPrevention": 2
+            if self.config.enable_tracking_protection
+            else 0,  # 0=Off, 1=Basic, 2=Balanced, 3=Strict
+            "SyncDisabled": 1 if not self.config.enable_sync else 0,
+            "HardwareAccelerationModeEnabled": 1 if self.config.hardware_acceleration else 0,
         }
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             for policy, value in default_policies.items():
-                subprocess.run([
-                    'reg', 'add',
-                    f'{hive_key}\\Policies\\Microsoft\\Edge',
-                    '/v', policy,
-                    '/t', 'REG_DWORD',
-                    '/d', str(value),
-                    '/f'
-                ], check=True, capture_output=True)
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        f"{hive_key}\\Policies\\Microsoft\\Edge",
+                        "/v",
+                        policy,
+                        "/t",
+                        "REG_DWORD",
+                        "/d",
+                        str(value),
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             logger.info(f"Edge policies configured: {len(default_policies)} settings")
 
@@ -491,7 +539,7 @@ class BrowserBundler:
             raise
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def configure_privacy_settings(self):
         """Apply privacy-focused settings across installed browsers"""
@@ -500,13 +548,13 @@ class BrowserBundler:
 
         logger.info("Configuring privacy settings for browsers")
 
-        if 'chrome' in self.config.browsers:
+        if "chrome" in self.config.browsers:
             self.configure_chrome_policies()
 
-        if 'firefox' in self.config.browsers:
+        if "firefox" in self.config.browsers:
             self.configure_firefox_policies()
 
-        if 'edge' in self.config.browsers:
+        if "edge" in self.config.browsers:
             self.configure_edge_policies()
 
         logger.info("Privacy settings configured for all browsers")
@@ -519,11 +567,11 @@ class BrowserBundler:
         logger.info(f"Setting default browser: {browser}")
 
         browser_associations = {
-            'chrome': 'ChromeHTML',
-            'firefox': 'FirefoxHTML',
-            'edge': 'MSEdgeHTM',
-            'brave': 'BraveHTML',
-            'opera': 'OperaHTML',
+            "chrome": "ChromeHTML",
+            "firefox": "FirefoxHTML",
+            "edge": "MSEdgeHTM",
+            "brave": "BraveHTML",
+            "opera": "OperaHTML",
         }
 
         if browser not in browser_associations:
@@ -536,18 +584,28 @@ class BrowserBundler:
         hive_key = "HKLM\\TEMP_USER"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Set default for http and https
-            for protocol in ['http', 'https']:
-                subprocess.run([
-                    'reg', 'add',
-                    f'{hive_key}\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\{protocol}\\UserChoice',
-                    '/v', 'ProgId',
-                    '/t', 'REG_SZ',
-                    '/d', prog_id,
-                    '/f'
-                ], check=True, capture_output=True)
+            for protocol in ["http", "https"]:
+                subprocess.run(
+                    [
+                        "reg",
+                        "add",
+                        f"{hive_key}\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\{protocol}\\UserChoice",
+                        "/v",
+                        "ProgId",
+                        "/t",
+                        "REG_SZ",
+                        "/d",
+                        prog_id,
+                        "/f",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
 
             logger.info(f"Default browser set to: {browser}")
 
@@ -556,7 +614,7 @@ class BrowserBundler:
             raise
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def install_browser_extensions(self, browser: str, extensions: List[str]):
         """Configure browser to auto-install extensions on first run"""
@@ -573,16 +631,16 @@ class BrowserBundler:
         scripts_dir.mkdir(parents=True, exist_ok=True)
 
         # Create extension installation script for browser
-        if browser == 'chrome':
+        if browser == "chrome":
             script_lines = ["# Chrome Extension Installation\n"]
             script_lines.append("# Extensions will be installed on first Chrome launch\n")
             for ext in extensions:
-                if ext in self.COMMON_EXTENSIONS['chrome']:
-                    ext_id = self.COMMON_EXTENSIONS['chrome'][ext]
+                if ext in self.COMMON_EXTENSIONS["chrome"]:
+                    ext_id = self.COMMON_EXTENSIONS["chrome"][ext]
                     script_lines.append(f"# {ext}: {ext_id}\n")
 
         script_path = scripts_dir / f"install_{browser}_extensions.ps1"
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.writelines(script_lines)
 
         logger.info(f"Extension configuration created for {browser}")
@@ -603,8 +661,8 @@ class BrowserBundler:
         # Disable background apps if configured
         if not self.config.background_apps:
             logger.info("Background browser apps disabled")
-            if 'chrome' in self.config.browsers:
-                self.configure_chrome_policies({'BackgroundModeEnabled': 0})
+            if "chrome" in self.config.browsers:
+                self.configure_chrome_policies({"BackgroundModeEnabled": 0})
 
         logger.info("Browser performance optimizations applied")
 
@@ -614,7 +672,7 @@ def install_browsers(
     browsers: Optional[List[str]] = None,
     profile: Optional[BrowserProfile] = None,
     custom_config: Optional[BrowserConfiguration] = None,
-    progress_callback: Optional[Callable[[int, str], None]] = None
+    progress_callback: Optional[Callable[[int, str], None]] = None,
 ) -> None:
     """
     Quick browser installation and configuration.
@@ -670,14 +728,19 @@ def install_browsers(
 
         if progress_callback:
             progress_callback(90, "Setting default browser...")
-        if bundler.config.default_browser and bundler.config.default_browser in bundler.config.browsers:
+        if (
+            bundler.config.default_browser
+            and bundler.config.default_browser in bundler.config.browsers
+        ):
             bundler.set_default_browser(bundler.config.default_browser)
 
         if progress_callback:
             progress_callback(100, "Browser configuration complete")
 
         bundler.unmount(save_changes=True)
-        logger.info(f"Browser installation complete: {len(bundler.config.browsers)} browsers configured")
+        logger.info(
+            f"Browser installation complete: {len(bundler.config.browsers)} browsers configured"
+        )
 
     except Exception as e:
         logger.error(f"Failed to install browsers: {e}")

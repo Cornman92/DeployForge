@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class DeltaMetadata:
     """Metadata for delta package"""
+
     source_version: str
     target_version: str
     source_hash: str
@@ -40,13 +41,13 @@ class DeltaMetadata:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'source_version': self.source_version,
-            'target_version': self.target_version,
-            'source_hash': self.source_hash,
-            'target_hash': self.target_hash,
-            'delta_size_bytes': self.delta_size_bytes,
-            'created_at': self.created_at,
-            'compression_ratio': self.compression_ratio
+            "source_version": self.source_version,
+            "target_version": self.target_version,
+            "source_hash": self.source_hash,
+            "target_hash": self.target_hash,
+            "delta_size_bytes": self.delta_size_bytes,
+            "created_at": self.created_at,
+            "compression_ratio": self.compression_ratio,
         }
 
 
@@ -87,7 +88,7 @@ class DeltaManager:
         output: Path,
         source_version: str = "1.0",
         target_version: str = "2.0",
-        compression: str = "maximum"
+        compression: str = "maximum",
     ) -> DeltaMetadata:
         """
         Create delta between base and target images.
@@ -133,12 +134,12 @@ class DeltaManager:
                 source_hash=source_hash,
                 target_hash=target_hash,
                 delta_size_bytes=delta_size,
-                compression_ratio=compression_ratio
+                compression_ratio=compression_ratio,
             )
 
             # Save metadata
-            metadata_path = output.with_suffix('.json')
-            with open(metadata_path, 'w') as f:
+            metadata_path = output.with_suffix(".json")
+            with open(metadata_path, "w") as f:
                 json.dump(metadata.to_dict(), f, indent=2)
 
             logger.info(f"Delta created: {output} ({compression_ratio:.1f}% compression)")
@@ -149,32 +150,25 @@ class DeltaManager:
             logger.error(f"Failed to create delta: {e.stderr.decode()}")
             raise
 
-    def _create_delta_export(
-        self,
-        target_image: Path,
-        output: Path,
-        compression: str = "maximum"
-    ):
+    def _create_delta_export(self, target_image: Path, output: Path, compression: str = "maximum"):
         """Create delta using DISM export with reference"""
         # Export target with base as reference
         # This creates a delta that contains only differences
-        subprocess.run([
-            'dism',
-            '/Export-Image',
-            f'/SourceImageFile:{target_image}',
-            '/SourceIndex:1',
-            f'/DestinationImageFile:{output}',
-            f'/Compress:{compression}',
-            f'/ReferenceImageFile:{self.base_image}'
-        ], check=True, capture_output=True)
+        subprocess.run(
+            [
+                "dism",
+                "/Export-Image",
+                f"/SourceImageFile:{target_image}",
+                "/SourceIndex:1",
+                f"/DestinationImageFile:{output}",
+                f"/Compress:{compression}",
+                f"/ReferenceImageFile:{self.base_image}",
+            ],
+            check=True,
+            capture_output=True,
+        )
 
-    def apply_delta(
-        self,
-        base: Path,
-        delta: Path,
-        output: Path,
-        validate: bool = True
-    ) -> bool:
+    def apply_delta(self, base: Path, delta: Path, output: Path, validate: bool = True) -> bool:
         """
         Apply delta to base image.
 
@@ -197,9 +191,9 @@ class DeltaManager:
 
         # Load and validate metadata
         if validate:
-            metadata_path = delta.with_suffix('.json')
+            metadata_path = delta.with_suffix(".json")
             if metadata_path.exists():
-                with open(metadata_path, 'r') as f:
+                with open(metadata_path, "r") as f:
                     metadata_dict = json.load(f)
                     metadata = DeltaMetadata(**metadata_dict)
 
@@ -248,12 +242,12 @@ class DeltaManager:
             return False
 
         # Load metadata
-        metadata_path = delta.with_suffix('.json')
+        metadata_path = delta.with_suffix(".json")
         if not metadata_path.exists():
             logger.error("Delta metadata not found")
             return False
 
-        with open(metadata_path, 'r') as f:
+        with open(metadata_path, "r") as f:
             metadata_dict = json.load(f)
             metadata = DeltaMetadata(**metadata_dict)
 
@@ -273,11 +267,7 @@ class DeltaManager:
         logger.info("Delta validation passed")
         return True
 
-    def create_rollback(
-        self,
-        current_image: Path,
-        backup_path: Path
-    ):
+    def create_rollback(self, current_image: Path, backup_path: Path):
         """
         Create rollback backup.
 
@@ -292,22 +282,18 @@ class DeltaManager:
 
         # Save backup metadata
         metadata = {
-            'original_path': str(current_image),
-            'backup_created': datetime.now().isoformat(),
-            'image_hash': self._calculate_hash(current_image)
+            "original_path": str(current_image),
+            "backup_created": datetime.now().isoformat(),
+            "image_hash": self._calculate_hash(current_image),
         }
 
-        metadata_path = backup_path.with_suffix('.backup.json')
-        with open(metadata_path, 'w') as f:
+        metadata_path = backup_path.with_suffix(".backup.json")
+        with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
 
         logger.info("Rollback backup created")
 
-    def perform_rollback(
-        self,
-        backup_path: Path,
-        restore_path: Path
-    ) -> bool:
+    def perform_rollback(self, backup_path: Path, restore_path: Path) -> bool:
         """
         Restore from rollback backup.
 
@@ -329,13 +315,13 @@ class DeltaManager:
             shutil.copy2(backup_path, restore_path)
 
             # Validate restored image
-            metadata_path = backup_path.with_suffix('.backup.json')
+            metadata_path = backup_path.with_suffix(".backup.json")
             if metadata_path.exists():
-                with open(metadata_path, 'r') as f:
+                with open(metadata_path, "r") as f:
                     metadata = json.load(f)
 
                 restored_hash = self._calculate_hash(restore_path)
-                if restored_hash != metadata['image_hash']:
+                if restored_hash != metadata["image_hash"]:
                     logger.error("Restored image hash mismatch")
                     return False
 
@@ -346,11 +332,11 @@ class DeltaManager:
             logger.error(f"Rollback failed: {e}")
             return False
 
-    def _calculate_hash(self, file_path: Path, algorithm: str = 'sha256') -> str:
+    def _calculate_hash(self, file_path: Path, algorithm: str = "sha256") -> str:
         """Calculate file hash"""
         hash_obj = hashlib.new(algorithm)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hash_obj.update(chunk)
 
@@ -393,11 +379,7 @@ class DeltaChain:
         self.versions[version] = image_path
         logger.info(f"Added version {version} to chain")
 
-    def create_delta_chain(
-        self,
-        output_dir: Path,
-        compression: str = "maximum"
-    ):
+    def create_delta_chain(self, output_dir: Path, compression: str = "maximum"):
         """
         Create deltas between all consecutive versions.
 
@@ -428,7 +410,7 @@ class DeltaChain:
                 output=delta_path,
                 source_version=from_ver,
                 target_version=to_ver,
-                compression=compression
+                compression=compression,
             )
 
             self.deltas[(from_ver, to_ver)] = delta_path
@@ -436,11 +418,7 @@ class DeltaChain:
         logger.info(f"Created {len(self.deltas)} deltas")
 
     def apply_delta_chain(
-        self,
-        from_version: str,
-        to_version: str,
-        base_image: Path,
-        output: Path
+        self, from_version: str, to_version: str, base_image: Path, output: Path
     ) -> bool:
         """
         Apply chain of deltas to update from one version to another.
@@ -466,7 +444,7 @@ class DeltaChain:
 
         # Apply deltas in sequence
         current_image = base_image
-        temp_dir = Path(tempfile.mkdtemp(prefix='deployforge_delta_'))
+        temp_dir = Path(tempfile.mkdtemp(prefix="deployforge_delta_"))
 
         try:
             for i in range(from_idx, to_idx):
@@ -505,10 +483,7 @@ class DeltaChain:
 
 
 def create_update_package(
-    base_image: Path,
-    updated_image: Path,
-    output_dir: Path,
-    version: str = "1.0"
+    base_image: Path, updated_image: Path, output_dir: Path, version: str = "1.0"
 ) -> Path:
     """
     Create delta update package.
@@ -536,9 +511,7 @@ def create_update_package(
 
     dm = DeltaManager(base_image)
     metadata = dm.create_delta(
-        target_image=updated_image,
-        output=delta_path,
-        target_version=version
+        target_image=updated_image, output=delta_path, target_version=version
     )
 
     logger.info(f"Update package created: {delta_path}")
@@ -549,10 +522,7 @@ def create_update_package(
 
 
 def apply_update_package(
-    base_image: Path,
-    update_package: Path,
-    output: Path,
-    create_backup: bool = True
+    base_image: Path, update_package: Path, output: Path, create_backup: bool = True
 ) -> bool:
     """
     Apply delta update package.
@@ -578,7 +548,7 @@ def apply_update_package(
 
     # Create backup if requested
     if create_backup:
-        backup_path = base_image.with_suffix('.backup.wim')
+        backup_path = base_image.with_suffix(".backup.wim")
         dm.create_rollback(base_image, backup_path)
 
     # Apply update

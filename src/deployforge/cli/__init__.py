@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.version_option(version='0.6.0')
-@click.option('--verbose', '-v', is_flag=True, help='Enable verbose logging')
+@click.version_option(version="0.6.0")
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
 def cli(verbose):
     """DeployForge - Enterprise Windows Deployment Suite"""
     if verbose:
@@ -26,10 +26,10 @@ def cli(verbose):
 
 
 @cli.command()
-@click.argument('image', type=click.Path(exists=True))
-@click.option('--profile', '-p', help='Profile to apply (gamer, developer, enterprise)')
-@click.option('--interactive', '-i', is_flag=True, help='Interactive mode')
-@click.option('--output', '-o', type=click.Path(), help='Output image path')
+@click.argument("image", type=click.Path(exists=True))
+@click.option("--profile", "-p", help="Profile to apply (gamer, developer, enterprise)")
+@click.option("--interactive", "-i", is_flag=True, help="Interactive mode")
+@click.option("--output", "-o", type=click.Path(), help="Output image path")
 def build(image, profile, interactive, output):
     """Build customized Windows image"""
 
@@ -40,14 +40,16 @@ def build(image, profile, interactive, output):
         # Get profile
         if not profile:
             profile = click.prompt(
-                'Select profile',
-                type=click.Choice(['gamer', 'developer', 'enterprise', 'student', 'creator', 'custom']),
-                default='gamer'
+                "Select profile",
+                type=click.Choice(
+                    ["gamer", "developer", "enterprise", "student", "creator", "custom"]
+                ),
+                default="gamer",
             )
 
         # Get output path
         if not output:
-            output = click.prompt('Output image path', default='custom.wim')
+            output = click.prompt("Output image path", default="custom.wim")
 
         # Confirm settings
         click.echo(f"\n📋 Configuration:")
@@ -55,7 +57,7 @@ def build(image, profile, interactive, output):
         click.echo(f"  Profile: {profile}")
         click.echo(f"  Output: {output}")
 
-        if not click.confirm('\nProceed with build?'):
+        if not click.confirm("\nProceed with build?"):
             click.echo("Build cancelled.")
             return
 
@@ -63,14 +65,15 @@ def build(image, profile, interactive, output):
 
     # Apply profile
     from deployforge.cli.profiles import apply_profile
+
     apply_profile(Path(image), profile, Path(output) if output else None)
 
     click.echo(f"✅ Build complete: {output}")
 
 
 @cli.command()
-@click.argument('profile_name')
-@click.option('--config', '-c', type=click.Path(exists=True), help='Configuration file')
+@click.argument("profile_name")
+@click.option("--config", "-c", type=click.Path(exists=True), help="Configuration file")
 def apply_profile(profile_name, config):
     """Apply a profile to an image"""
     click.echo(f"Applying profile: {profile_name}")
@@ -88,9 +91,9 @@ def list_profiles():
 
 
 @cli.command()
-@click.argument('image', type=click.Path(exists=True))
-@click.option('--format', '-f', type=click.Choice(['text', 'json', 'html']), default='text')
-@click.option('--output', '-o', type=click.Path(), help='Output report file')
+@click.argument("image", type=click.Path(exists=True))
+@click.option("--format", "-f", type=click.Choice(["text", "json", "html"]), default="text")
+@click.option("--output", "-o", type=click.Path(), help="Output report file")
 def analyze(image, format, output):
     """Analyze Windows image and generate report"""
     click.echo(f"🔍 Analyzing image: {image}")
@@ -100,9 +103,9 @@ def analyze(image, format, output):
     analyzer = ImageAnalyzer(Path(image))
     report = analyzer.analyze()
 
-    if format == 'json':
+    if format == "json":
         output_data = json.dumps(report, indent=2)
-    elif format == 'html':
+    elif format == "html":
         output_data = analyzer.generate_html_report(report)
     else:
         output_data = analyzer.format_text_report(report)
@@ -115,8 +118,8 @@ def analyze(image, format, output):
 
 
 @cli.command()
-@click.argument('image1', type=click.Path(exists=True))
-@click.argument('image2', type=click.Path(exists=True))
+@click.argument("image1", type=click.Path(exists=True))
+@click.argument("image2", type=click.Path(exists=True))
 def diff(image1, image2):
     """Compare two images and show differences"""
     click.echo(f"📊 Comparing images...")
@@ -133,8 +136,8 @@ def diff(image1, image2):
 
 
 @cli.command()
-@click.argument('name')
-@click.option('--base', '-b', help='Base profile to extend')
+@click.argument("name")
+@click.option("--base", "-b", help="Base profile to extend")
 def create_preset(name, base):
     """Create a new preset configuration"""
     click.echo(f"Creating preset: {name}")
@@ -161,7 +164,7 @@ def list_presets():
 
 
 @cli.command()
-@click.argument('image', type=click.Path(exists=True))
+@click.argument("image", type=click.Path(exists=True))
 def validate(image):
     """Validate image integrity and compatibility"""
     click.echo(f"✓ Validating image: {image}")
@@ -186,20 +189,20 @@ def preset():
     pass
 
 
-@preset.command('create')
-@click.argument('name')
+@preset.command("create")
+@click.argument("name")
 def preset_create(name):
     """Create a new preset"""
     click.echo(f"Creating preset: {name}")
 
 
-@preset.command('apply')
-@click.argument('name')
-@click.argument('image')
+@preset.command("apply")
+@click.argument("name")
+@click.argument("image")
 def preset_apply(name, image):
     """Apply preset to image"""
     click.echo(f"Applying preset {name} to {image}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     cli()

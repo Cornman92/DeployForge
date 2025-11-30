@@ -54,8 +54,7 @@ class ImageManager:
         if not handler_class:
             supported = ", ".join(cls._handlers.keys())
             raise UnsupportedFormatError(
-                f"Unsupported image format: {extension}. "
-                f"Supported formats: {supported}"
+                f"Unsupported image format: {extension}. " f"Supported formats: {supported}"
             )
 
         logger.info(f"Using {handler_class.__name__} for {image_path.name}")
@@ -119,4 +118,6 @@ class ImageManager:
 
     def __repr__(self) -> str:
         """String representation."""
-        return f"ImageManager(image_path={self.image_path}, handler={self.handler.__class__.__name__})"
+        return (
+            f"ImageManager(image_path={self.image_path}, handler={self.handler.__class__.__name__})"
+        )

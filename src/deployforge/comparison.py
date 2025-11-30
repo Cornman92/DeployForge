@@ -20,6 +20,7 @@ console = Console()
 @dataclass
 class FileEntry:
     """Represents a file entry in an image."""
+
     path: str
     size: int
     is_dir: bool
@@ -29,6 +30,7 @@ class FileEntry:
 @dataclass
 class ComparisonResult:
     """Result of comparing two images."""
+
     image1: str
     image2: str
     only_in_image1: List[str] = field(default_factory=list)
@@ -60,12 +62,7 @@ class ImageComparator:
         """
         self.compute_hashes = compute_hashes
 
-    def compare(
-        self,
-        image1_path: Path,
-        image2_path: Path,
-        path: str = "/"
-    ) -> ComparisonResult:
+    def compare(self, image1_path: Path, image2_path: Path, path: str = "/") -> ComparisonResult:
         """
         Compare two images.
 
@@ -79,10 +76,7 @@ class ImageComparator:
         """
         logger.info(f"Comparing {image1_path.name} with {image2_path.name}")
 
-        result = ComparisonResult(
-            image1=str(image1_path),
-            image2=str(image2_path)
-        )
+        result = ComparisonResult(image1=str(image1_path), image2=str(image2_path))
 
         # Get file listings from both images
         with ImageManager(image1_path) as manager1:
@@ -124,23 +118,22 @@ class ImageComparator:
             file2 = files2_dict[file_path]
 
             if self._files_different(file1, file2):
-                result.different_files.append({
-                    'path': file_path,
-                    'size1': file1.size,
-                    'size2': file2.size,
-                    'hash1': file1.hash,
-                    'hash2': file2.hash,
-                })
+                result.different_files.append(
+                    {
+                        "path": file_path,
+                        "size1": file1.size,
+                        "size2": file2.size,
+                        "hash1": file1.hash,
+                        "hash2": file2.hash,
+                    }
+                )
             else:
                 result.identical_files.append(file_path)
 
         return result
 
     def _get_all_files(
-        self,
-        manager: ImageManager,
-        path: str = "/",
-        recursive: bool = True
+        self, manager: ImageManager, path: str = "/", recursive: bool = True
     ) -> List[FileEntry]:
         """
         Get all files from an image recursively.
@@ -160,18 +153,18 @@ class ImageComparator:
             return files
 
         try:
-            target_path = mount_point / path.lstrip('/')
+            target_path = mount_point / path.lstrip("/")
 
             if not target_path.exists():
                 return files
 
-            for item in target_path.rglob('*') if recursive else target_path.iterdir():
+            for item in target_path.rglob("*") if recursive else target_path.iterdir():
                 relative_path = str(item.relative_to(mount_point))
 
                 entry = FileEntry(
                     path=relative_path,
                     size=item.stat().st_size if item.is_file() else 0,
-                    is_dir=item.is_dir()
+                    is_dir=item.is_dir(),
                 )
 
                 # Compute hash if requested and it's a file
@@ -185,7 +178,7 @@ class ImageComparator:
 
         return files
 
-    def _compute_hash(self, file_path: Path, algorithm: str = 'sha256') -> str:
+    def _compute_hash(self, file_path: Path, algorithm: str = "sha256") -> str:
         """
         Compute hash of a file.
 
@@ -199,7 +192,7 @@ class ImageComparator:
         hasher = hashlib.new(algorithm)
 
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 while chunk := f.read(8192):
                     hasher.update(chunk)
             return hasher.hexdigest()
@@ -245,10 +238,20 @@ class ImageComparator:
 
         table.add_row("Image Path", Path(result.image1).name, Path(result.image2).name)
         table.add_row("Total Files", str(result.total_files_image1), str(result.total_files_image2))
-        table.add_row("Unique Files", str(len(result.only_in_image1)), str(len(result.only_in_image2)))
-        table.add_row("Identical Files", str(len(result.identical_files)), str(len(result.identical_files)))
-        table.add_row("Different Files", str(len(result.different_files)), str(len(result.different_files)))
-        table.add_row("Similarity", f"{result.similarity_percentage():.2f}%", f"{result.similarity_percentage():.2f}%")
+        table.add_row(
+            "Unique Files", str(len(result.only_in_image1)), str(len(result.only_in_image2))
+        )
+        table.add_row(
+            "Identical Files", str(len(result.identical_files)), str(len(result.identical_files))
+        )
+        table.add_row(
+            "Different Files", str(len(result.different_files)), str(len(result.different_files))
+        )
+        table.add_row(
+            "Similarity",
+            f"{result.similarity_percentage():.2f}%",
+            f"{result.similarity_percentage():.2f}%",
+        )
 
         console.print(table)
 
@@ -289,7 +292,7 @@ class ImageComparator:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write("=" * 80 + "\n")
             f.write("IMAGE COMPARISON REPORT\n")
             f.write("=" * 80 + "\n\n")
@@ -327,7 +330,7 @@ class ImageComparator:
                 for diff in result.different_files:
                     f.write(f"{diff['path']}\n")
                     f.write(f"  Size: {diff['size1']} vs {diff['size2']}\n")
-                    if diff.get('hash1') and diff.get('hash2'):
+                    if diff.get("hash1") and diff.get("hash2"):
                         f.write(f"  Hash1: {diff['hash1']}\n")
                         f.write(f"  Hash2: {diff['hash2']}\n")
                 f.write("\n")

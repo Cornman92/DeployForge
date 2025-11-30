@@ -85,14 +85,14 @@ class WinPEConfig:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'architecture': self.architecture.value,
-            'components': [c.name for c in self.components],
-            'drivers': [str(d) for d in self.drivers],
-            'startup_script': self.startup_script,
-            'wallpaper': str(self.wallpaper) if self.wallpaper else None,
-            'scratch_space_mb': self.scratch_space_mb,
-            'custom_files': {str(k): v for k, v in self.custom_files.items()},
-            'time_zone': self.time_zone
+            "architecture": self.architecture.value,
+            "components": [c.name for c in self.components],
+            "drivers": [str(d) for d in self.drivers],
+            "startup_script": self.startup_script,
+            "wallpaper": str(self.wallpaper) if self.wallpaper else None,
+            "scratch_space_mb": self.scratch_space_mb,
+            "custom_files": {str(k): v for k, v in self.custom_files.items()},
+            "time_zone": self.time_zone,
         }
 
 
@@ -152,20 +152,24 @@ class WinPECustomizer:
 
         if self.platform == "Windows":
             # Use DISM
-            subprocess.run([
-                'dism',
-                '/Mount-Wim',
-                f'/WimFile:{self.winpe_image}',
-                f'/Index:{index}',
-                f'/MountDir:{mount_point}'
-            ], check=True, timeout=120)
+            subprocess.run(
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{self.winpe_image}",
+                    f"/Index:{index}",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                timeout=120,
+            )
         else:
             # Use wimlib on Linux/macOS
-            subprocess.run([
-                'wimlib-imagex', 'mount',
-                str(self.winpe_image), str(index),
-                str(mount_point)
-            ], check=True, timeout=120)
+            subprocess.run(
+                ["wimlib-imagex", "mount", str(self.winpe_image), str(index), str(mount_point)],
+                check=True,
+                timeout=120,
+            )
 
         logger.info("WinPE image mounted successfully")
         return mount_point
@@ -184,19 +188,19 @@ class WinPECustomizer:
         logger.info(f"Unmounting WinPE image from {self.mount_point}")
 
         if self.platform == "Windows":
-            action = '/Commit' if save_changes else '/Discard'
-            subprocess.run([
-                'dism',
-                '/Unmount-Wim',
-                f'/MountDir:{self.mount_point}',
-                action
-            ], check=True, timeout=300)
+            action = "/Commit" if save_changes else "/Discard"
+            subprocess.run(
+                ["dism", "/Unmount-Wim", f"/MountDir:{self.mount_point}", action],
+                check=True,
+                timeout=300,
+            )
         else:
-            commit_flag = '--commit' if save_changes else '--force'
-            subprocess.run([
-                'wimlib-imagex', 'unmount',
-                str(self.mount_point), commit_flag
-            ], check=True, timeout=300)
+            commit_flag = "--commit" if save_changes else "--force"
+            subprocess.run(
+                ["wimlib-imagex", "unmount", str(self.mount_point), commit_flag],
+                check=True,
+                timeout=300,
+            )
 
         # Cleanup mount point
         if self.mount_point.exists():
@@ -225,7 +229,9 @@ class WinPECustomizer:
         logger.info(f"Adding component: {component.name}")
 
         # Get component package paths
-        packages_path = self.adk_path / "Windows Preinstallation Environment" / "amd64" / "WinPE_OCs"
+        packages_path = (
+            self.adk_path / "Windows Preinstallation Environment" / "amd64" / "WinPE_OCs"
+        )
 
         for package_name in component.value:
             cab_file = packages_path / f"{package_name}.cab"
@@ -235,24 +241,32 @@ class WinPECustomizer:
                 continue
 
             try:
-                subprocess.run([
-                    'dism',
-                    f'/Image:{self.mount_point}',
-                    '/Add-Package',
-                    f'/PackagePath:{cab_file}'
-                ], check=True, timeout=300)
+                subprocess.run(
+                    [
+                        "dism",
+                        f"/Image:{self.mount_point}",
+                        "/Add-Package",
+                        f"/PackagePath:{cab_file}",
+                    ],
+                    check=True,
+                    timeout=300,
+                )
 
                 logger.info(f"Added package: {package_name}")
 
                 # Also add language pack if exists
                 lang_cab = packages_path / "en-us" / f"{package_name}_en-us.cab"
                 if lang_cab.exists():
-                    subprocess.run([
-                        'dism',
-                        f'/Image:{self.mount_point}',
-                        '/Add-Package',
-                        f'/PackagePath:{lang_cab}'
-                    ], check=True, timeout=300)
+                    subprocess.run(
+                        [
+                            "dism",
+                            f"/Image:{self.mount_point}",
+                            "/Add-Package",
+                            f"/PackagePath:{lang_cab}",
+                        ],
+                        check=True,
+                        timeout=300,
+                    )
                     logger.info(f"Added language pack: {package_name}_en-us")
 
             except subprocess.CalledProcessError as e:
@@ -272,18 +286,13 @@ class WinPECustomizer:
         logger.info(f"Adding driver: {driver_path}")
 
         if self.platform == "Windows":
-            cmd = [
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Add-Driver',
-                f'/Driver:{driver_path}'
-            ]
+            cmd = ["dism", f"/Image:{self.mount_point}", "/Add-Driver", f"/Driver:{driver_path}"]
 
             if driver_path.is_dir():
-                cmd.append('/Recurse')
+                cmd.append("/Recurse")
 
             if force_unsigned:
-                cmd.append('/ForceUnsigned')
+                cmd.append("/ForceUnsigned")
 
             subprocess.run(cmd, check=True, timeout=300)
 
@@ -307,7 +316,7 @@ class WinPECustomizer:
 
         logger.info("Setting WinPE startup script")
 
-        with open(startnet_path, 'w', encoding='utf-8') as f:
+        with open(startnet_path, "w", encoding="utf-8") as f:
             f.write(script_content)
 
         logger.info(f"Startup script written to {startnet_path}")
@@ -349,7 +358,7 @@ class WinPECustomizer:
         if not source.exists():
             raise FileNotFoundError(f"Source file not found: {source}")
 
-        dest_path = self.mount_point / destination.lstrip('/')
+        dest_path = self.mount_point / destination.lstrip("/")
         dest_path.parent.mkdir(parents=True, exist_ok=True)
 
         shutil.copy2(source, dest_path)
@@ -387,13 +396,17 @@ class WinPECustomizer:
 
         # Cleanup component store
         try:
-            subprocess.run([
-                'dism',
-                f'/Image:{self.mount_point}',
-                '/Cleanup-Image',
-                '/StartComponentCleanup',
-                '/ResetBase'
-            ], check=True, timeout=600)
+            subprocess.run(
+                [
+                    "dism",
+                    f"/Image:{self.mount_point}",
+                    "/Cleanup-Image",
+                    "/StartComponentCleanup",
+                    "/ResetBase",
+                ],
+                check=True,
+                timeout=600,
+            )
 
             logger.info("Image cleanup completed")
 
@@ -483,7 +496,9 @@ class WinPECustomizer:
 
             # Copy bootmgr and BCD
             if self.adk_path:
-                media_path = self.adk_path / "Windows Preinstallation Environment" / "amd64" / "Media"
+                media_path = (
+                    self.adk_path / "Windows Preinstallation Environment" / "amd64" / "Media"
+                )
                 if media_path.exists():
                     shutil.copytree(media_path, temp_path, dirs_exist_ok=True)
 
@@ -493,14 +508,14 @@ class WinPECustomizer:
 
             cmd = [
                 str(oscdimg_path),
-                '-m',
-                '-o',
-                '-u2',
-                '-udfver102',
-                f'-bootdata:2#p0,e,b{etfsboot}#pEF,e,b{efisys}',
-                f'-l{label}',
+                "-m",
+                "-o",
+                "-u2",
+                "-udfver102",
+                f"-bootdata:2#p0,e,b{etfsboot}#pEF,e,b{efisys}",
+                f"-l{label}",
                 str(temp_path),
-                str(output_iso)
+                str(output_iso),
             ]
 
             subprocess.run(cmd, check=True, timeout=300)
@@ -518,24 +533,34 @@ class WinPECustomizer:
         logger.info(f"Exporting WinPE to {output_wim}")
 
         if self.platform == "Windows":
-            subprocess.run([
-                'dism',
-                '/Export-Image',
-                f'/SourceImageFile:{self.winpe_image}',
-                '/SourceIndex:1',
-                f'/DestinationImageFile:{output_wim}',
-                f'/Compress:{compress}'
-            ], check=True, timeout=600)
+            subprocess.run(
+                [
+                    "dism",
+                    "/Export-Image",
+                    f"/SourceImageFile:{self.winpe_image}",
+                    "/SourceIndex:1",
+                    f"/DestinationImageFile:{output_wim}",
+                    f"/Compress:{compress}",
+                ],
+                check=True,
+                timeout=600,
+            )
 
         else:
             # Use wimlib
-            compress_flag = f'--compress={compress}'
-            subprocess.run([
-                'wimlib-imagex', 'export',
-                str(self.winpe_image), '1',
-                str(output_wim),
-                compress_flag
-            ], check=True, timeout=600)
+            compress_flag = f"--compress={compress}"
+            subprocess.run(
+                [
+                    "wimlib-imagex",
+                    "export",
+                    str(self.winpe_image),
+                    "1",
+                    str(output_wim),
+                    compress_flag,
+                ],
+                check=True,
+                timeout=600,
+            )
 
         logger.info(f"WinPE exported successfully")
 
@@ -545,7 +570,7 @@ def create_deployment_winpe(
     adk_path: Optional[Path] = None,
     include_powershell: bool = True,
     include_network: bool = True,
-    drivers: Optional[List[Path]] = None
+    drivers: Optional[List[Path]] = None,
 ) -> WinPECustomizer:
     """
     Create a deployment-ready WinPE image
@@ -567,7 +592,7 @@ def create_deployment_winpe(
         architecture=WinPEArchitecture.AMD64,
         components=[],
         drivers=drivers or [],
-        scratch_space_mb=512
+        scratch_space_mb=512,
     )
 
     if include_powershell:
@@ -597,9 +622,7 @@ echo.
 
 
 def create_recovery_winpe(
-    output_wim: Path,
-    adk_path: Optional[Path] = None,
-    include_bitlocker: bool = True
+    output_wim: Path, adk_path: Optional[Path] = None, include_bitlocker: bool = True
 ) -> WinPEConfig:
     """
     Create a recovery-focused WinPE image
@@ -614,12 +637,8 @@ def create_recovery_winpe(
     """
     config = WinPEConfig(
         architecture=WinPEArchitecture.AMD64,
-        components=[
-            WinPEComponent.POWERSHELL,
-            WinPEComponent.WMI,
-            WinPEComponent.RECOVERY
-        ],
-        scratch_space_mb=1024  # More space for recovery operations
+        components=[WinPEComponent.POWERSHELL, WinPEComponent.WMI, WinPEComponent.RECOVERY],
+        scratch_space_mb=1024,  # More space for recovery operations
     )
 
     if include_bitlocker:

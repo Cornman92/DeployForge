@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AzureConfig:
     """Azure configuration."""
+
     subscription_id: str
     resource_group: str
     storage_account: str
@@ -35,6 +36,7 @@ class AzureConfig:
 @dataclass
 class AWSConfig:
     """AWS configuration."""
+
     region: str = "us-east-1"
     bucket_name: str = "deployforge-images"
     profile: Optional[str] = None
@@ -43,6 +45,7 @@ class AWSConfig:
 @dataclass
 class CloudImage:
     """Cloud image metadata."""
+
     name: str
     size_mb: float
     upload_date: str
@@ -71,16 +74,18 @@ class AzureIntegration:
     def _check_azure_cli(self):
         """Check if Azure CLI is available."""
         try:
-            subprocess.run(['az', '--version'], capture_output=True, check=True)
+            subprocess.run(["az", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
-            raise RuntimeError("Azure CLI not found. Install with: https://aka.ms/installazurecliwindows")
+            raise RuntimeError(
+                "Azure CLI not found. Install with: https://aka.ms/installazurecliwindows"
+            )
 
     def login(self):
         """Login to Azure."""
         logger.info("Logging in to Azure...")
 
         try:
-            subprocess.run(['az', 'login'], check=True)
+            subprocess.run(["az", "login"], check=True)
             logger.info("Azure login successful")
         except subprocess.CalledProcessError as e:
             logger.error(f"Azure login failed: {e}")
@@ -117,16 +122,23 @@ class AzureIntegration:
             # Upload blob
             result = subprocess.run(
                 [
-                    'az', 'storage', 'blob', 'upload',
-                    '--account-name', self.config.storage_account,
-                    '--container-name', self.config.container_name,
-                    '--name', blob_name,
-                    '--file', str(image_path),
-                    '--overwrite'
+                    "az",
+                    "storage",
+                    "blob",
+                    "upload",
+                    "--account-name",
+                    self.config.storage_account,
+                    "--container-name",
+                    self.config.container_name,
+                    "--name",
+                    blob_name,
+                    "--file",
+                    str(image_path),
+                    "--overwrite",
                 ],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             # Get blob URL
@@ -156,15 +168,22 @@ class AzureIntegration:
         try:
             subprocess.run(
                 [
-                    'az', 'storage', 'blob', 'download',
-                    '--account-name', self.config.storage_account,
-                    '--container-name', self.config.container_name,
-                    '--name', blob_name,
-                    '--file', str(output_path)
+                    "az",
+                    "storage",
+                    "blob",
+                    "download",
+                    "--account-name",
+                    self.config.storage_account,
+                    "--container-name",
+                    self.config.container_name,
+                    "--name",
+                    blob_name,
+                    "--file",
+                    str(output_path),
                 ],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             logger.info(f"Download successful: {output_path}")
@@ -183,28 +202,36 @@ class AzureIntegration:
         try:
             result = subprocess.run(
                 [
-                    'az', 'storage', 'blob', 'list',
-                    '--account-name', self.config.storage_account,
-                    '--container-name', self.config.container_name,
-                    '--output', 'json'
+                    "az",
+                    "storage",
+                    "blob",
+                    "list",
+                    "--account-name",
+                    self.config.storage_account,
+                    "--container-name",
+                    self.config.container_name,
+                    "--output",
+                    "json",
                 ],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             blobs = json.loads(result.stdout)
 
             images = []
             for blob in blobs:
-                images.append(CloudImage(
-                    name=blob['name'],
-                    size_mb=round(blob['properties']['contentLength'] / 1024 / 1024, 2),
-                    upload_date=blob['properties']['creationTime'],
-                    cloud_url=self.get_blob_url(blob['name']),
-                    provider='azure',
-                    metadata=blob.get('metadata', {})
-                ))
+                images.append(
+                    CloudImage(
+                        name=blob["name"],
+                        size_mb=round(blob["properties"]["contentLength"] / 1024 / 1024, 2),
+                        upload_date=blob["properties"]["creationTime"],
+                        cloud_url=self.get_blob_url(blob["name"]),
+                        provider="azure",
+                        metadata=blob.get("metadata", {}),
+                    )
+                )
 
             return images
 
@@ -230,21 +257,29 @@ class AzureIntegration:
 
             result = subprocess.run(
                 [
-                    'az', 'image', 'create',
-                    '--resource-group', self.config.resource_group,
-                    '--name', image_name,
-                    '--source', vhd_url,
-                    '--os-type', 'Windows',
-                    '--location', self.config.location,
-                    '--output', 'json'
+                    "az",
+                    "image",
+                    "create",
+                    "--resource-group",
+                    self.config.resource_group,
+                    "--name",
+                    image_name,
+                    "--source",
+                    vhd_url,
+                    "--os-type",
+                    "Windows",
+                    "--location",
+                    self.config.location,
+                    "--output",
+                    "json",
                 ],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             image_data = json.loads(result.stdout)
-            image_id = image_data['id']
+            image_id = image_data["id"]
 
             logger.info(f"VM image created: {image_id}")
 
@@ -271,26 +306,38 @@ class AzureIntegration:
         try:
             subprocess.run(
                 [
-                    'az', 'storage', 'account', 'show',
-                    '--name', self.config.storage_account,
-                    '--resource-group', self.config.resource_group
+                    "az",
+                    "storage",
+                    "account",
+                    "show",
+                    "--name",
+                    self.config.storage_account,
+                    "--resource-group",
+                    self.config.resource_group,
                 ],
                 capture_output=True,
-                check=True
+                check=True,
             )
         except subprocess.CalledProcessError:
             # Create storage account
             logger.info(f"Creating storage account: {self.config.storage_account}")
             subprocess.run(
                 [
-                    'az', 'storage', 'account', 'create',
-                    '--name', self.config.storage_account,
-                    '--resource-group', self.config.resource_group,
-                    '--location', self.config.location,
-                    '--sku', 'Standard_LRS'
+                    "az",
+                    "storage",
+                    "account",
+                    "create",
+                    "--name",
+                    self.config.storage_account,
+                    "--resource-group",
+                    self.config.resource_group,
+                    "--location",
+                    self.config.location,
+                    "--sku",
+                    "Standard_LRS",
                 ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
     def _ensure_container(self):
@@ -298,24 +345,34 @@ class AzureIntegration:
         try:
             subprocess.run(
                 [
-                    'az', 'storage', 'container', 'show',
-                    '--account-name', self.config.storage_account,
-                    '--name', self.config.container_name
+                    "az",
+                    "storage",
+                    "container",
+                    "show",
+                    "--account-name",
+                    self.config.storage_account,
+                    "--name",
+                    self.config.container_name,
                 ],
                 capture_output=True,
-                check=True
+                check=True,
             )
         except subprocess.CalledProcessError:
             # Create container
             logger.info(f"Creating container: {self.config.container_name}")
             subprocess.run(
                 [
-                    'az', 'storage', 'container', 'create',
-                    '--account-name', self.config.storage_account,
-                    '--name', self.config.container_name
+                    "az",
+                    "storage",
+                    "container",
+                    "create",
+                    "--account-name",
+                    self.config.storage_account,
+                    "--name",
+                    self.config.container_name,
                 ],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
 
@@ -335,7 +392,7 @@ class AWSIntegration:
     def _check_aws_cli(self):
         """Check if AWS CLI is available."""
         try:
-            subprocess.run(['aws', '--version'], capture_output=True, check=True)
+            subprocess.run(["aws", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
             raise RuntimeError("AWS CLI not found. Install with: https://aws.amazon.com/cli/")
 
@@ -366,14 +423,17 @@ class AWSIntegration:
 
             # Build command
             cmd = [
-                'aws', 's3', 'cp',
+                "aws",
+                "s3",
+                "cp",
                 str(image_path),
                 f"s3://{self.config.bucket_name}/{key}",
-                '--region', self.config.region
+                "--region",
+                self.config.region,
             ]
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             subprocess.run(cmd, check=True, capture_output=True)
 
@@ -403,14 +463,17 @@ class AWSIntegration:
 
         try:
             cmd = [
-                'aws', 's3', 'cp',
+                "aws",
+                "s3",
+                "cp",
                 f"s3://{self.config.bucket_name}/{key}",
                 str(output_path),
-                '--region', self.config.region
+                "--region",
+                self.config.region,
             ]
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             subprocess.run(cmd, check=True, capture_output=True)
 
@@ -429,28 +492,35 @@ class AWSIntegration:
         """
         try:
             cmd = [
-                'aws', 's3api', 'list-objects-v2',
-                '--bucket', self.config.bucket_name,
-                '--region', self.config.region,
-                '--output', 'json'
+                "aws",
+                "s3api",
+                "list-objects-v2",
+                "--bucket",
+                self.config.bucket_name,
+                "--region",
+                self.config.region,
+                "--output",
+                "json",
             ]
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             data = json.loads(result.stdout)
 
             images = []
-            for obj in data.get('Contents', []):
-                images.append(CloudImage(
-                    name=obj['Key'],
-                    size_mb=round(obj['Size'] / 1024 / 1024, 2),
-                    upload_date=obj['LastModified'],
-                    cloud_url=f"https://{self.config.bucket_name}.s3.{self.config.region}.amazonaws.com/{obj['Key']}",
-                    provider='aws'
-                ))
+            for obj in data.get("Contents", []):
+                images.append(
+                    CloudImage(
+                        name=obj["Key"],
+                        size_mb=round(obj["Size"] / 1024 / 1024, 2),
+                        upload_date=obj["LastModified"],
+                        cloud_url=f"https://{self.config.bucket_name}.s3.{self.config.region}.amazonaws.com/{obj['Key']}",
+                        provider="aws",
+                    )
+                )
 
             return images
 
@@ -474,25 +544,34 @@ class AWSIntegration:
 
         try:
             cmd = [
-                'aws', 'ec2', 'register-image',
-                '--name', ami_name,
-                '--description', description or f"DeployForge image: {ami_name}",
-                '--architecture', 'x86_64',
-                '--root-device-name', '/dev/sda1',
-                '--block-device-mappings',
+                "aws",
+                "ec2",
+                "register-image",
+                "--name",
+                ami_name,
+                "--description",
+                description or f"DeployForge image: {ami_name}",
+                "--architecture",
+                "x86_64",
+                "--root-device-name",
+                "/dev/sda1",
+                "--block-device-mappings",
                 f"DeviceName=/dev/sda1,Ebs={{SnapshotId={snapshot_id}}}",
-                '--virtualization-type', 'hvm',
-                '--region', self.config.region,
-                '--output', 'json'
+                "--virtualization-type",
+                "hvm",
+                "--region",
+                self.config.region,
+                "--output",
+                "json",
             ]
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             data = json.loads(result.stdout)
-            ami_id = data['ImageId']
+            ami_id = data["ImageId"]
 
             logger.info(f"AMI created: {ami_id}")
 
@@ -506,13 +585,17 @@ class AWSIntegration:
         """Ensure S3 bucket exists."""
         try:
             cmd = [
-                'aws', 's3api', 'head-bucket',
-                '--bucket', self.config.bucket_name,
-                '--region', self.config.region
+                "aws",
+                "s3api",
+                "head-bucket",
+                "--bucket",
+                self.config.bucket_name,
+                "--region",
+                self.config.region,
             ]
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             subprocess.run(cmd, capture_output=True, check=True)
 
@@ -521,16 +604,22 @@ class AWSIntegration:
             logger.info(f"Creating S3 bucket: {self.config.bucket_name}")
 
             cmd = [
-                'aws', 's3api', 'create-bucket',
-                '--bucket', self.config.bucket_name,
-                '--region', self.config.region
+                "aws",
+                "s3api",
+                "create-bucket",
+                "--bucket",
+                self.config.bucket_name,
+                "--region",
+                self.config.region,
             ]
 
-            if self.config.region != 'us-east-1':
-                cmd.extend(['--create-bucket-configuration', f"LocationConstraint={self.config.region}"])
+            if self.config.region != "us-east-1":
+                cmd.extend(
+                    ["--create-bucket-configuration", f"LocationConstraint={self.config.region}"]
+                )
 
             if self.config.profile:
-                cmd.extend(['--profile', self.config.profile])
+                cmd.extend(["--profile", self.config.profile])
 
             subprocess.run(cmd, check=True, capture_output=True)
 

@@ -1,0 +1,93 @@
+name: ❓ Question
+description: Ask a question about DeployForge
+title: "[Question]: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help! Please provide details below.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Installation & Setup
+        - Usage & How-To
+        - Image Formats
+        - Customization Features
+        - GUI Usage
+        - CLI Usage
+        - API Usage
+        - Troubleshooting
+        - Best Practices
+        - Performance
+        - Security
+        - Contributing
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: How do I...?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide any relevant context that might help us answer your question
+      placeholder: |
+        - What are you trying to accomplish?
+        - What have you tried so far?
+        - Any relevant configuration or setup details
+
+  - type: textarea
+    id: attempted
+    attributes:
+      label: What Have You Tried?
+      description: What documentation or resources have you already consulted?
+      placeholder: |
+        - Checked README.md
+        - Searched existing issues
+        - Consulted documentation
+        - Tried examples in /examples directory
+
+  - type: input
+    id: version
+    attributes:
+      label: DeployForge Version
+      description: Which version are you using?
+      placeholder: "e.g., 0.3.0"
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: Which OS are you using?
+      options:
+        - Windows 11
+        - Windows 10
+        - Linux
+        - macOS
+        - N/A
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have searched existing issues and discussions
+          required: true
+        - label: I have checked the documentation
+          required: true
+        - label: This is a specific question (not a bug report or feature request)
+          required: true

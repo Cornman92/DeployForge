@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PresetAction:
     """Represents a single action in a preset."""
+
     module: str  # e.g., 'gaming', 'debloat', 'themes'
     action: str  # e.g., 'apply_profile', 'remove_bloatware', 'set_theme'
     parameters: Dict[str, Any] = field(default_factory=dict)
@@ -27,6 +28,7 @@ class PresetAction:
 @dataclass
 class Preset:
     """A preset configuration."""
+
     name: str
     description: str
     version: str = "1.0"
@@ -51,7 +53,7 @@ class PresetManager:
         Args:
             presets_dir: Directory for preset storage
         """
-        self.presets_dir = presets_dir or Path.home() / '.deployforge' / 'presets'
+        self.presets_dir = presets_dir or Path.home() / ".deployforge" / "presets"
         self.presets_dir.mkdir(parents=True, exist_ok=True)
 
         # Create example presets on first run
@@ -59,7 +61,7 @@ class PresetManager:
 
     def _create_example_presets(self):
         """Create example presets if none exist."""
-        if not list(self.presets_dir.glob('*.json')):
+        if not list(self.presets_dir.glob("*.json")):
             # Gaming preset
             gaming_preset = Preset(
                 name="High-Performance Gaming",
@@ -70,24 +72,16 @@ class PresetManager:
                     PresetAction(
                         module="gaming",
                         action="apply_profile",
-                        parameters={"profile": "competitive"}
+                        parameters={"profile": "competitive"},
                     ),
                     PresetAction(
                         module="debloat",
                         action="remove_bloatware",
-                        parameters={"level": "moderate"}
+                        parameters={"level": "moderate"},
                     ),
-                    PresetAction(
-                        module="network",
-                        action="optimize_for_gaming",
-                        parameters={}
-                    ),
-                    PresetAction(
-                        module="themes",
-                        action="set_theme",
-                        parameters={"theme": "dark"}
-                    )
-                ]
+                    PresetAction(module="network", action="optimize_for_gaming", parameters={}),
+                    PresetAction(module="themes", action="set_theme", parameters={"theme": "dark"}),
+                ],
             )
             self.save_preset(gaming_preset)
 
@@ -101,24 +95,18 @@ class PresetManager:
                     PresetAction(
                         module="debloat",
                         action="remove_bloatware",
-                        parameters={"level": "aggressive"}
+                        parameters={"level": "aggressive"},
                     ),
                     PresetAction(
-                        module="privacy_hardening",
-                        action="disable_telemetry",
-                        parameters={}
+                        module="privacy_hardening", action="disable_telemetry", parameters={}
                     ),
                     PresetAction(
-                        module="privacy_hardening",
-                        action="disable_advertising_id",
-                        parameters={}
+                        module="privacy_hardening", action="disable_advertising_id", parameters={}
                     ),
                     PresetAction(
-                        module="privacy_hardening",
-                        action="configure_dns_over_https",
-                        parameters={}
-                    )
-                ]
+                        module="privacy_hardening", action="configure_dns_over_https", parameters={}
+                    ),
+                ],
             )
             self.save_preset(privacy_preset)
 
@@ -129,29 +117,17 @@ class PresetManager:
                 author="DeployForge",
                 tags=["development", "programming"],
                 actions=[
-                    PresetAction(
-                        module="devenv",
-                        action="configure_developer_mode",
-                        parameters={}
-                    ),
-                    PresetAction(
-                        module="features",
-                        action="enable_wsl2",
-                        parameters={}
-                    ),
-                    PresetAction(
-                        module="features",
-                        action="enable_hyperv",
-                        parameters={}
-                    ),
+                    PresetAction(module="devenv", action="configure_developer_mode", parameters={}),
+                    PresetAction(module="features", action="enable_wsl2", parameters={}),
+                    PresetAction(module="features", action="enable_hyperv", parameters={}),
                     PresetAction(
                         module="packages",
                         action="install_packages",
                         parameters={
                             "packages": ["vscode", "git", "docker-desktop", "python", "nodejs"]
-                        }
-                    )
-                ]
+                        },
+                    ),
+                ],
             )
             self.save_preset(dev_preset)
 
@@ -166,11 +142,7 @@ class PresetManager:
         Returns:
             New preset instance
         """
-        preset = Preset(
-            name=name,
-            description=f"Custom preset: {name}",
-            base_profile=base_profile
-        )
+        preset = Preset(name=name, description=f"Custom preset: {name}", base_profile=base_profile)
 
         return preset
 
@@ -182,10 +154,10 @@ class PresetManager:
             preset: Preset to save
         """
         # Sanitize name for filename
-        filename = preset.name.lower().replace(' ', '_').replace('/', '_')
+        filename = preset.name.lower().replace(" ", "_").replace("/", "_")
         preset_path = self.presets_dir / f"{filename}.json"
 
-        with open(preset_path, 'w') as f:
+        with open(preset_path, "w") as f:
             json.dump(asdict(preset), f, indent=2)
 
         logger.info(f"Saved preset: {preset.name}")
@@ -205,18 +177,18 @@ class PresetManager:
 
         if not preset_path.exists():
             # Try sanitized name
-            filename = name.lower().replace(' ', '_').replace('/', '_')
+            filename = name.lower().replace(" ", "_").replace("/", "_")
             preset_path = self.presets_dir / f"{filename}.json"
 
         if not preset_path.exists():
             raise ValueError(f"Preset not found: {name}")
 
-        with open(preset_path, 'r') as f:
+        with open(preset_path, "r") as f:
             data = json.load(f)
 
         # Convert actions
-        if 'actions' in data:
-            data['actions'] = [PresetAction(**action) for action in data['actions']]
+        if "actions" in data:
+            data["actions"] = [PresetAction(**action) for action in data["actions"]]
 
         return Preset(**data)
 
@@ -229,18 +201,20 @@ class PresetManager:
         """
         presets = []
 
-        for preset_file in self.presets_dir.glob('*.json'):
+        for preset_file in self.presets_dir.glob("*.json"):
             try:
                 preset = self.load_preset(preset_file.stem)
-                presets.append({
-                    'name': preset.name,
-                    'description': preset.description,
-                    'author': preset.author,
-                    'tags': preset.tags,
-                    'actions_count': len(preset.actions),
-                    'created': preset.created,
-                    'file': preset_file.name
-                })
+                presets.append(
+                    {
+                        "name": preset.name,
+                        "description": preset.description,
+                        "author": preset.author,
+                        "tags": preset.tags,
+                        "actions_count": len(preset.actions),
+                        "created": preset.created,
+                        "file": preset_file.name,
+                    }
+                )
             except Exception as e:
                 logger.warning(f"Failed to load preset {preset_file}: {e}")
 
@@ -253,7 +227,7 @@ class PresetManager:
         Args:
             name: Preset name
         """
-        filename = name.lower().replace(' ', '_').replace('/', '_')
+        filename = name.lower().replace(" ", "_").replace("/", "_")
         preset_path = self.presets_dir / f"{filename}.json"
 
         if preset_path.exists():
@@ -281,6 +255,7 @@ class PresetManager:
         working_image = output_path if output_path else image_path
         if output_path and output_path != image_path:
             import shutil
+
             logger.info(f"Copying image to: {output_path}")
             shutil.copy2(image_path, output_path)
 
@@ -288,6 +263,7 @@ class PresetManager:
         if preset.base_profile:
             logger.info(f"Applying base profile: {preset.base_profile}")
             from deployforge.cli.profiles import apply_profile
+
             apply_profile(working_image, preset.base_profile)
 
         # Apply each action
@@ -312,21 +288,21 @@ class PresetManager:
         """
         # Import required modules dynamically
         module_map = {
-            'gaming': 'deployforge.gaming',
-            'debloat': 'deployforge.debloat',
-            'themes': 'deployforge.themes',
-            'packages': 'deployforge.packages',
-            'features': 'deployforge.features',
-            'optimizer': 'deployforge.optimizer',
-            'network': 'deployforge.network',
-            'privacy_hardening': 'deployforge.privacy_hardening',
-            'devenv': 'deployforge.devenv',
-            'creative': 'deployforge.creative',
-            'launchers': 'deployforge.launchers',
-            'browsers': 'deployforge.browsers',
-            'backup': 'deployforge.backup',
-            'security': 'deployforge.security',
-            'applications': 'deployforge.applications'
+            "gaming": "deployforge.gaming",
+            "debloat": "deployforge.debloat",
+            "themes": "deployforge.themes",
+            "packages": "deployforge.packages",
+            "features": "deployforge.features",
+            "optimizer": "deployforge.optimizer",
+            "network": "deployforge.network",
+            "privacy_hardening": "deployforge.privacy_hardening",
+            "devenv": "deployforge.devenv",
+            "creative": "deployforge.creative",
+            "launchers": "deployforge.launchers",
+            "browsers": "deployforge.browsers",
+            "backup": "deployforge.backup",
+            "security": "deployforge.security",
+            "applications": "deployforge.applications",
         }
 
         if action.module not in module_map:
@@ -334,25 +310,26 @@ class PresetManager:
 
         # Import module
         import importlib
+
         module = importlib.import_module(module_map[action.module])
 
         # Get class name from module
         class_map = {
-            'gaming': 'GamingOptimizer',
-            'debloat': 'DebloatManager',
-            'themes': 'ThemeManager',
-            'packages': 'PackageManager',
-            'features': 'FeatureManager',
-            'optimizer': 'SystemOptimizer',
-            'network': 'NetworkOptimizer',
-            'privacy_hardening': 'PrivacyHardening',
-            'devenv': 'DeveloperEnvironment',
-            'creative': 'CreativeSuite',
-            'launchers': 'GamingLaunchers',
-            'browsers': 'BrowserBundler',
-            'backup': 'BackupIntegration',
-            'security': 'SecurityHardening',
-            'applications': 'ApplicationInjector'
+            "gaming": "GamingOptimizer",
+            "debloat": "DebloatManager",
+            "themes": "ThemeManager",
+            "packages": "PackageManager",
+            "features": "FeatureManager",
+            "optimizer": "SystemOptimizer",
+            "network": "NetworkOptimizer",
+            "privacy_hardening": "PrivacyHardening",
+            "devenv": "DeveloperEnvironment",
+            "creative": "CreativeSuite",
+            "launchers": "GamingLaunchers",
+            "browsers": "BrowserBundler",
+            "backup": "BackupIntegration",
+            "security": "SecurityHardening",
+            "applications": "ApplicationInjector",
         }
 
         class_name = class_map.get(action.module)
@@ -374,7 +351,7 @@ class PresetManager:
             # Unmount image
             instance.unmount(save_changes=True)
 
-    def export_preset(self, preset_name: str, output_path: Path, format: str = 'json'):
+    def export_preset(self, preset_name: str, output_path: Path, format: str = "json"):
         """
         Export a preset to a file.
 
@@ -388,11 +365,11 @@ class PresetManager:
         output_path = Path(output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if format == 'yaml':
-            with open(output_path, 'w') as f:
+        if format == "yaml":
+            with open(output_path, "w") as f:
                 yaml.dump(asdict(preset), f, default_flow_style=False)
         else:
-            with open(output_path, 'w') as f:
+            with open(output_path, "w") as f:
                 json.dump(asdict(preset), f, indent=2)
 
         logger.info(f"Exported preset to: {output_path}")
@@ -410,16 +387,16 @@ class PresetManager:
             raise FileNotFoundError(f"File not found: {import_path}")
 
         # Load based on extension
-        if import_path.suffix == '.yaml' or import_path.suffix == '.yml':
-            with open(import_path, 'r') as f:
+        if import_path.suffix == ".yaml" or import_path.suffix == ".yml":
+            with open(import_path, "r") as f:
                 data = yaml.safe_load(f)
         else:
-            with open(import_path, 'r') as f:
+            with open(import_path, "r") as f:
                 data = json.load(f)
 
         # Convert actions
-        if 'actions' in data:
-            data['actions'] = [PresetAction(**action) for action in data['actions']]
+        if "actions" in data:
+            data["actions"] = [PresetAction(**action) for action in data["actions"]]
 
         preset = Preset(**data)
         self.save_preset(preset)
@@ -439,15 +416,15 @@ def create_preset_from_config(config_path: Path) -> Preset:
     """
     config_path = Path(config_path)
 
-    if config_path.suffix in ['.yaml', '.yml']:
-        with open(config_path, 'r') as f:
+    if config_path.suffix in [".yaml", ".yml"]:
+        with open(config_path, "r") as f:
             data = yaml.safe_load(f)
     else:
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             data = json.load(f)
 
     # Convert actions
-    if 'actions' in data:
-        data['actions'] = [PresetAction(**action) for action in data['actions']]
+    if "actions" in data:
+        data["actions"] = [PresetAction(**action) for action in data["actions"]]
 
     return Preset(**data)

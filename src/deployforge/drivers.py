@@ -30,8 +30,8 @@ class DriverInjector:
             mount_point: Path to mounted Windows image
         """
         self.mount_point = Path(mount_point)
-        self.is_windows = platform.system() == 'Windows'
-        self.driver_store = self.mount_point / 'Windows' / 'System32' / 'DriverStore'
+        self.is_windows = platform.system() == "Windows"
+        self.driver_store = self.mount_point / "Windows" / "System32" / "DriverStore"
 
     def extract_driver_package(self, package_path: Path, extract_dir: Path) -> Path:
         """
@@ -56,28 +56,26 @@ class DriverInjector:
             return package_path
 
         # Extract based on file type
-        if package_path.suffix.lower() in ['.zip']:
-            with zipfile.ZipFile(package_path, 'r') as zf:
+        if package_path.suffix.lower() in [".zip"]:
+            with zipfile.ZipFile(package_path, "r") as zf:
                 zf.extractall(extract_dir)
 
-        elif package_path.suffix.lower() in ['.tar', '.gz', '.bz2', '.xz']:
-            with tarfile.open(package_path, 'r:*') as tf:
+        elif package_path.suffix.lower() in [".tar", ".gz", ".bz2", ".xz"]:
+            with tarfile.open(package_path, "r:*") as tf:
                 tf.extractall(extract_dir)
 
-        elif package_path.suffix.lower() in ['.cab']:
+        elif package_path.suffix.lower() in [".cab"]:
             if self.is_windows:
-                cmd = ['expand', str(package_path), '-F:*', str(extract_dir)]
+                cmd = ["expand", str(package_path), "-F:*", str(extract_dir)]
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 if result.returncode != 0:
                     raise OperationError(f"Failed to extract CAB: {result.stderr}")
             else:
                 raise OperationError("CAB extraction requires Windows")
 
-        elif package_path.suffix.lower() in ['.exe']:
+        elif package_path.suffix.lower() in [".exe"]:
             # Some driver packages are self-extracting
-            raise ValidationError(
-                "Self-extracting EXE files must be manually extracted first"
-            )
+            raise ValidationError("Self-extracting EXE files must be manually extracted first")
 
         else:
             raise ValidationError(f"Unsupported driver package format: {package_path.suffix}")
@@ -96,7 +94,7 @@ class DriverInjector:
             List of INF file paths
         """
         driver_dir = Path(driver_dir)
-        inf_files = list(driver_dir.rglob('*.inf'))
+        inf_files = list(driver_dir.rglob("*.inf"))
 
         logger.info(f"Found {len(inf_files)} INF files in {driver_dir}")
         return inf_files
@@ -120,9 +118,9 @@ class DriverInjector:
             raise ValidationError(f"No INF files found in {driver_dir}")
 
         # Check for suspicious files (basic security check)
-        suspicious_extensions = ['.exe', '.com', '.bat', '.cmd', '.ps1', '.vbs', '.js']
+        suspicious_extensions = [".exe", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js"]
         for ext in suspicious_extensions:
-            suspicious_files = list(driver_dir.rglob(f'*{ext}'))
+            suspicious_files = list(driver_dir.rglob(f"*{ext}"))
             if suspicious_files:
                 logger.warning(
                     f"Found {len(suspicious_files)} {ext} files in driver package. "
@@ -132,10 +130,7 @@ class DriverInjector:
         return True
 
     def inject_drivers(
-        self,
-        driver_paths: List[Path],
-        force_unsigned: bool = False,
-        recurse: bool = True
+        self, driver_paths: List[Path], force_unsigned: bool = False, recurse: bool = True
     ) -> Dict[str, Any]:
         """
         Inject drivers into the image.
@@ -154,12 +149,7 @@ class DriverInjector:
         if not self.is_windows:
             raise OperationError("Driver injection requires Windows and DISM")
 
-        results = {
-            'total': len(driver_paths),
-            'successful': 0,
-            'failed': 0,
-            'details': []
-        }
+        results = {"total": len(driver_paths), "successful": 0, "failed": 0, "details": []}
 
         for driver_path in driver_paths:
             try:
@@ -179,11 +169,8 @@ class DriverInjector:
                 # Inject using DISM
                 self._inject_with_dism(driver_dir, force_unsigned, recurse)
 
-                results['successful'] += 1
-                results['details'].append({
-                    'path': str(driver_path),
-                    'status': 'success'
-                })
+                results["successful"] += 1
+                results["details"].append({"path": str(driver_path), "status": "success"})
 
                 logger.info(f"Successfully injected drivers from {driver_path}")
 
@@ -193,34 +180,27 @@ class DriverInjector:
 
             except Exception as e:
                 logger.error(f"Failed to inject drivers from {driver_path}: {e}")
-                results['failed'] += 1
-                results['details'].append({
-                    'path': str(driver_path),
-                    'status': 'failed',
-                    'error': str(e)
-                })
+                results["failed"] += 1
+                results["details"].append(
+                    {"path": str(driver_path), "status": "failed", "error": str(e)}
+                )
 
         return results
 
-    def _inject_with_dism(
-        self,
-        driver_dir: Path,
-        force_unsigned: bool,
-        recurse: bool
-    ) -> None:
+    def _inject_with_dism(self, driver_dir: Path, force_unsigned: bool, recurse: bool) -> None:
         """Inject drivers using DISM."""
         cmd = [
-            'dism',
-            '/Image:' + str(self.mount_point),
-            '/Add-Driver',
-            '/Driver:' + str(driver_dir),
+            "dism",
+            "/Image:" + str(self.mount_point),
+            "/Add-Driver",
+            "/Driver:" + str(driver_dir),
         ]
 
         if recurse:
-            cmd.append('/Recurse')
+            cmd.append("/Recurse")
 
         if force_unsigned:
-            cmd.append('/ForceUnsigned')
+            cmd.append("/ForceUnsigned")
 
         logger.debug(f"Running: {' '.join(cmd)}")
 
@@ -240,9 +220,9 @@ class DriverInjector:
             raise OperationError("Listing drivers requires Windows and DISM")
 
         cmd = [
-            'dism',
-            '/Image:' + str(self.mount_point),
-            '/Get-Drivers',
+            "dism",
+            "/Image:" + str(self.mount_point),
+            "/Get-Drivers",
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
@@ -254,7 +234,7 @@ class DriverInjector:
         drivers = []
         # TODO: Parse DISM output format
         # For now, return raw output
-        drivers.append({'raw_output': result.stdout})
+        drivers.append({"raw_output": result.stdout})
 
         return drivers
 
@@ -272,10 +252,10 @@ class DriverInjector:
             raise OperationError("Driver removal requires Windows and DISM")
 
         cmd = [
-            'dism',
-            '/Image:' + str(self.mount_point),
-            '/Remove-Driver',
-            '/Driver:' + driver_inf,
+            "dism",
+            "/Image:" + str(self.mount_point),
+            "/Remove-Driver",
+            "/Driver:" + driver_inf,
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)

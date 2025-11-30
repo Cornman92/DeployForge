@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 
 class OptimizationProfile(Enum):
     """System optimization profiles"""
+
     MAXIMUM_PERFORMANCE = "maximum_performance"  # All optimizations
     BALANCED = "balanced"  # Performance with some features
     BATTERY_SAVER = "battery_saver"  # Optimized for battery life
@@ -40,6 +41,7 @@ class OptimizationProfile(Enum):
 @dataclass
 class OptimizationSettings:
     """System optimization configuration"""
+
     # Boot Optimization
     optimize_boot_time: bool = True
     disable_boot_delay: bool = True
@@ -112,15 +114,21 @@ class SystemOptimizer:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_opt_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_opt_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         subprocess.run(
-            ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-             f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-            check=True, capture_output=True
+            [
+                "dism",
+                "/Mount-Wim",
+                f"/WimFile:{self.image_path}",
+                f"/Index:{self.index}",
+                f"/MountDir:{mount_point}",
+            ],
+            check=True,
+            capture_output=True,
         )
         self._mounted = True
         logger.info(f"System optimizer mounted at {mount_point}")
@@ -132,10 +140,11 @@ class SystemOptimizer:
             logger.warning("Image not mounted")
             return
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
         subprocess.run(
-            ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-            check=True, capture_output=True
+            ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+            check=True,
+            capture_output=True,
         )
         self._mounted = False
         logger.info("System optimizer unmounted")
@@ -157,7 +166,7 @@ class SystemOptimizer:
                 disable_hibernation=True,
                 optimize_disk_cache=True,
                 disable_background_apps=True,
-                optimize_system_responsiveness=True
+                optimize_system_responsiveness=True,
             )
         elif profile == OptimizationProfile.BALANCED:
             settings = OptimizationSettings(
@@ -166,7 +175,7 @@ class SystemOptimizer:
                 enable_high_performance_power=True,
                 optimize_memory_management=True,
                 disable_hibernation=False,
-                optimize_disk_cache=True
+                optimize_disk_cache=True,
             )
         elif profile == OptimizationProfile.BATTERY_SAVER:
             settings = OptimizationSettings(
@@ -174,7 +183,7 @@ class SystemOptimizer:
                 disable_visual_effects=True,
                 enable_high_performance_power=False,
                 optimize_cpu_scheduling=False,
-                disable_hibernation=False
+                disable_hibernation=False,
             )
         else:  # CUSTOM
             settings = OptimizationSettings()
@@ -227,30 +236,50 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable boot delay
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control',
-                '/v', 'BootDelay',
-                '/t', 'REG_DWORD',
-                '/d', '0',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control",
+                    "/v",
+                    "BootDelay",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Optimize boot timeout
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control',
-                '/v', 'WaitToKillServiceTimeout',
-                '/t', 'REG_SZ',
-                '/d', '2000',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control",
+                    "/v",
+                    "WaitToKillServiceTimeout",
+                    "/t",
+                    "REG_SZ",
+                    "/d",
+                    "2000",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Boot time optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def disable_hibernation(self):
         """Disable hibernation to save disk space"""
@@ -258,20 +287,31 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\Power',
-                '/v', 'HibernateEnabled',
-                '/t', 'REG_DWORD',
-                '/d', '0',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\Power",
+                    "/v",
+                    "HibernateEnabled",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Hibernation disabled")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def set_high_performance_power(self):
         """Configure high performance power plan"""
@@ -279,22 +319,33 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Set active power scheme to high performance
             # GUID for High Performance: 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\Power\\User\\PowerSchemes',
-                '/v', 'ActivePowerScheme',
-                '/t', 'REG_SZ',
-                '/d', '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\Power\\User\\PowerSchemes",
+                    "/v",
+                    "ActivePowerScheme",
+                    "/t",
+                    "REG_SZ",
+                    "/d",
+                    "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("High performance power plan configured")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_cpu_scheduling(self):
         """Optimize CPU scheduling for foreground processes"""
@@ -302,21 +353,32 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Optimize for programs (not background services)
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\PriorityControl',
-                '/v', 'Win32PrioritySeparation',
-                '/t', 'REG_DWORD',
-                '/d', '38',  # Best for programs
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\PriorityControl",
+                    "/v",
+                    "Win32PrioritySeparation",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "38",  # Best for programs
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("CPU scheduling optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_memory(self):
         """Optimize memory management"""
@@ -324,30 +386,50 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable paging executive
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\Session Manager\\Memory Management',
-                '/v', 'DisablePagingExecutive',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\Session Manager\\Memory Management",
+                    "/v",
+                    "DisablePagingExecutive",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Large system cache for better performance
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\Session Manager\\Memory Management',
-                '/v', 'LargeSystemCache',
-                '/t', 'REG_DWORD',
-                '/d', '0',  # 0 for workstations, 1 for servers
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\Session Manager\\Memory Management",
+                    "/v",
+                    "LargeSystemCache",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",  # 0 for workstations, 1 for servers
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Memory management optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_disk_cache(self):
         """Optimize disk cache settings"""
@@ -355,30 +437,50 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable NTFS last access time
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\FileSystem',
-                '/v', 'NtfsDisableLastAccessUpdate',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\FileSystem",
+                    "/v",
+                    "NtfsDisableLastAccessUpdate",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             # Optimize disk timeout
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\FileSystem',
-                '/v', 'NtfsDisable8dot3NameCreation',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\FileSystem",
+                    "/v",
+                    "NtfsDisable8dot3NameCreation",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Disk cache optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def disable_visual_effects(self):
         """Disable visual effects for performance"""
@@ -386,21 +488,32 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_DEFAULT"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable animations
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects',
-                '/v', 'VisualFXSetting',
-                '/t', 'REG_DWORD',
-                '/d', '2',  # Best performance
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects",
+                    "/v",
+                    "VisualFXSetting",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "2",  # Best performance
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Visual effects disabled for performance")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_system_responsiveness(self):
         """Optimize system responsiveness"""
@@ -408,21 +521,32 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_SYSTEM"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Optimize multimedia system responsiveness
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\ControlSet001\\Control\\PriorityControl',
-                '/v', 'IRQ8Priority',
-                '/t', 'REG_DWORD',
-                '/d', '1',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\ControlSet001\\Control\\PriorityControl",
+                    "/v",
+                    "IRQ8Priority",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "1",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("System responsiveness optimized")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def disable_tips_and_suggestions(self):
         """Disable Windows tips and suggestions"""
@@ -430,21 +554,32 @@ class SystemOptimizer:
         hive_key = "HKLM\\TEMP_DEFAULT"
 
         try:
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Disable tips
-            subprocess.run([
-                'reg', 'add', f'{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager',
-                '/v', 'SubscribedContent-338389Enabled',
-                '/t', 'REG_DWORD',
-                '/d', '0',
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager",
+                    "/v",
+                    "SubscribedContent-338389Enabled",
+                    "/t",
+                    "REG_DWORD",
+                    "/d",
+                    "0",
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
             logger.info("Tips and suggestions disabled")
 
         finally:
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def optimize_startup(self):
         """Optimize startup programs"""

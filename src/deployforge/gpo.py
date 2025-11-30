@@ -30,12 +30,14 @@ logger = logging.getLogger(__name__)
 
 class PolicyScope(Enum):
     """GPO policy scope"""
+
     MACHINE = "Machine"
     USER = "User"
 
 
 class PolicyType(Enum):
     """GPO policy type"""
+
     REGISTRY = "Registry"
     SECURITY = "Security"
     ADMINISTRATIVE_TEMPLATE = "Administrative Template"
@@ -46,6 +48,7 @@ class PolicyType(Enum):
 @dataclass
 class RegistryPolicy:
     """Registry policy setting"""
+
     key: str
     value_name: str
     value_data: Any
@@ -55,17 +58,18 @@ class RegistryPolicy:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'key': self.key,
-            'value_name': self.value_name,
-            'value_data': self.value_data,
-            'value_type': self.value_type,
-            'scope': self.scope.value
+            "key": self.key,
+            "value_name": self.value_name,
+            "value_data": self.value_data,
+            "value_type": self.value_type,
+            "scope": self.scope.value,
         }
 
 
 @dataclass
 class SecurityPolicy:
     """Security policy setting"""
+
     policy_name: str
     policy_value: Union[str, int, bool]
     category: str = "SecurityOptions"
@@ -73,15 +77,16 @@ class SecurityPolicy:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'policy_name': self.policy_name,
-            'policy_value': self.policy_value,
-            'category': self.category
+            "policy_name": self.policy_name,
+            "policy_value": self.policy_value,
+            "category": self.category,
         }
 
 
 @dataclass
 class ADMXPolicy:
     """ADMX template policy"""
+
     policy_path: str
     policy_name: str
     setting: Union[str, int, bool]
@@ -90,16 +95,17 @@ class ADMXPolicy:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'policy_path': self.policy_path,
-            'policy_name': self.policy_name,
-            'setting': self.setting,
-            'scope': self.scope.value
+            "policy_path": self.policy_path,
+            "policy_name": self.policy_name,
+            "setting": self.setting,
+            "scope": self.scope.value,
         }
 
 
 @dataclass
 class GroupPolicyObject:
     """Complete GPO definition"""
+
     name: str
     registry_policies: List[RegistryPolicy] = field(default_factory=list)
     security_policies: List[SecurityPolicy] = field(default_factory=list)
@@ -108,10 +114,10 @@ class GroupPolicyObject:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'registry_policies': [p.to_dict() for p in self.registry_policies],
-            'security_policies': [p.to_dict() for p in self.security_policies],
-            'admx_policies': [p.to_dict() for p in self.admx_policies]
+            "name": self.name,
+            "registry_policies": [p.to_dict() for p in self.registry_policies],
+            "security_policies": [p.to_dict() for p in self.security_policies],
+            "admx_policies": [p.to_dict() for p in self.admx_policies],
         }
 
 
@@ -160,7 +166,7 @@ class GroupPolicyManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_gpo_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_gpo_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
@@ -168,19 +174,29 @@ class GroupPolicyManager:
         logger.info(f"Mounting {self.image_path} to {mount_point}")
 
         try:
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
-            elif self.image_path.suffix.lower() in ['.vhd', '.vhdx']:
+            elif self.image_path.suffix.lower() in [".vhd", ".vhdx"]:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 raise ValueError(f"Unsupported image format: {self.image_path.suffix}")
@@ -207,11 +223,11 @@ class GroupPolicyManager:
         logger.info(f"Unmounting {self.mount_point}")
 
         try:
-            commit_flag = '/Commit' if save_changes else '/Discard'
+            commit_flag = "/Commit" if save_changes else "/Discard"
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
+                ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             self._mounted = False
@@ -297,23 +313,17 @@ class GroupPolicyManager:
         config.read(template_file)
 
         # Parse common security settings
-        if 'System Access' in config:
-            for key, value in config['System Access'].items():
+        if "System Access" in config:
+            for key, value in config["System Access"].items():
                 policy = SecurityPolicy(
-                    policy_name=key,
-                    policy_value=value,
-                    category="SystemAccess"
+                    policy_name=key, policy_value=value, category="SystemAccess"
                 )
                 self.gpo.security_policies.append(policy)
                 self._apply_security_policy(policy)
 
-        if 'Event Audit' in config:
-            for key, value in config['Event Audit'].items():
-                policy = SecurityPolicy(
-                    policy_name=key,
-                    policy_value=value,
-                    category="EventAudit"
-                )
+        if "Event Audit" in config:
+            for key, value in config["Event Audit"].items():
+                policy = SecurityPolicy(policy_name=key, policy_value=value, category="EventAudit")
                 self.gpo.security_policies.append(policy)
                 self._apply_security_policy(policy)
 
@@ -333,7 +343,7 @@ class GroupPolicyManager:
         scripts_dest.mkdir(parents=True, exist_ok=True)
 
         # Copy all scripts
-        for script_file in scripts_path.rglob('*'):
+        for script_file in scripts_path.rglob("*"):
             if script_file.is_file():
                 rel_path = script_file.relative_to(scripts_path)
                 dest_file = scripts_dest / rel_path
@@ -354,18 +364,14 @@ class GroupPolicyManager:
         logger.info(f"Setting policy: {policy_name}")
 
         # Apply based on policy name
-        if 'password' in policy_name.lower():
+        if "password" in policy_name.lower():
             self._apply_password_policy(settings)
-        elif 'audit' in policy_name.lower():
+        elif "audit" in policy_name.lower():
             self._apply_audit_policy(settings)
         else:
             # Default to security policy
             for key, value in settings.items():
-                policy = SecurityPolicy(
-                    policy_name=key,
-                    policy_value=value,
-                    category=policy_name
-                )
+                policy = SecurityPolicy(policy_name=key, policy_value=value, category=policy_name)
                 self.gpo.security_policies.append(policy)
                 self._apply_security_policy(policy)
 
@@ -373,29 +379,27 @@ class GroupPolicyManager:
         """Apply password policy settings"""
         # Map to registry/local policy
         policy_map = {
-            'MinimumPasswordLength': (r'SYSTEM\CurrentControlSet\Control\Lsa', 'MinimumPasswordLength'),
-            'PasswordComplexity': (r'SYSTEM\CurrentControlSet\Control\Lsa', 'PasswordComplexity'),
-            'MaximumPasswordAge': (r'SYSTEM\CurrentControlSet\Control\Lsa', 'MaximumPasswordAge'),
-            'MinimumPasswordAge': (r'SYSTEM\CurrentControlSet\Control\Lsa', 'MinimumPasswordAge'),
+            "MinimumPasswordLength": (
+                r"SYSTEM\CurrentControlSet\Control\Lsa",
+                "MinimumPasswordLength",
+            ),
+            "PasswordComplexity": (r"SYSTEM\CurrentControlSet\Control\Lsa", "PasswordComplexity"),
+            "MaximumPasswordAge": (r"SYSTEM\CurrentControlSet\Control\Lsa", "MaximumPasswordAge"),
+            "MinimumPasswordAge": (r"SYSTEM\CurrentControlSet\Control\Lsa", "MinimumPasswordAge"),
         }
 
         for setting, value in settings.items():
             if setting in policy_map:
                 key, value_name = policy_map[setting]
                 self.add_registry_policy(
-                    key=key,
-                    value_name=value_name,
-                    value_data=value,
-                    scope=PolicyScope.MACHINE
+                    key=key, value_name=value_name, value_data=value, scope=PolicyScope.MACHINE
                 )
 
     def _apply_audit_policy(self, settings: Dict[str, Any]):
         """Apply audit policy settings"""
         for category, value in settings.items():
             policy = SecurityPolicy(
-                policy_name=category,
-                policy_value=value,
-                category="AuditPolicy"
+                policy_name=category, policy_value=value, category="AuditPolicy"
             )
             self.gpo.security_policies.append(policy)
             self._apply_security_policy(policy)
@@ -419,7 +423,7 @@ class GroupPolicyManager:
 
         config[policy.category][policy.policy_name] = str(policy.policy_value)
 
-        with open(inf_path, 'w') as f:
+        with open(inf_path, "w") as f:
             config.write(f)
 
         logger.info(f"Applied security policy: {policy.policy_name} = {policy.policy_value}")
@@ -430,7 +434,7 @@ class GroupPolicyManager:
         value_name: str,
         value_data: Any,
         value_type: str = "REG_DWORD",
-        scope: PolicyScope = PolicyScope.MACHINE
+        scope: PolicyScope = PolicyScope.MACHINE,
     ):
         """
         Add registry policy.
@@ -450,7 +454,7 @@ class GroupPolicyManager:
             value_name=value_name,
             value_data=value_data,
             value_type=value_type,
-            scope=scope
+            scope=scope,
         )
 
         self.gpo.registry_policies.append(policy)
@@ -462,11 +466,11 @@ class GroupPolicyManager:
         """Apply registry policy to image"""
         # Determine hive to load
         if policy.scope == PolicyScope.MACHINE:
-            if policy.key.upper().startswith('SOFTWARE'):
+            if policy.key.upper().startswith("SOFTWARE"):
                 hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
                 hive_key = "HKLM\\TEMP_SOFTWARE"
-                software_prefix = 'SOFTWARE\\'
-                subkey = policy.key[len(software_prefix):]
+                software_prefix = "SOFTWARE\\"
+                subkey = policy.key[len(software_prefix) :]
                 reg_key = f"{hive_key}\\{subkey}"
             else:
                 hive_file = self.mount_point / "Windows" / "System32" / "config" / "SYSTEM"
@@ -480,28 +484,38 @@ class GroupPolicyManager:
 
         try:
             # Load hive
-            subprocess.run(['reg', 'load', hive_key, str(hive_file)], check=True, capture_output=True)
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
 
             # Set registry value
-            subprocess.run([
-                'reg', 'add', reg_key,
-                '/v', policy.value_name,
-                '/t', policy.value_type,
-                '/d', str(policy.value_data),
-                '/f'
-            ], check=True, capture_output=True)
+            subprocess.run(
+                [
+                    "reg",
+                    "add",
+                    reg_key,
+                    "/v",
+                    policy.value_name,
+                    "/t",
+                    policy.value_type,
+                    "/d",
+                    str(policy.value_data),
+                    "/f",
+                ],
+                check=True,
+                capture_output=True,
+            )
 
-            logger.info(f"Applied registry policy: {policy.key}\\{policy.value_name} = {policy.value_data}")
+            logger.info(
+                f"Applied registry policy: {policy.key}\\{policy.value_name} = {policy.value_data}"
+            )
 
         finally:
             # Unload hive
-            subprocess.run(['reg', 'unload', hive_key], check=True, capture_output=True)
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def apply_admx_policy(
-        self,
-        policy_path: str,
-        settings: Dict[str, Any],
-        scope: PolicyScope = PolicyScope.MACHINE
+        self, policy_path: str, settings: Dict[str, Any], scope: PolicyScope = PolicyScope.MACHINE
     ):
         """
         Apply ADMX template policy.
@@ -518,10 +532,7 @@ class GroupPolicyManager:
 
         for policy_name, setting in settings.items():
             admx_policy = ADMXPolicy(
-                policy_path=policy_path,
-                policy_name=policy_name,
-                setting=setting,
-                scope=scope
+                policy_path=policy_path, policy_name=policy_name, setting=setting, scope=scope
             )
 
             self.gpo.admx_policies.append(admx_policy)
@@ -535,7 +546,7 @@ class GroupPolicyManager:
                 value_name=policy_name,
                 value_data=setting,
                 value_type="REG_SZ" if isinstance(setting, str) else "REG_DWORD",
-                scope=scope
+                scope=scope,
             )
 
     def export_gpo(self, output_path: Path):
@@ -545,7 +556,7 @@ class GroupPolicyManager:
         Args:
             output_path: Path to save GPO JSON
         """
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(self.gpo.to_dict(), f, indent=2)
 
         logger.info(f"Exported GPO to {output_path}")
@@ -560,48 +571,45 @@ class GroupPolicyManager:
         if not self._mounted:
             raise RuntimeError("Image must be mounted first")
 
-        with open(gpo_json_path, 'r') as f:
+        with open(gpo_json_path, "r") as f:
             gpo_data = json.load(f)
 
         # Import registry policies
-        for policy_data in gpo_data.get('registry_policies', []):
+        for policy_data in gpo_data.get("registry_policies", []):
             policy = RegistryPolicy(
-                key=policy_data['key'],
-                value_name=policy_data['value_name'],
-                value_data=policy_data['value_data'],
-                value_type=policy_data.get('value_type', 'REG_DWORD'),
-                scope=PolicyScope(policy_data.get('scope', 'Machine'))
+                key=policy_data["key"],
+                value_name=policy_data["value_name"],
+                value_data=policy_data["value_data"],
+                value_type=policy_data.get("value_type", "REG_DWORD"),
+                scope=PolicyScope(policy_data.get("scope", "Machine")),
             )
             self.gpo.registry_policies.append(policy)
             self._apply_registry_policy(policy)
 
         # Import security policies
-        for policy_data in gpo_data.get('security_policies', []):
+        for policy_data in gpo_data.get("security_policies", []):
             policy = SecurityPolicy(
-                policy_name=policy_data['policy_name'],
-                policy_value=policy_data['policy_value'],
-                category=policy_data.get('category', 'SecurityOptions')
+                policy_name=policy_data["policy_name"],
+                policy_value=policy_data["policy_value"],
+                category=policy_data.get("category", "SecurityOptions"),
             )
             self.gpo.security_policies.append(policy)
             self._apply_security_policy(policy)
 
         # Import ADMX policies
-        for policy_data in gpo_data.get('admx_policies', []):
+        for policy_data in gpo_data.get("admx_policies", []):
             admx_policy = ADMXPolicy(
-                policy_path=policy_data['policy_path'],
-                policy_name=policy_data['policy_name'],
-                setting=policy_data['setting'],
-                scope=PolicyScope(policy_data.get('scope', 'Machine'))
+                policy_path=policy_data["policy_path"],
+                policy_name=policy_data["policy_name"],
+                setting=policy_data["setting"],
+                scope=PolicyScope(policy_data.get("scope", "Machine")),
             )
             self.gpo.admx_policies.append(admx_policy)
 
         logger.info(f"Imported GPO from {gpo_json_path}")
 
 
-def apply_standard_gpo(
-    image_path: Path,
-    gpo_type: str = "corporate"
-) -> GroupPolicyManager:
+def apply_standard_gpo(image_path: Path, gpo_type: str = "corporate") -> GroupPolicyManager:
     """
     Apply standard GPO template.
 
@@ -620,37 +628,35 @@ def apply_standard_gpo(
 
     if gpo_type == "corporate":
         # Corporate GPO settings
-        gpm.set_policy('Password Policy', {
-            'MinimumPasswordLength': 12,
-            'PasswordComplexity': 1,
-            'MaximumPasswordAge': 90
-        })
+        gpm.set_policy(
+            "Password Policy",
+            {"MinimumPasswordLength": 12, "PasswordComplexity": 1, "MaximumPasswordAge": 90},
+        )
 
         gpm.add_registry_policy(
-            key=r'SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU',
-            value_name='NoAutoUpdate',
-            value_data=0
+            key=r"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU",
+            value_name="NoAutoUpdate",
+            value_data=0,
         )
 
     elif gpo_type == "secure":
         # Secure GPO settings
-        gpm.set_policy('Password Policy', {
-            'MinimumPasswordLength': 14,
-            'PasswordComplexity': 1,
-            'MaximumPasswordAge': 60
-        })
+        gpm.set_policy(
+            "Password Policy",
+            {"MinimumPasswordLength": 14, "PasswordComplexity": 1, "MaximumPasswordAge": 60},
+        )
 
         gpm.add_registry_policy(
-            key=r'SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU',
-            value_name='NoAutoUpdate',
-            value_data=0
+            key=r"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU",
+            value_name="NoAutoUpdate",
+            value_data=0,
         )
 
         # Disable legacy protocols
         gpm.add_registry_policy(
-            key=r'SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters',
-            value_name='SMB1',
-            value_data=0
+            key=r"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters",
+            value_name="SMB1",
+            value_data=0,
         )
 
     gpm.unmount(save_changes=True)

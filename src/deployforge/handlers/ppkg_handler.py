@@ -10,6 +10,7 @@ import logging
 
 try:
     import xmltodict
+
     XMLTODICT_AVAILABLE = True
 except ImportError:
     XMLTODICT_AVAILABLE = False
@@ -41,11 +42,12 @@ class PPKGHandler(BaseImageHandler):
     def _validate_ppkg(self) -> None:
         """Validate that the file is a valid PPKG (ZIP) file."""
         try:
-            with zipfile.ZipFile(self.image_path, 'r') as zf:
+            with zipfile.ZipFile(self.image_path, "r") as zf:
                 # Just check if it's a valid ZIP
                 zf.testzip()
         except zipfile.BadZipFile:
             from deployforge.core.exceptions import ValidationError
+
             raise ValidationError(f"Invalid PPKG file: {self.image_path}")
 
     def mount(self, mount_point: Optional[Path] = None) -> Path:
@@ -72,7 +74,7 @@ class PPKGHandler(BaseImageHandler):
                 self.mount_point.mkdir(parents=True, exist_ok=True)
 
             # Extract PPKG (ZIP) contents
-            with zipfile.ZipFile(self.image_path, 'r') as zf:
+            with zipfile.ZipFile(self.image_path, "r") as zf:
                 zf.extractall(self.mount_point)
 
             self.is_mounted = True
@@ -98,7 +100,7 @@ class PPKGHandler(BaseImageHandler):
         try:
             if save_changes:
                 # Create new PPKG with modifications
-                new_ppkg_path = self.image_path.with_suffix('.ppkg.new')
+                new_ppkg_path = self.image_path.with_suffix(".ppkg.new")
                 self._create_ppkg(self.mount_point, new_ppkg_path)
                 logger.info(f"Saved modified PPKG to {new_ppkg_path}")
 
@@ -116,7 +118,7 @@ class PPKGHandler(BaseImageHandler):
 
     def _create_ppkg(self, source_dir: Path, output_path: Path) -> None:
         """Create a PPKG (ZIP) from a directory."""
-        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for root, dirs, files in os.walk(source_dir):
                 for file in files:
                     file_path = Path(root) / file
@@ -137,18 +139,20 @@ class PPKGHandler(BaseImageHandler):
             raise MountError("PPKG must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if not target_path.exists():
                 return []
 
             files = []
             for item in target_path.iterdir():
-                files.append({
-                    'name': item.name,
-                    'is_dir': item.is_dir(),
-                    'size': item.stat().st_size if item.is_file() else 0,
-                    'path': str(item.relative_to(self.mount_point)),
-                })
+                files.append(
+                    {
+                        "name": item.name,
+                        "is_dir": item.is_dir(),
+                        "size": item.stat().st_size if item.is_file() else 0,
+                        "path": str(item.relative_to(self.mount_point)),
+                    }
+                )
             return files
 
         except Exception as e:
@@ -171,7 +175,7 @@ class PPKGHandler(BaseImageHandler):
             if not source.exists():
                 raise OperationError(f"Source file not found: {source}")
 
-            dest_path = self.mount_point / destination.lstrip('/')
+            dest_path = self.mount_point / destination.lstrip("/")
             dest_path.parent.mkdir(parents=True, exist_ok=True)
 
             shutil.copy2(source, dest_path)
@@ -191,7 +195,7 @@ class PPKGHandler(BaseImageHandler):
             raise MountError("PPKG must be mounted first")
 
         try:
-            target_path = self.mount_point / path.lstrip('/')
+            target_path = self.mount_point / path.lstrip("/")
             if target_path.is_file():
                 target_path.unlink()
             elif target_path.is_dir():
@@ -216,7 +220,7 @@ class PPKGHandler(BaseImageHandler):
             raise MountError("PPKG must be mounted first")
 
         try:
-            source_path = self.mount_point / source.lstrip('/')
+            source_path = self.mount_point / source.lstrip("/")
             destination = Path(destination)
             destination.parent.mkdir(parents=True, exist_ok=True)
 
@@ -240,26 +244,26 @@ class PPKGHandler(BaseImageHandler):
             Dictionary containing PPKG metadata
         """
         info = {
-            'path': str(self.image_path),
-            'format': 'PPKG (Provisioning Package)',
-            'size': self.image_path.stat().st_size,
-            'mounted': self.is_mounted,
+            "path": str(self.image_path),
+            "format": "PPKG (Provisioning Package)",
+            "size": self.image_path.stat().st_size,
+            "mounted": self.is_mounted,
         }
 
         # Try to read metadata from the package
         try:
-            with zipfile.ZipFile(self.image_path, 'r') as zf:
-                info['files'] = len(zf.namelist())
+            with zipfile.ZipFile(self.image_path, "r") as zf:
+                info["files"] = len(zf.namelist())
 
                 # Look for customizations.xml
-                if 'customizations.xml' in zf.namelist():
-                    info['has_customizations'] = True
+                if "customizations.xml" in zf.namelist():
+                    info["has_customizations"] = True
 
                     if XMLTODICT_AVAILABLE and self.is_mounted:
-                        customizations_path = self.mount_point / 'customizations.xml'
+                        customizations_path = self.mount_point / "customizations.xml"
                         if customizations_path.exists():
-                            with open(customizations_path, 'r', encoding='utf-8') as f:
-                                info['customizations'] = xmltodict.parse(f.read())
+                            with open(customizations_path, "r", encoding="utf-8") as f:
+                                info["customizations"] = xmltodict.parse(f.read())
 
         except Exception as e:
             logger.warning(f"Could not read PPKG metadata: {e}")
@@ -281,12 +285,12 @@ class PPKGHandler(BaseImageHandler):
             raise MountError("PPKG must be mounted first")
 
         try:
-            customizations_path = self.mount_point / 'customizations.xml'
+            customizations_path = self.mount_point / "customizations.xml"
             if not customizations_path.exists():
                 logger.warning("customizations.xml not found in PPKG")
                 return None
 
-            with open(customizations_path, 'r', encoding='utf-8') as f:
+            with open(customizations_path, "r", encoding="utf-8") as f:
                 return xmltodict.parse(f.read())
 
         except Exception as e:

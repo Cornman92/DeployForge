@@ -44,16 +44,22 @@ class PackageManager:
             return self.mount_point
 
         if mount_point is None:
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_pkg_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_pkg_"))
 
         mount_point.mkdir(parents=True, exist_ok=True)
         self.mount_point = mount_point
 
         try:
             subprocess.run(
-                ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                 f'/Index:{self.index}', f'/MountDir:{mount_point}'],
-                check=True, capture_output=True
+                [
+                    "dism",
+                    "/Mount-Wim",
+                    f"/WimFile:{self.image_path}",
+                    f"/Index:{self.index}",
+                    f"/MountDir:{mount_point}",
+                ],
+                check=True,
+                capture_output=True,
             )
             self._mounted = True
             return mount_point
@@ -65,10 +71,11 @@ class PackageManager:
         if not self._mounted:
             return
 
-        commit_flag = '/Commit' if save_changes else '/Discard'
+        commit_flag = "/Commit" if save_changes else "/Discard"
         subprocess.run(
-            ['dism', '/Unmount-Image', f'/MountDir:{self.mount_point}', commit_flag],
-            check=True, capture_output=True
+            ["dism", "/Unmount-Image", f"/MountDir:{self.mount_point}", commit_flag],
+            check=True,
+            capture_output=True,
         )
         self._mounted = False
 
@@ -88,15 +95,17 @@ class PackageManager:
         for package in packages:
             script += f"winget install --id {package} --silent --accept-package-agreements --accept-source-agreements\n"
 
-        with open(script_path, 'w') as f:
+        with open(script_path, "w") as f:
             f.write(script)
 
         # Add to SetupComplete
         setupcomplete = scripts_dir / "SetupComplete.cmd"
-        with open(setupcomplete, 'a' if setupcomplete.exists() else 'w') as f:
+        with open(setupcomplete, "a" if setupcomplete.exists() else "w") as f:
             if not setupcomplete.exists():
                 f.write("@echo off\n")
-            f.write("powershell.exe -ExecutionPolicy Bypass -File \"%~dp0install_winget_packages.ps1\"\n")
+            f.write(
+                'powershell.exe -ExecutionPolicy Bypass -File "%~dp0install_winget_packages.ps1"\n'
+            )
 
         logger.info(f"Configured {len(packages)} WinGet packages")
 
@@ -120,7 +129,7 @@ def install_common_apps(image_path: Path, apps: Optional[List[str]] = None):
         )
     """
     if apps is None:
-        apps = ['7zip.7zip', 'VideoLAN.VLC', 'Microsoft.VisualStudioCode', 'Mozilla.Firefox']
+        apps = ["7zip.7zip", "VideoLAN.VLC", "Microsoft.VisualStudioCode", "Mozilla.Firefox"]
 
     pkg = PackageManager(image_path)
     pkg.mount()

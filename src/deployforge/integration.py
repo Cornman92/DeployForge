@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 class TaskSequenceType(Enum):
     """MDT/SCCM task sequence types"""
+
     STANDARD_CLIENT = "Standard Client Task Sequence"
     CUSTOM = "Custom Task Sequence"
     REPLACE_COMPUTER = "Replace Computer"
@@ -37,6 +38,7 @@ class TaskSequenceType(Enum):
 
 class MDTApplicationType(Enum):
     """MDT application types"""
+
     APPLICATION = "Application"
     BUNDLE = "Bundle"
 
@@ -44,6 +46,7 @@ class MDTApplicationType(Enum):
 @dataclass
 class MDTApplication:
     """MDT application definition"""
+
     name: str
     source_path: Path
     command_line: str
@@ -54,18 +57,19 @@ class MDTApplication:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'source_path': str(self.source_path),
-            'command_line': self.command_line,
-            'working_directory': self.working_directory,
-            'quiet_install': self.quiet_install,
-            'dependencies': self.dependencies
+            "name": self.name,
+            "source_path": str(self.source_path),
+            "command_line": self.command_line,
+            "working_directory": self.working_directory,
+            "quiet_install": self.quiet_install,
+            "dependencies": self.dependencies,
         }
 
 
 @dataclass
 class MDTDriver:
     """MDT driver definition"""
+
     name: str
     source_path: Path
     manufacturer: str = ""
@@ -76,18 +80,19 @@ class MDTDriver:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'source_path': str(self.source_path),
-            'manufacturer': self.manufacturer,
-            'model': self.model,
-            'version': self.version,
-            'platform': self.platform
+            "name": self.name,
+            "source_path": str(self.source_path),
+            "manufacturer": self.manufacturer,
+            "model": self.model,
+            "version": self.version,
+            "platform": self.platform,
         }
 
 
 @dataclass
 class TaskSequenceStep:
     """Task sequence step definition"""
+
     name: str
     type: str
     command: Optional[str] = None
@@ -98,12 +103,12 @@ class TaskSequenceStep:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'type': self.type,
-            'command': self.command,
-            'condition': self.condition,
-            'success_codes': self.success_codes,
-            'continue_on_error': self.continue_on_error
+            "name": self.name,
+            "type": self.type,
+            "command": self.command,
+            "condition": self.condition,
+            "success_codes": self.success_codes,
+            "continue_on_error": self.continue_on_error,
         }
 
 
@@ -140,10 +145,7 @@ class MDTIntegration:
             raise FileNotFoundError(f"MDT deployment share not found: {deployment_share}")
 
     def import_image(
-        self,
-        image_path: Path,
-        os_name: str,
-        destination_folder: Optional[str] = None
+        self, image_path: Path, os_name: str, destination_folder: Optional[str] = None
     ) -> Path:
         """
         Import OS image into MDT.
@@ -227,7 +229,7 @@ class MDTIntegration:
 
         # Copy driver files
         if driver.source_path.is_dir():
-            for item in driver.source_path.rglob('*'):
+            for item in driver.source_path.rglob("*"):
                 if item.is_file():
                     rel_path = item.relative_to(driver.source_path)
                     dest_file = driver_dest / rel_path
@@ -247,7 +249,7 @@ class MDTIntegration:
         image: Optional[str] = None,
         applications: Optional[List[str]] = None,
         drivers: Optional[List[str]] = None,
-        ts_type: TaskSequenceType = TaskSequenceType.STANDARD_CLIENT
+        ts_type: TaskSequenceType = TaskSequenceType.STANDARD_CLIENT,
     ) -> Path:
         """
         Create MDT task sequence.
@@ -264,7 +266,7 @@ class MDTIntegration:
             Path to task sequence folder
         """
         if ts_id is None:
-            ts_id = name.replace(' ', '_').upper()
+            ts_id = name.replace(" ", "_").upper()
 
         ts_folder = self.task_sequences_path / ts_id
         ts_folder.mkdir(parents=True, exist_ok=True)
@@ -278,7 +280,7 @@ class MDTIntegration:
             applications=applications or [],
             drivers=drivers or [],
             ts_type=ts_type,
-            output_path=ts_xml_path
+            output_path=ts_xml_path,
         )
 
         logger.info(f"Created task sequence '{name}' (ID: {ts_id})")
@@ -286,10 +288,7 @@ class MDTIntegration:
         return ts_folder
 
     def add_task_sequence_step(
-        self,
-        ts_id: str,
-        step: TaskSequenceStep,
-        group: Optional[str] = None
+        self, ts_id: str, step: TaskSequenceStep, group: Optional[str] = None
     ):
         """
         Add step to existing task sequence.
@@ -309,19 +308,19 @@ class MDTIntegration:
         root = tree.getroot()
 
         # Create step element
-        step_elem = ET.SubElement(root.find('.//sequence'), 'step')
-        step_elem.set('name', step.name)
-        step_elem.set('type', step.type)
+        step_elem = ET.SubElement(root.find(".//sequence"), "step")
+        step_elem.set("name", step.name)
+        step_elem.set("type", step.type)
 
         if step.command:
-            step_elem.set('command', step.command)
+            step_elem.set("command", step.command)
 
         if step.condition:
-            condition_elem = ET.SubElement(step_elem, 'condition')
+            condition_elem = ET.SubElement(step_elem, "condition")
             condition_elem.text = step.condition
 
         # Save updated XML
-        tree.write(ts_xml_path, encoding='utf-8', xml_declaration=True)
+        tree.write(ts_xml_path, encoding="utf-8", xml_declaration=True)
 
         logger.info(f"Added step '{step.name}' to task sequence '{ts_id}'")
 
@@ -330,7 +329,7 @@ class MDTIntegration:
         name: str,
         include_os: Optional[List[str]] = None,
         include_apps: Optional[List[str]] = None,
-        include_drivers: Optional[List[str]] = None
+        include_drivers: Optional[List[str]] = None,
     ) -> Path:
         """
         Create MDT selection profile.
@@ -350,29 +349,29 @@ class MDTIntegration:
         profile_path = profiles_path / f"{name}.xml"
 
         # Create selection profile XML
-        root = ET.Element('SelectionProfile')
-        root.set('name', name)
+        root = ET.Element("SelectionProfile")
+        root.set("name", name)
 
         if include_os:
-            os_elem = ET.SubElement(root, 'OperatingSystems')
+            os_elem = ET.SubElement(root, "OperatingSystems")
             for os in include_os:
-                item = ET.SubElement(os_elem, 'item')
+                item = ET.SubElement(os_elem, "item")
                 item.text = os
 
         if include_apps:
-            apps_elem = ET.SubElement(root, 'Applications')
+            apps_elem = ET.SubElement(root, "Applications")
             for app in include_apps:
-                item = ET.SubElement(apps_elem, 'item')
+                item = ET.SubElement(apps_elem, "item")
                 item.text = app
 
         if include_drivers:
-            drivers_elem = ET.SubElement(root, 'Drivers')
+            drivers_elem = ET.SubElement(root, "Drivers")
             for driver in include_drivers:
-                item = ET.SubElement(drivers_elem, 'item')
+                item = ET.SubElement(drivers_elem, "item")
                 item.text = driver
 
         tree = ET.ElementTree(root)
-        tree.write(profile_path, encoding='utf-8', xml_declaration=True)
+        tree.write(profile_path, encoding="utf-8", xml_declaration=True)
 
         logger.info(f"Created selection profile '{name}'")
 
@@ -390,7 +389,7 @@ class MDTIntegration:
         # Read existing content
         lines = []
         if bootstrap_path.exists():
-            with open(bootstrap_path, 'r') as f:
+            with open(bootstrap_path, "r") as f:
                 lines = f.readlines()
 
         # Update settings
@@ -407,7 +406,7 @@ class MDTIntegration:
                 lines.append(f"{key}={value}\n")
 
         # Write back
-        with open(bootstrap_path, 'w') as f:
+        with open(bootstrap_path, "w") as f:
             f.writelines(lines)
 
         logger.info("Updated Bootstrap.ini")
@@ -424,7 +423,7 @@ class MDTIntegration:
         # Read existing content
         lines = []
         if customsettings_path.exists():
-            with open(customsettings_path, 'r') as f:
+            with open(customsettings_path, "r") as f:
                 lines = f.readlines()
 
         # Update settings
@@ -439,12 +438,12 @@ class MDTIntegration:
             if not found:
                 # Add to [Default] section
                 for i, line in enumerate(lines):
-                    if line.strip() == '[Default]':
+                    if line.strip() == "[Default]":
                         lines.insert(i + 1, f"{key}={value}\n")
                         break
 
         # Write back
-        with open(customsettings_path, 'w') as f:
+        with open(customsettings_path, "w") as f:
             f.writelines(lines)
 
         logger.info("Updated CustomSettings.ini")
@@ -453,30 +452,30 @@ class MDTIntegration:
         """Create MDT application XML"""
         xml_path = app_folder / "application.xml"
 
-        root = ET.Element('Application')
-        root.set('guid', str(uuid.uuid4()))
+        root = ET.Element("Application")
+        root.set("guid", str(uuid.uuid4()))
 
-        name_elem = ET.SubElement(root, 'Name')
+        name_elem = ET.SubElement(root, "Name")
         name_elem.text = app.name
 
-        command_elem = ET.SubElement(root, 'CommandLine')
+        command_elem = ET.SubElement(root, "CommandLine")
         command_elem.text = app.command_line
 
         if app.working_directory:
-            workdir_elem = ET.SubElement(root, 'WorkingDirectory')
+            workdir_elem = ET.SubElement(root, "WorkingDirectory")
             workdir_elem.text = app.working_directory
 
-        quiet_elem = ET.SubElement(root, 'QuietInstall')
+        quiet_elem = ET.SubElement(root, "QuietInstall")
         quiet_elem.text = str(app.quiet_install).lower()
 
         if app.dependencies:
-            deps_elem = ET.SubElement(root, 'Dependencies')
+            deps_elem = ET.SubElement(root, "Dependencies")
             for dep in app.dependencies:
-                dep_item = ET.SubElement(deps_elem, 'Dependency')
+                dep_item = ET.SubElement(deps_elem, "Dependency")
                 dep_item.text = dep
 
         tree = ET.ElementTree(root)
-        tree.write(xml_path, encoding='utf-8', xml_declaration=True)
+        tree.write(xml_path, encoding="utf-8", xml_declaration=True)
 
     def _create_task_sequence_xml(
         self,
@@ -486,69 +485,69 @@ class MDTIntegration:
         applications: List[str],
         drivers: List[str],
         ts_type: TaskSequenceType,
-        output_path: Path
+        output_path: Path,
     ):
         """Create MDT task sequence XML"""
-        root = ET.Element('sequence')
-        root.set('version', '3.00')
-        root.set('name', name)
-        root.set('guid', str(uuid.uuid4()))
+        root = ET.Element("sequence")
+        root.set("version", "3.00")
+        root.set("name", name)
+        root.set("guid", str(uuid.uuid4()))
 
         # Add metadata
-        metadata = ET.SubElement(root, 'globalVarList')
+        metadata = ET.SubElement(root, "globalVarList")
 
-        id_elem = ET.SubElement(metadata, 'variable')
-        id_elem.set('name', 'TaskSequenceID')
-        id_elem.set('property', 'TaskSequenceID')
+        id_elem = ET.SubElement(metadata, "variable")
+        id_elem.set("name", "TaskSequenceID")
+        id_elem.set("property", "TaskSequenceID")
         id_elem.text = ts_id
 
-        name_elem = ET.SubElement(metadata, 'variable')
-        name_elem.set('name', 'TaskSequenceName')
-        name_elem.set('property', 'TaskSequenceName')
+        name_elem = ET.SubElement(metadata, "variable")
+        name_elem.set("name", "TaskSequenceName")
+        name_elem.set("property", "TaskSequenceName")
         name_elem.text = name
 
         # Create standard groups
         groups = [
-            'Initialization',
-            'Validation',
-            'State Capture',
-            'Preinstall',
-            'Install',
-            'Postinstall',
-            'State Restore',
-            'Applications',
-            'Finalize'
+            "Initialization",
+            "Validation",
+            "State Capture",
+            "Preinstall",
+            "Install",
+            "Postinstall",
+            "State Restore",
+            "Applications",
+            "Finalize",
         ]
 
         for group in groups:
-            group_elem = ET.SubElement(root, 'group')
-            group_elem.set('name', group)
-            group_elem.set('expand', 'true')
+            group_elem = ET.SubElement(root, "group")
+            group_elem.set("name", group)
+            group_elem.set("expand", "true")
 
             # Add steps based on group
-            if group == 'Install' and image:
-                step = ET.SubElement(group_elem, 'step')
-                step.set('type', 'BDD_InstallOS')
-                step.set('name', 'Install Operating System')
+            if group == "Install" and image:
+                step = ET.SubElement(group_elem, "step")
+                step.set("type", "BDD_InstallOS")
+                step.set("name", "Install Operating System")
 
-                var = ET.SubElement(step, 'defaultVarList')
-                os_var = ET.SubElement(var, 'variable')
-                os_var.set('name', 'OSGUID')
+                var = ET.SubElement(step, "defaultVarList")
+                os_var = ET.SubElement(var, "variable")
+                os_var.set("name", "OSGUID")
                 os_var.text = image
 
-            elif group == 'Applications' and applications:
+            elif group == "Applications" and applications:
                 for app in applications:
-                    step = ET.SubElement(group_elem, 'step')
-                    step.set('type', 'BDD_InstallApplication')
-                    step.set('name', f'Install {app}')
+                    step = ET.SubElement(group_elem, "step")
+                    step.set("type", "BDD_InstallApplication")
+                    step.set("name", f"Install {app}")
 
-                    var = ET.SubElement(step, 'defaultVarList')
-                    app_var = ET.SubElement(var, 'variable')
-                    app_var.set('name', 'ApplicationGUID')
+                    var = ET.SubElement(step, "defaultVarList")
+                    app_var = ET.SubElement(var, "variable")
+                    app_var.set("name", "ApplicationGUID")
                     app_var.text = app
 
         tree = ET.ElementTree(root)
-        tree.write(output_path, encoding='utf-8', xml_declaration=True)
+        tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
     def _update_mdt_database(self):
         """Update MDT database (requires PowerShell MDT module)"""
@@ -561,11 +560,7 @@ class MDTIntegration:
             Remove-PSDrive -Name "DS001"
             """
 
-            subprocess.run(
-                ['powershell', '-Command', ps_script],
-                capture_output=True,
-                timeout=60
-            )
+            subprocess.run(["powershell", "-Command", ps_script], capture_output=True, timeout=60)
 
             logger.info("Updated MDT database")
         except Exception as e:
@@ -582,12 +577,7 @@ class SCCMIntegration:
         sccm.create_task_sequence('Deploy Windows 11', 'Windows 11 Custom')
     """
 
-    def __init__(
-        self,
-        server: str,
-        site_code: Optional[str] = None,
-        namespace: str = 'root\\SMS'
-    ):
+    def __init__(self, server: str, site_code: Optional[str] = None, namespace: str = "root\\SMS"):
         """
         Initialize SCCM integration.
 
@@ -605,7 +595,7 @@ class SCCMIntegration:
         image_path: Path,
         package_name: str,
         package_description: Optional[str] = None,
-        source_path: Optional[Path] = None
+        source_path: Optional[Path] = None,
     ) -> str:
         """
         Create SCCM OS image package.
@@ -636,10 +626,7 @@ class SCCMIntegration:
 
         try:
             result = subprocess.run(
-                ['powershell', '-Command', ps_script],
-                capture_output=True,
-                text=True,
-                check=True
+                ["powershell", "-Command", ps_script], capture_output=True, text=True, check=True
             )
 
             package_id = result.stdout.strip()
@@ -651,10 +638,7 @@ class SCCMIntegration:
             raise
 
     def create_task_sequence(
-        self,
-        name: str,
-        os_image_package_id: str,
-        boot_image_package_id: Optional[str] = None
+        self, name: str, os_image_package_id: str, boot_image_package_id: Optional[str] = None
     ) -> str:
         """
         Create SCCM task sequence.
@@ -679,10 +663,7 @@ class SCCMIntegration:
 
         try:
             result = subprocess.run(
-                ['powershell', '-Command', ps_script],
-                capture_output=True,
-                text=True,
-                check=True
+                ["powershell", "-Command", ps_script], capture_output=True, text=True, check=True
             )
 
             ts_id = result.stdout.strip()
@@ -693,11 +674,7 @@ class SCCMIntegration:
             logger.error(f"Failed to create SCCM task sequence: {e.stderr}")
             raise
 
-    def distribute_package(
-        self,
-        package_id: str,
-        distribution_points: List[str]
-    ):
+    def distribute_package(self, package_id: str, distribution_points: List[str]):
         """
         Distribute package to distribution points.
 
@@ -716,9 +693,7 @@ class SCCMIntegration:
 
             try:
                 subprocess.run(
-                    ['powershell', '-Command', ps_script],
-                    capture_output=True,
-                    check=True
+                    ["powershell", "-Command", ps_script], capture_output=True, check=True
                 )
 
                 logger.info(f"Distributed package {package_id} to {dp}")
@@ -732,7 +707,7 @@ def create_mdt_deployment(
     image_path: Path,
     os_name: str,
     task_sequence_name: str,
-    applications: Optional[List[MDTApplication]] = None
+    applications: Optional[List[MDTApplication]] = None,
 ) -> MDTIntegration:
     """
     Create complete MDT deployment in one step.
@@ -775,11 +750,7 @@ def create_mdt_deployment(
             app_names.append(app.name)
 
     # Create task sequence
-    mdt.create_task_sequence(
-        name=task_sequence_name,
-        image=os_name,
-        applications=app_names
-    )
+    mdt.create_task_sequence(name=task_sequence_name, image=os_name, applications=app_names)
 
     logger.info(f"Created complete MDT deployment for '{os_name}'")
 

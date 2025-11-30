@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 
 class TestStatus(Enum):
     """Test execution status"""
+
     PENDING = "pending"
     RUNNING = "running"
     PASSED = "passed"
@@ -39,6 +40,7 @@ class TestStatus(Enum):
 
 class Hypervisor(Enum):
     """Supported hypervisors for VM testing"""
+
     HYPER_V = "Hyper-V"
     VIRTUALBOX = "VirtualBox"
     VMWARE = "VMware"
@@ -48,6 +50,7 @@ class Hypervisor(Enum):
 @dataclass
 class TestResult:
     """Result of a single test"""
+
     test_name: str
     status: TestStatus
     message: str = ""
@@ -58,18 +61,19 @@ class TestResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'test_name': self.test_name,
-            'status': self.status.value,
-            'message': self.message,
-            'duration_seconds': self.duration_seconds,
-            'details': self.details,
-            'timestamp': self.timestamp
+            "test_name": self.test_name,
+            "status": self.status.value,
+            "message": self.message,
+            "duration_seconds": self.duration_seconds,
+            "details": self.details,
+            "timestamp": self.timestamp,
         }
 
 
 @dataclass
 class TestSuite:
     """Collection of test results"""
+
     name: str
     results: List[TestResult] = field(default_factory=list)
     start_time: str = field(default_factory=lambda: datetime.now().isoformat())
@@ -81,34 +85,28 @@ class TestSuite:
 
     def get_summary(self) -> Dict[str, int]:
         """Get test summary counts"""
-        summary = {
-            'total': len(self.results),
-            'passed': 0,
-            'failed': 0,
-            'warning': 0,
-            'skipped': 0
-        }
+        summary = {"total": len(self.results), "passed": 0, "failed": 0, "warning": 0, "skipped": 0}
 
         for result in self.results:
             if result.status == TestStatus.PASSED:
-                summary['passed'] += 1
+                summary["passed"] += 1
             elif result.status == TestStatus.FAILED:
-                summary['failed'] += 1
+                summary["failed"] += 1
             elif result.status == TestStatus.WARNING:
-                summary['warning'] += 1
+                summary["warning"] += 1
             elif result.status == TestStatus.SKIPPED:
-                summary['skipped'] += 1
+                summary["skipped"] += 1
 
         return summary
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
-            'name': self.name,
-            'start_time': self.start_time,
-            'end_time': self.end_time or datetime.now().isoformat(),
-            'results': [r.to_dict() for r in self.results],
-            'summary': self.get_summary()
+            "name": self.name,
+            "start_time": self.start_time,
+            "end_time": self.end_time or datetime.now().isoformat(),
+            "results": [r.to_dict() for r in self.results],
+            "summary": self.get_summary(),
         }
 
 
@@ -150,26 +148,26 @@ class ImageValidator:
             TestSuite with results
         """
         if checks is None:
-            checks = ['integrity', 'bootability', 'drivers', 'compliance', 'size', 'metadata']
+            checks = ["integrity", "bootability", "drivers", "compliance", "size", "metadata"]
 
         logger.info(f"Running {len(checks)} validation checks")
 
-        if 'integrity' in checks:
+        if "integrity" in checks:
             self._check_integrity()
 
-        if 'bootability' in checks:
+        if "bootability" in checks:
             self._check_bootability()
 
-        if 'drivers' in checks:
+        if "drivers" in checks:
             self._check_drivers()
 
-        if 'compliance' in checks:
+        if "compliance" in checks:
             self._check_compliance()
 
-        if 'size' in checks:
+        if "size" in checks:
             self._check_size()
 
-        if 'metadata' in checks:
+        if "metadata" in checks:
             self._check_metadata()
 
         self.test_suite.end_time = datetime.now().isoformat()
@@ -184,54 +182,56 @@ class ImageValidator:
             logger.info("Checking image integrity...")
 
             # Run DISM /Cleanup-Wim to verify
-            result = subprocess.run(
-                ['dism', '/Cleanup-Wim'],
-                capture_output=True,
-                text=True
-            )
+            result = subprocess.run(["dism", "/Cleanup-Wim"], capture_output=True, text=True)
 
             # Check image with DISM
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 result = subprocess.run(
-                    ['dism', '/Get-WimInfo', f'/WimFile:{self.image_path}'],
+                    ["dism", "/Get-WimInfo", f"/WimFile:{self.image_path}"],
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
                 )
 
                 # Calculate hash
                 hash_md5 = self._calculate_file_hash(self.image_path)
 
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message="Image integrity verified",
-                    duration_seconds=duration,
-                    details={
-                        'hash_md5': hash_md5,
-                        'size_bytes': self.image_path.stat().st_size
-                    }
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message="Image integrity verified",
+                        duration_seconds=duration,
+                        details={
+                            "hash_md5": hash_md5,
+                            "size_bytes": self.image_path.stat().st_size,
+                        },
+                    )
+                )
 
             else:
                 # For VHD/VHDX
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message="Image file exists and is accessible",
-                    duration_seconds=duration
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message="Image file exists and is accessible",
+                        duration_seconds=duration,
+                    )
+                )
 
         except subprocess.CalledProcessError as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.FAILED,
-                message=f"Integrity check failed: {e.stderr}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.FAILED,
+                    message=f"Integrity check failed: {e.stderr}",
+                    duration_seconds=duration,
+                )
+            )
 
     def _check_bootability(self):
         """Check if image has bootable configuration"""
@@ -241,37 +241,49 @@ class ImageValidator:
         try:
             logger.info("Checking bootability...")
 
-            mount_point = Path(tempfile.mkdtemp(prefix='deployforge_test_'))
+            mount_point = Path(tempfile.mkdtemp(prefix="deployforge_test_"))
 
             # Mount image
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 subprocess.run(
-                    ['dism', '/Mount-Wim', f'/WimFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                    [
+                        "dism",
+                        "/Mount-Wim",
+                        f"/WimFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                        "/ReadOnly",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
             else:
                 subprocess.run(
-                    ['dism', '/Mount-Image', f'/ImageFile:{self.image_path}',
-                     f'/Index:{self.index}', f'/MountDir:{mount_point}', '/ReadOnly'],
+                    [
+                        "dism",
+                        "/Mount-Image",
+                        f"/ImageFile:{self.image_path}",
+                        f"/Index:{self.index}",
+                        f"/MountDir:{mount_point}",
+                        "/ReadOnly",
+                    ],
                     check=True,
-                    capture_output=True
+                    capture_output=True,
                 )
 
             # Check for boot files
             boot_checks = {
-                'bootmgr': mount_point / "Windows" / "Boot" / "PCAT" / "bootmgr",
-                'winload': mount_point / "Windows" / "System32" / "winload.exe",
-                'bcd': mount_point / "Windows" / "System32" / "config" / "BCD-Template",
-                'ntoskrnl': mount_point / "Windows" / "System32" / "ntoskrnl.exe"
+                "bootmgr": mount_point / "Windows" / "Boot" / "PCAT" / "bootmgr",
+                "winload": mount_point / "Windows" / "System32" / "winload.exe",
+                "bcd": mount_point / "Windows" / "System32" / "config" / "BCD-Template",
+                "ntoskrnl": mount_point / "Windows" / "System32" / "ntoskrnl.exe",
             }
 
             missing_files = []
             for name, path in boot_checks.items():
                 if not path.exists():
                     # Try alternate locations
-                    if name == 'winload':
+                    if name == "winload":
                         alt_path = mount_point / "Windows" / "System32" / "winload.efi"
                         if not alt_path.exists():
                             missing_files.append(name)
@@ -280,37 +292,43 @@ class ImageValidator:
 
             # Unmount
             subprocess.run(
-                ['dism', '/Unmount-Image', f'/MountDir:{mount_point}', '/Discard'],
+                ["dism", "/Unmount-Image", f"/MountDir:{mount_point}", "/Discard"],
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             duration = time.time() - start_time
 
             if missing_files:
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.WARNING,
-                    message=f"Some boot files missing: {', '.join(missing_files)}",
-                    duration_seconds=duration,
-                    details={'missing_files': missing_files}
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.WARNING,
+                        message=f"Some boot files missing: {', '.join(missing_files)}",
+                        duration_seconds=duration,
+                        details={"missing_files": missing_files},
+                    )
+                )
             else:
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message="All critical boot files present",
-                    duration_seconds=duration
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message="All critical boot files present",
+                        duration_seconds=duration,
+                    )
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.FAILED,
-                message=f"Bootability check failed: {str(e)}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.FAILED,
+                    message=f"Bootability check failed: {str(e)}",
+                    duration_seconds=duration,
+                )
+            )
 
     def _check_drivers(self):
         """Check driver signatures and validity"""
@@ -321,41 +339,47 @@ class ImageValidator:
             logger.info("Checking drivers...")
 
             # Get driver information from image
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 result = subprocess.run(
-                    ['dism', '/Get-Drivers', f'/Image:{self.image_path}', f'/Index:{self.index}'],
+                    ["dism", "/Get-Drivers", f"/Image:{self.image_path}", f"/Index:{self.index}"],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
 
                 # Parse driver count from output
-                driver_count = result.stdout.count('Published Name')
+                driver_count = result.stdout.count("Published Name")
 
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message=f"Found {driver_count} drivers",
-                    duration_seconds=duration,
-                    details={'driver_count': driver_count}
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message=f"Found {driver_count} drivers",
+                        duration_seconds=duration,
+                        details={"driver_count": driver_count},
+                    )
+                )
             else:
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.SKIPPED,
-                    message="Driver check not supported for this image format",
-                    duration_seconds=duration
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.SKIPPED,
+                        message="Driver check not supported for this image format",
+                        duration_seconds=duration,
+                    )
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.FAILED,
-                message=f"Driver check failed: {str(e)}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.FAILED,
+                    message=f"Driver check failed: {str(e)}",
+                    duration_seconds=duration,
+                )
+            )
 
     def _check_compliance(self):
         """Check update compliance"""
@@ -366,41 +390,47 @@ class ImageValidator:
             logger.info("Checking update compliance...")
 
             # Get packages/updates installed
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 result = subprocess.run(
-                    ['dism', '/Get-Packages', f'/Image:{self.image_path}', f'/Index:{self.index}'],
+                    ["dism", "/Get-Packages", f"/Image:{self.image_path}", f"/Index:{self.index}"],
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
 
                 # Count packages
-                package_count = result.stdout.count('Package Identity')
+                package_count = result.stdout.count("Package Identity")
 
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message=f"Found {package_count} installed packages",
-                    duration_seconds=duration,
-                    details={'package_count': package_count}
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message=f"Found {package_count} installed packages",
+                        duration_seconds=duration,
+                        details={"package_count": package_count},
+                    )
+                )
             else:
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.SKIPPED,
-                    message="Compliance check not supported for this image format",
-                    duration_seconds=duration
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.SKIPPED,
+                        message="Compliance check not supported for this image format",
+                        duration_seconds=duration,
+                    )
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.WARNING,
-                message=f"Compliance check warning: {str(e)}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.WARNING,
+                    message=f"Compliance check warning: {str(e)}",
+                    duration_seconds=duration,
+                )
+            )
 
     def _check_size(self):
         """Check image size limits"""
@@ -412,42 +442,45 @@ class ImageValidator:
             size_gb = size_bytes / (1024**3)
 
             # Recommended max size for WIM: 4GB, VHDX: 127GB
-            max_size_gb = 4.0 if self.image_path.suffix.lower() == '.wim' else 127.0
+            max_size_gb = 4.0 if self.image_path.suffix.lower() == ".wim" else 127.0
 
             duration = time.time() - start_time
 
             if size_gb > max_size_gb:
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.WARNING,
-                    message=f"Image size ({size_gb:.2f} GB) exceeds recommended maximum ({max_size_gb} GB)",
-                    duration_seconds=duration,
-                    details={
-                        'size_bytes': size_bytes,
-                        'size_gb': size_gb,
-                        'max_recommended_gb': max_size_gb
-                    }
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.WARNING,
+                        message=f"Image size ({size_gb:.2f} GB) exceeds recommended maximum ({max_size_gb} GB)",
+                        duration_seconds=duration,
+                        details={
+                            "size_bytes": size_bytes,
+                            "size_gb": size_gb,
+                            "max_recommended_gb": max_size_gb,
+                        },
+                    )
+                )
             else:
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message=f"Image size OK: {size_gb:.2f} GB",
-                    duration_seconds=duration,
-                    details={
-                        'size_bytes': size_bytes,
-                        'size_gb': size_gb
-                    }
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message=f"Image size OK: {size_gb:.2f} GB",
+                        duration_seconds=duration,
+                        details={"size_bytes": size_bytes, "size_gb": size_gb},
+                    )
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.FAILED,
-                message=f"Size check failed: {str(e)}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.FAILED,
+                    message=f"Size check failed: {str(e)}",
+                    duration_seconds=duration,
+                )
+            )
 
     def _check_metadata(self):
         """Check image metadata"""
@@ -457,58 +490,64 @@ class ImageValidator:
         try:
             logger.info("Checking image metadata...")
 
-            if self.image_path.suffix.lower() == '.wim':
+            if self.image_path.suffix.lower() == ".wim":
                 result = subprocess.run(
-                    ['dism', '/Get-WimInfo', f'/WimFile:{self.image_path}', f'/Index:{self.index}'],
+                    ["dism", "/Get-WimInfo", f"/WimFile:{self.image_path}", f"/Index:{self.index}"],
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
                 )
 
                 # Extract metadata
                 metadata = {}
-                for line in result.stdout.split('\n'):
-                    if ':' in line:
-                        key, value = line.split(':', 1)
+                for line in result.stdout.split("\n"):
+                    if ":" in line:
+                        key, value = line.split(":", 1)
                         metadata[key.strip()] = value.strip()
 
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.PASSED,
-                    message="Metadata extracted successfully",
-                    duration_seconds=duration,
-                    details=metadata
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.PASSED,
+                        message="Metadata extracted successfully",
+                        duration_seconds=duration,
+                        details=metadata,
+                    )
+                )
             else:
                 duration = time.time() - start_time
-                self.test_suite.add_result(TestResult(
-                    test_name=test_name,
-                    status=TestStatus.SKIPPED,
-                    message="Metadata check not supported for this image format",
-                    duration_seconds=duration
-                ))
+                self.test_suite.add_result(
+                    TestResult(
+                        test_name=test_name,
+                        status=TestStatus.SKIPPED,
+                        message="Metadata check not supported for this image format",
+                        duration_seconds=duration,
+                    )
+                )
 
         except Exception as e:
             duration = time.time() - start_time
-            self.test_suite.add_result(TestResult(
-                test_name=test_name,
-                status=TestStatus.WARNING,
-                message=f"Metadata check warning: {str(e)}",
-                duration_seconds=duration
-            ))
+            self.test_suite.add_result(
+                TestResult(
+                    test_name=test_name,
+                    status=TestStatus.WARNING,
+                    message=f"Metadata check warning: {str(e)}",
+                    duration_seconds=duration,
+                )
+            )
 
-    def _calculate_file_hash(self, file_path: Path, algorithm: str = 'md5') -> str:
+    def _calculate_file_hash(self, file_path: Path, algorithm: str = "md5") -> str:
         """Calculate file hash"""
         hash_obj = hashlib.new(algorithm)
 
-        with open(file_path, 'rb') as f:
+        with open(file_path, "rb") as f:
             while chunk := f.read(8192):
                 hash_obj.update(chunk)
 
         return hash_obj.hexdigest()
 
-    def save_report(self, output_path: Path, format: str = 'html'):
+    def save_report(self, output_path: Path, format: str = "html"):
         """
         Save test report.
 
@@ -516,9 +555,9 @@ class ImageValidator:
             output_path: Path to save report
             format: Report format ('html' or 'json')
         """
-        if format == 'json':
+        if format == "json":
             self._save_json_report(output_path)
-        elif format == 'html':
+        elif format == "html":
             self._save_html_report(output_path)
         else:
             raise ValueError(f"Unsupported format: {format}")
@@ -527,7 +566,7 @@ class ImageValidator:
 
     def _save_json_report(self, output_path: Path):
         """Save JSON report"""
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(self.test_suite.to_dict(), f, indent=2)
 
     def _save_html_report(self, output_path: Path):
@@ -619,7 +658,7 @@ class ImageValidator:
 </html>
 """
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             f.write(html)
 
 
@@ -639,7 +678,7 @@ class VMTestRunner:
         image: Path,
         vm_name: Optional[str] = None,
         memory_mb: int = 4096,
-        cpu_count: int = 2
+        cpu_count: int = 2,
     ):
         """
         Initialize VM test runner.
@@ -674,7 +713,7 @@ class VMTestRunner:
             TestSuite with results
         """
         if tests is None:
-            tests = ['boot_time', 'first_logon', 'network']
+            tests = ["boot_time", "first_logon", "network"]
 
         logger.info(f"Running {len(tests)} VM tests")
 
@@ -684,19 +723,19 @@ class VMTestRunner:
             return self.test_suite
 
         try:
-            if 'boot_time' in tests:
+            if "boot_time" in tests:
                 self._test_boot_time()
 
-            if 'first_logon' in tests:
+            if "first_logon" in tests:
                 self._test_first_logon()
 
-            if 'network' in tests:
+            if "network" in tests:
                 self._test_network()
 
-            if 'domain_join' in tests:
+            if "domain_join" in tests:
                 self._test_domain_join()
 
-            if 'apps' in tests:
+            if "apps" in tests:
                 self._test_applications()
 
         finally:
@@ -726,13 +765,15 @@ class VMTestRunner:
         # Placeholder for actual VM boot and timing
         duration = time.time() - start_time
 
-        self.test_suite.add_result(TestResult(
-            test_name=test_name,
-            status=TestStatus.PASSED,
-            message=f"Boot completed in {duration:.2f} seconds",
-            duration_seconds=duration,
-            details={'boot_time_seconds': duration}
-        ))
+        self.test_suite.add_result(
+            TestResult(
+                test_name=test_name,
+                status=TestStatus.PASSED,
+                message=f"Boot completed in {duration:.2f} seconds",
+                duration_seconds=duration,
+                details={"boot_time_seconds": duration},
+            )
+        )
 
     def _test_first_logon(self):
         """Test first logon experience"""
@@ -743,12 +784,14 @@ class VMTestRunner:
 
         duration = time.time() - start_time
 
-        self.test_suite.add_result(TestResult(
-            test_name=test_name,
-            status=TestStatus.PASSED,
-            message="First logon completed successfully",
-            duration_seconds=duration
-        ))
+        self.test_suite.add_result(
+            TestResult(
+                test_name=test_name,
+                status=TestStatus.PASSED,
+                message="First logon completed successfully",
+                duration_seconds=duration,
+            )
+        )
 
     def _test_network(self):
         """Test network connectivity"""
@@ -759,12 +802,14 @@ class VMTestRunner:
 
         duration = time.time() - start_time
 
-        self.test_suite.add_result(TestResult(
-            test_name=test_name,
-            status=TestStatus.PASSED,
-            message="Network connectivity verified",
-            duration_seconds=duration
-        ))
+        self.test_suite.add_result(
+            TestResult(
+                test_name=test_name,
+                status=TestStatus.PASSED,
+                message="Network connectivity verified",
+                duration_seconds=duration,
+            )
+        )
 
     def _test_domain_join(self):
         """Test domain join capability"""
@@ -775,12 +820,14 @@ class VMTestRunner:
 
         duration = time.time() - start_time
 
-        self.test_suite.add_result(TestResult(
-            test_name=test_name,
-            status=TestStatus.SKIPPED,
-            message="Domain join test requires domain controller",
-            duration_seconds=duration
-        ))
+        self.test_suite.add_result(
+            TestResult(
+                test_name=test_name,
+                status=TestStatus.SKIPPED,
+                message="Domain join test requires domain controller",
+                duration_seconds=duration,
+            )
+        )
 
     def _test_applications(self):
         """Test application launch"""
@@ -791,12 +838,14 @@ class VMTestRunner:
 
         duration = time.time() - start_time
 
-        self.test_suite.add_result(TestResult(
-            test_name=test_name,
-            status=TestStatus.PASSED,
-            message="Applications launched successfully",
-            duration_seconds=duration
-        ))
+        self.test_suite.add_result(
+            TestResult(
+                test_name=test_name,
+                status=TestStatus.PASSED,
+                message="Applications launched successfully",
+                duration_seconds=duration,
+            )
+        )
 
 
 def validate_image(image_path: Path, output_report: Optional[Path] = None) -> TestSuite:
@@ -818,6 +867,6 @@ def validate_image(image_path: Path, output_report: Optional[Path] = None) -> Te
     results = validator.run_checks()
 
     if output_report:
-        validator.save_report(output_report, format='html')
+        validator.save_report(output_report, format="html")
 
     return results
