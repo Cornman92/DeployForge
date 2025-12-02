@@ -1298,19 +1298,90 @@ class ApplicationInstaller:
 
     def _resolve_dependencies(self, app_ids: List[str]) -> List[str]:
         """
-        Resolve installation order based on dependencies.
+        Resolve installation order based on dependencies using topological sort.
 
-        Uses topological sort to ensure dependencies are installed first.
+        Implements Kahn's algorithm for topological sorting to ensure that
+        dependencies are installed before applications that depend on them.
 
         Args:
             app_ids: List of application IDs to install
 
         Returns:
             Ordered list with dependencies first
+
+        Raises:
+            ValueError: If circular dependencies are detected
+
+        Example:
+            # If app B depends on app A, returns [A, B]
+            ordered = self._resolve_dependencies(["B", "A"])
+            # Result: ["A", "B"]
         """
-        # Simplified implementation - just return as-is for now
-        # TODO: Implement proper dependency resolution with topological sort
-        return app_ids
+        from deployforge.app_catalog import get_app
+        from collections import deque, defaultdict
+
+        # Build dependency graph
+        graph = defaultdict(list)  # app_id -> [dependent_ids]
+        in_degree = defaultdict(int)  # app_id -> count of dependencies
+        all_apps_set = set(app_ids)
+
+        # Initialize in_degree for all apps
+        for app_id in app_ids:
+            if app_id not in in_degree:
+                in_degree[app_id] = 0
+
+        # Build the graph from application definitions
+        for app_id in app_ids:
+            try:
+                app = get_app(app_id)
+
+                # Process dependencies
+                for dep_id in app.dependencies:
+                    # Add dependency to the list if not already requested
+                    if dep_id not in all_apps_set:
+                        all_apps_set.add(dep_id)
+                        app_ids.append(dep_id)
+                        in_degree[dep_id] = 0
+                        logger.info(f"Auto-adding dependency: {dep_id} (required by {app_id})")
+
+                    # Add edge from dependency to dependent
+                    graph[dep_id].append(app_id)
+                    in_degree[app_id] += 1
+
+            except ValueError as e:
+                logger.warning(f"Skipping unknown app in dependency resolution: {app_id}")
+                continue
+
+        # Kahn's algorithm for topological sort
+        queue = deque([app_id for app_id in all_apps_set if in_degree[app_id] == 0])
+        sorted_order = []
+
+        while queue:
+            # Remove node with no dependencies
+            current = queue.popleft()
+            sorted_order.append(current)
+
+            # Reduce in-degree for all dependents
+            for dependent in graph[current]:
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
+
+        # Check for circular dependencies
+        if len(sorted_order) != len(all_apps_set):
+            # Find apps in cycle
+            cyclic_apps = [app_id for app_id in all_apps_set if in_degree[app_id] > 0]
+            raise ValueError(
+                f"Circular dependency detected among: {', '.join(cyclic_apps)}. "
+                f"Cannot determine installation order."
+            )
+
+        logger.info(
+            f"Resolved {len(sorted_order)} apps in dependency order: "
+            f"{' -> '.join(sorted_order[:5])}{'...' if len(sorted_order) > 5 else ''}"
+        )
+
+        return sorted_order
 
     def _is_winget_available(self) -> bool:
         """Check if WinGet is available on the system"""
