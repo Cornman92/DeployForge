@@ -319,6 +319,127 @@ class RetryConfig:
 
 
 @dataclass
+class InstallStatistics:
+    """
+    Installation statistics and metrics.
+
+    Tracks comprehensive statistics about installation operations
+    for reporting and analysis.
+
+    Attributes:
+        total_apps: Total number of apps attempted
+        successful: Number of successful installations
+        failed: Number of failed installations
+        skipped: Number of skipped installations
+        total_duration: Total time spent in seconds
+        average_duration: Average installation time in seconds
+        fastest_install: Fastest installation time in seconds
+        slowest_install: Slowest installation time in seconds
+        method_breakdown: Count of installations per method
+        category_breakdown: Count of installations per category
+        success_rate: Overall success rate (0.0-1.0)
+        apps_per_minute: Installation throughput
+    """
+
+    total_apps: int = 0
+    successful: int = 0
+    failed: int = 0
+    skipped: int = 0
+    total_duration: float = 0.0
+    average_duration: float = 0.0
+    fastest_install: Optional[float] = None
+    slowest_install: Optional[float] = None
+    method_breakdown: Dict[str, int] = field(default_factory=dict)
+    category_breakdown: Dict[str, int] = field(default_factory=dict)
+    success_rate: float = 0.0
+    apps_per_minute: float = 0.0
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary"""
+        return {
+            "total_apps": self.total_apps,
+            "successful": self.successful,
+            "failed": self.failed,
+            "skipped": self.skipped,
+            "total_duration": self.total_duration,
+            "average_duration": self.average_duration,
+            "fastest_install": self.fastest_install,
+            "slowest_install": self.slowest_install,
+            "method_breakdown": self.method_breakdown,
+            "category_breakdown": self.category_breakdown,
+            "success_rate": self.success_rate,
+            "apps_per_minute": self.apps_per_minute,
+        }
+
+    def format_report(self) -> str:
+        """
+        Generate formatted statistics report.
+
+        Returns:
+            Human-readable statistics report
+        """
+        lines = [
+            "=" * 60,
+            "INSTALLATION STATISTICS",
+            "=" * 60,
+            "",
+            f"Total Applications: {self.total_apps}",
+            f"  ✓ Successful:     {self.successful} ({self.success_rate*100:.1f}%)",
+            f"  ✗ Failed:         {self.failed}",
+            f"  ⊘ Skipped:        {self.skipped}",
+            "",
+            f"Timing:",
+            f"  Total Duration:   {self._format_duration(self.total_duration)}",
+            f"  Average:          {self._format_duration(self.average_duration)}",
+        ]
+
+        if self.fastest_install is not None:
+            lines.append(f"  Fastest:          {self._format_duration(self.fastest_install)}")
+        if self.slowest_install is not None:
+            lines.append(f"  Slowest:          {self._format_duration(self.slowest_install)}")
+
+        lines.extend(
+            [
+                f"  Throughput:       {self.apps_per_minute:.1f} apps/min",
+                "",
+                "Installation Methods:",
+            ]
+        )
+
+        for method, count in sorted(
+            self.method_breakdown.items(), key=lambda x: x[1], reverse=True
+        ):
+            percentage = (count / self.successful * 100) if self.successful > 0 else 0
+            lines.append(f"  {method:<15} {count:>3} ({percentage:>5.1f}%)")
+
+        if self.category_breakdown:
+            lines.extend(["", "Categories:"])
+            for category, count in sorted(
+                self.category_breakdown.items(), key=lambda x: x[1], reverse=True
+            ):
+                lines.append(f"  {category:<15} {count:>3}")
+
+        lines.append("=" * 60)
+
+        return "\n".join(lines)
+
+    def _format_duration(self, seconds: Optional[float]) -> str:
+        """Format duration in human-readable format"""
+        if seconds is None:
+            return "N/A"
+        if seconds < 60:
+            return f"{seconds:.1f}s"
+        elif seconds < 3600:
+            mins = int(seconds // 60)
+            secs = int(seconds % 60)
+            return f"{mins}m {secs}s"
+        else:
+            hours = int(seconds // 3600)
+            mins = int((seconds % 3600) // 60)
+            return f"{hours}h {mins}m"
+
+
+@dataclass
 class InstallEstimate:
     """
     Installation time estimates based on historical data.
@@ -1691,3 +1812,76 @@ class ApplicationInstaller:
         logger.info(f"Verification complete: {successful}/{len(app_ids)} apps verified")
 
         return results
+
+    def get_statistics(self) -> InstallStatistics:
+        """
+        Generate installation statistics from results.
+
+        Analyzes all installation results and generates comprehensive
+        statistics including success rates, timing, and breakdowns.
+
+        Returns:
+            InstallStatistics with metrics and breakdowns
+
+        Example:
+            # After installing apps
+            stats = installer.get_statistics()
+            print(stats.format_report())
+
+            # Or get as dict
+            stats_dict = stats.to_dict()
+            print(f"Success rate: {stats_dict['success_rate']*100:.1f}%")
+        """
+        from deployforge.app_catalog import get_app
+
+        stats = InstallStatistics()
+
+        if not self.results:
+            logger.warning("No installation results available for statistics")
+            return stats
+
+        # Count totals
+        stats.total_apps = len(self.results)
+        stats.successful = sum(1 for r in self.results.values() if r.success)
+        stats.failed = sum(1 for r in self.results.values() if not r.success)
+
+        # Calculate durations
+        durations = [r.duration_seconds for r in self.results.values() if r.success]
+        if durations:
+            stats.total_duration = sum(durations)
+            stats.average_duration = stats.total_duration / len(durations)
+            stats.fastest_install = min(durations)
+            stats.slowest_install = max(durations)
+
+            # Calculate throughput (apps per minute)
+            if stats.total_duration > 0:
+                stats.apps_per_minute = (stats.successful / stats.total_duration) * 60
+
+        # Calculate success rate
+        stats.success_rate = stats.successful / stats.total_apps if stats.total_apps > 0 else 0
+
+        # Method breakdown
+        for result in self.results.values():
+            if result.success and result.method:
+                method_name = result.method.value
+                stats.method_breakdown[method_name] = stats.method_breakdown.get(method_name, 0) + 1
+
+        # Category breakdown
+        for app_id, result in self.results.items():
+            if result.success:
+                try:
+                    app = get_app(app_id)
+                    category = app.category
+                    stats.category_breakdown[category] = (
+                        stats.category_breakdown.get(category, 0) + 1
+                    )
+                except ValueError:
+                    # Unknown app, skip category tracking
+                    pass
+
+        logger.info(
+            f"Generated statistics: {stats.successful}/{stats.total_apps} successful "
+            f"({stats.success_rate*100:.1f}% success rate)"
+        )
+
+        return stats
