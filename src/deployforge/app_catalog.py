@@ -2,20 +2,26 @@
 Application Catalog for DeployForge
 
 Centralized repository of application definitions for automated installation.
-Contains 113 pre-configured applications across 11 categories.
+Contains 136 pre-configured applications across 17 categories.
 
 Categories:
-- Gaming: 12 applications
-- Development: 15 applications
-- Browsers: 8 applications
-- Utilities: 10 applications
-- Creative: 5 applications
-- Productivity: 15 applications
-- Communication: 12 applications
+- Gaming: 12 applications (platforms, launchers, voice chat)
+- Development: 15 applications (IDEs, version control, tools)
+- Browsers: 8 applications (web browsers)
+- Utilities: 10 applications (general utilities)
+- Creative: 5 applications (design, video editing)
+- Productivity: 15 applications (office suites, note-taking)
+- Communication: 12 applications (messaging, video conferencing)
 - Security: 10 applications (VPNs, password managers, antivirus)
-- Cloud Storage: 8 applications
+- Cloud Storage: 8 applications (file sync and backup)
 - Media: 8 applications (music and video players)
 - System Tools: 10 applications (monitoring, benchmarking)
+- Database: 6 applications (MySQL, PostgreSQL, MongoDB, Redis)
+- Virtualization: 4 applications (VirtualBox, VMware, Docker, WSL)
+- Education: 4 applications (learning platforms, academic tools)
+- Finance: 3 applications (personal finance, business accounting)
+- Compression: 3 applications (archive tools)
+- Remote Access: 4 applications (remote desktop, support tools)
 
 Each application includes:
 - WinGet ID (primary installation method)
@@ -25,7 +31,7 @@ Each application includes:
 - Dependencies and conflicts
 
 Example:
-    from deployforge.app_catalog import get_app, GAMING_APPS, PRODUCTIVITY_APPS
+    from deployforge.app_catalog import get_app, GAMING_APPS, DATABASE_APPS
 
     # Get single application
     vscode = get_app("vscode")
@@ -35,8 +41,8 @@ Example:
     for app_id, app in GAMING_APPS.items():
         print(f"{app.name}: {app.description}")
 
-    # Get all productivity applications
-    for app_id, app in PRODUCTIVITY_APPS.items():
+    # Get all database applications
+    for app_id, app in DATABASE_APPS.items():
         print(f"{app.name}: {app.description}")
 """
 
@@ -1312,6 +1318,279 @@ SYSTEM_TOOLS_APPS: Dict[str, ApplicationDefinition] = {
 }
 
 # =============================================================================
+# DATABASE & DATA TOOLS
+# =============================================================================
+
+DATABASE_APPS: Dict[str, ApplicationDefinition] = {
+    "mysql": ApplicationDefinition(
+        id="mysql",
+        name="MySQL",
+        description="Open-source relational database",
+        category="Database",
+        winget_id="Oracle.MySQL",
+        chocolatey_id="mysql",
+        silent_args="/quiet",
+        requires_admin=True,
+    ),
+    "postgresql": ApplicationDefinition(
+        id="postgresql",
+        name="PostgreSQL",
+        description="Advanced open-source relational database",
+        category="Database",
+        winget_id="PostgreSQL.PostgreSQL",
+        chocolatey_id="postgresql",
+        silent_args="/SILENT",
+        requires_admin=True,
+    ),
+    "mongodb": ApplicationDefinition(
+        id="mongodb",
+        name="MongoDB",
+        description="NoSQL document database",
+        category="Database",
+        winget_id="MongoDB.Server",
+        chocolatey_id="mongodb",
+        silent_args="/quiet",
+        requires_admin=True,
+    ),
+    "redis": ApplicationDefinition(
+        id="redis",
+        name="Redis",
+        description="In-memory data structure store",
+        category="Database",
+        winget_id="Redis.Redis",
+        chocolatey_id="redis",
+        silent_args="/VERYSILENT",
+        requires_admin=True,
+    ),
+    "sqlite": ApplicationDefinition(
+        id="sqlite",
+        name="SQLite",
+        description="Lightweight embedded database",
+        category="Database",
+        winget_id="SQLite.SQLite",
+        chocolatey_id="sqlite",
+        silent_args="/S",
+        requires_admin=False,
+    ),
+    "tableplus": ApplicationDefinition(
+        id="tableplus",
+        name="TablePlus",
+        description="Modern database management tool",
+        category="Database",
+        winget_id="TablePlus.TablePlus",
+        chocolatey_id="tableplus",
+        silent_args="/SILENT",
+        requires_admin=False,
+    ),
+}
+
+# =============================================================================
+# VIRTUALIZATION & CONTAINERS
+# =============================================================================
+
+VIRTUALIZATION_APPS: Dict[str, ApplicationDefinition] = {
+    "virtualbox": ApplicationDefinition(
+        id="virtualbox",
+        name="VirtualBox",
+        description="Free virtualization software",
+        category="Virtualization",
+        winget_id="Oracle.VirtualBox",
+        chocolatey_id="virtualbox",
+        silent_args="--silent",
+        requires_admin=True,
+    ),
+    "vmware-player": ApplicationDefinition(
+        id="vmware-player",
+        name="VMware Workstation Player",
+        description="Free virtualization player",
+        category="Virtualization",
+        winget_id="VMware.WorkstationPlayer",
+        chocolatey_id="vmware-workstation-player",
+        silent_args="/s /v/qn",
+        requires_admin=True,
+    ),
+    "qemu": ApplicationDefinition(
+        id="qemu",
+        name="QEMU",
+        description="Open-source machine emulator",
+        category="Virtualization",
+        winget_id="SoftwareFreedomConservancy.QEMU",
+        chocolatey_id="qemu",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "wsl": ApplicationDefinition(
+        id="wsl",
+        name="Windows Subsystem for Linux",
+        description="Run Linux on Windows",
+        category="Virtualization",
+        winget_id="Microsoft.WSL",
+        chocolatey_id="wsl",
+        silent_args="/quiet",
+        requires_admin=True,
+    ),
+}
+
+# =============================================================================
+# EDUCATION & LEARNING
+# =============================================================================
+
+EDUCATION_APPS: Dict[str, ApplicationDefinition] = {
+    "duolingo": ApplicationDefinition(
+        id="duolingo",
+        name="Duolingo",
+        description="Language learning platform",
+        category="Education",
+        winget_id="Duolingo.Duolingo",
+        chocolatey_id="duolingo",
+        silent_args="/S",
+        requires_admin=False,
+    ),
+    "wolfram-mathematica": ApplicationDefinition(
+        id="wolfram-mathematica",
+        name="Wolfram Mathematica",
+        description="Computational software",
+        category="Education",
+        chocolatey_id="mathematica",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "geogebra": ApplicationDefinition(
+        id="geogebra",
+        name="GeoGebra",
+        description="Mathematics software for learning",
+        category="Education",
+        winget_id="GeoGebra.Classic",
+        chocolatey_id="geogebra",
+        silent_args="/S",
+        requires_admin=False,
+    ),
+    "khan-academy": ApplicationDefinition(
+        id="khan-academy",
+        name="Khan Academy",
+        description="Free online courses and lessons",
+        category="Education",
+        chocolatey_id="khanacademy",
+        silent_args="/S",
+        requires_admin=False,
+    ),
+}
+
+# =============================================================================
+# FINANCE & BUSINESS
+# =============================================================================
+
+FINANCE_APPS: Dict[str, ApplicationDefinition] = {
+    "quicken": ApplicationDefinition(
+        id="quicken",
+        name="Quicken",
+        description="Personal finance management",
+        category="Finance",
+        chocolatey_id="quicken",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "quickbooks": ApplicationDefinition(
+        id="quickbooks",
+        name="QuickBooks",
+        description="Small business accounting",
+        category="Finance",
+        chocolatey_id="quickbooks",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "mint": ApplicationDefinition(
+        id="mint",
+        name="Mint",
+        description="Budget and expense tracking",
+        category="Finance",
+        silent_args="/S",
+        requires_admin=False,
+    ),
+}
+
+# =============================================================================
+# COMPRESSION & ARCHIVE TOOLS
+# =============================================================================
+
+COMPRESSION_APPS: Dict[str, ApplicationDefinition] = {
+    "7zip": ApplicationDefinition(
+        id="7zip",
+        name="7-Zip",
+        description="Open-source file archiver",
+        category="Compression",
+        winget_id="7zip.7zip",
+        chocolatey_id="7zip",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "winrar": ApplicationDefinition(
+        id="winrar",
+        name="WinRAR",
+        description="Popular compression tool",
+        category="Compression",
+        winget_id="RARLab.WinRAR",
+        chocolatey_id="winrar",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "peazip": ApplicationDefinition(
+        id="peazip",
+        name="PeaZip",
+        description="Free archive manager",
+        category="Compression",
+        winget_id="Giorgiotani.Peazip",
+        chocolatey_id="peazip",
+        silent_args="/VERYSILENT",
+        requires_admin=False,
+    ),
+}
+
+# =============================================================================
+# REMOTE DESKTOP & ACCESS
+# =============================================================================
+
+REMOTE_ACCESS_APPS: Dict[str, ApplicationDefinition] = {
+    "teamviewer": ApplicationDefinition(
+        id="teamviewer",
+        name="TeamViewer",
+        description="Remote access and support",
+        category="Remote Access",
+        winget_id="TeamViewer.TeamViewer",
+        chocolatey_id="teamviewer",
+        silent_args="/S",
+        requires_admin=True,
+    ),
+    "anydesk": ApplicationDefinition(
+        id="anydesk",
+        name="AnyDesk",
+        description="Fast remote desktop software",
+        category="Remote Access",
+        winget_id="AnyDesk.AnyDesk",
+        chocolatey_id="anydesk",
+        silent_args="--silent",
+        requires_admin=False,
+    ),
+    "parsec": ApplicationDefinition(
+        id="parsec",
+        name="Parsec",
+        description="Low-latency remote desktop for gaming",
+        category="Remote Access",
+        winget_id="Parsec.Parsec",
+        chocolatey_id="parsec",
+        silent_args="/VERYSILENT",
+        requires_admin=False,
+    ),
+    "rdp": ApplicationDefinition(
+        id="rdp",
+        name="Remote Desktop Connection",
+        description="Windows built-in RDP client",
+        category="Remote Access",
+        requires_admin=False,
+    ),
+}
+
+# =============================================================================
 # ALL APPLICATIONS REGISTRY
 # =============================================================================
 
@@ -1327,6 +1606,12 @@ ALL_APPS: Dict[str, ApplicationDefinition] = {
     **CLOUD_STORAGE_APPS,
     **MEDIA_APPS,
     **SYSTEM_TOOLS_APPS,
+    **DATABASE_APPS,
+    **VIRTUALIZATION_APPS,
+    **EDUCATION_APPS,
+    **FINANCE_APPS,
+    **COMPRESSION_APPS,
+    **REMOTE_ACCESS_APPS,
 }
 
 
@@ -1541,6 +1826,136 @@ APPLICATION_GROUPS: Dict[str, ApplicationGroup] = {
         description="Install all major browsers",
         app_ids=["chrome", "firefox", "brave", "edge", "opera", "opera-gx", "vivaldi"],
         category="Browsers",
+    ),
+    # Database Developer Stack
+    "database_developer": ApplicationGroup(
+        id="database_developer",
+        name="Database Developer Stack",
+        description="Complete database development environment",
+        app_ids=["mysql", "postgresql", "mongodb", "redis", "tableplus", "dbeaver"],
+        category="Database",
+        install_order=True,
+    ),
+    "nosql_stack": ApplicationGroup(
+        id="nosql_stack",
+        name="NoSQL Database Stack",
+        description="Modern NoSQL databases",
+        app_ids=["mongodb", "redis"],
+        category="Database",
+    ),
+    # Virtualization & Containers
+    "virtualization_suite": ApplicationGroup(
+        id="virtualization_suite",
+        name="Virtualization Suite",
+        description="Complete virtualization setup",
+        app_ids=["docker", "virtualbox", "wsl"],
+        category="Virtualization",
+        install_order=True,
+    ),
+    # Education & Learning
+    "student_complete": ApplicationGroup(
+        id="student_complete",
+        name="Complete Student Setup",
+        description="Everything a student needs",
+        app_ids=[
+            "libreoffice",
+            "notion",
+            "zoom",
+            "teams",
+            "anki",
+            "calibre",
+            "geogebra",
+            "chrome",
+            "vscode",
+        ],
+        category="Education",
+    ),
+    "online_learning": ApplicationGroup(
+        id="online_learning",
+        name="Online Learning Tools",
+        description="Tools for online education",
+        app_ids=["zoom", "teams", "notion", "anki", "khan-academy"],
+        category="Education",
+    ),
+    # Finance & Business
+    "small_business_suite": ApplicationGroup(
+        id="small_business_suite",
+        name="Small Business Suite",
+        description="Tools for running a small business",
+        app_ids=["quickbooks", "zoom", "teams", "slack", "dropbox", "chrome"],
+        category="Finance",
+    ),
+    # Remote Work Complete
+    "remote_work_complete": ApplicationGroup(
+        id="remote_work_complete",
+        name="Complete Remote Work Setup",
+        description="Everything for remote work",
+        app_ids=[
+            "zoom",
+            "teams",
+            "slack",
+            "notion",
+            "trello",
+            "bitwarden",
+            "nordvpn",
+            "teamviewer",
+            "chrome",
+            "vscode",
+        ],
+        category="Productivity",
+    ),
+    # DevOps Engineer
+    "devops_engineer": ApplicationGroup(
+        id="devops_engineer",
+        name="DevOps Engineer Stack",
+        description="Complete DevOps toolchain",
+        app_ids=[
+            "docker",
+            "kubernetes",
+            "git",
+            "vscode",
+            "windows-terminal",
+            "postman",
+            "mysql",
+            "mongodb",
+            "wsl",
+        ],
+        category="Development",
+        install_order=True,
+    ),
+    # Data Scientist
+    "data_scientist": ApplicationGroup(
+        id="data_scientist",
+        name="Data Science Stack",
+        description="Tools for data science and ML",
+        app_ids=["python", "vscode", "git", "jupyter", "mysql", "mongodb", "tableplus"],
+        category="Development",
+        install_order=True,
+    ),
+    # Compression & Archive
+    "archive_tools": ApplicationGroup(
+        id="archive_tools",
+        name="Archive & Compression Tools",
+        description="All compression utilities",
+        app_ids=["7zip", "winrar", "peazip"],
+        category="Compression",
+    ),
+    # Home Office
+    "home_office": ApplicationGroup(
+        id="home_office",
+        name="Home Office Complete",
+        description="Complete home office setup",
+        app_ids=[
+            "libreoffice",
+            "zoom",
+            "teams",
+            "chrome",
+            "dropbox",
+            "bitwarden",
+            "7zip",
+            "adobereader",
+        ],
+        category="Productivity",
     ),
 }
 
