@@ -50,7 +50,7 @@ class PPKGHandler(BaseImageHandler):
 
             raise ValidationError(f"Invalid PPKG file: {self.image_path}")
 
-    def mount(self, mount_point: Optional[Path] = None) -> Path:
+    def mount(self, mount_point: Optional[Path] = None, **kwargs: Any) -> Path:
         """
         Mount (extract) the PPKG.
 

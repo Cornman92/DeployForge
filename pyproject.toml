@@ -71,7 +71,7 @@ all = [
 ]
 
 [project.scripts]
-deployforge = "deployforge.cli:main"
+deployforge = "deployforge.cli.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

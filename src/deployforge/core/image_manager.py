@@ -3,6 +3,7 @@
 from pathlib import Path
 from typing import Optional, Dict, Any
 import logging
+import importlib
 
 from deployforge.core.base_handler import BaseImageHandler
 from deployforge.core.exceptions import UnsupportedFormatError
@@ -20,6 +21,21 @@ class ImageManager:
 
     # Map of file extensions to handler classes
     _handlers: Dict[str, type] = {}
+
+    @classmethod
+    def _ensure_handlers_registered(cls) -> None:
+        """
+        Ensure default format handlers are registered.
+
+        Handlers are registered as a side-effect of importing `deployforge.handlers`.
+        This keeps imports lightweight for callers while ensuring common operations
+        (like `supported_formats()` and `get_handler()`) behave reliably.
+        """
+        if cls._handlers:
+            return
+
+        # Importing the module triggers registration via deployforge/handlers/__init__.py
+        importlib.import_module("deployforge.handlers")
 
     @classmethod
     def register_handler(cls, extension: str, handler_class: type) -> None:
@@ -47,6 +63,8 @@ class ImageManager:
         Raises:
             UnsupportedFormatError: If the image format is not supported
         """
+        cls._ensure_handlers_registered()
+
         image_path = Path(image_path)
         extension = image_path.suffix.lower()
 
@@ -68,6 +86,7 @@ class ImageManager:
         Returns:
             List of supported file extensions
         """
+        cls._ensure_handlers_registered()
         return list(cls._handlers.keys())
 
     def __init__(self, image_path: Path):
@@ -80,9 +99,15 @@ class ImageManager:
         self.image_path = Path(image_path)
         self.handler = self.get_handler(self.image_path)
 
-    def mount(self, mount_point: Optional[Path] = None) -> Path:
-        """Mount the image."""
-        return self.handler.mount(mount_point)
+    def mount(self, mount_point: Optional[Path] = None, **kwargs: Any) -> Path:
+        """
+        Mount the image.
+
+        Args:
+            mount_point: Optional custom mount point.
+            **kwargs: Handler-specific options (e.g., index for WIM/ESD, partition for VHD).
+        """
+        return self.handler.mount(mount_point, **kwargs)
 
     def unmount(self, save_changes: bool = False) -> None:
         """Unmount the image."""

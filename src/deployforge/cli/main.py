@@ -264,11 +264,12 @@ def mount(image_path, mount_point, index):
         with console.status(f"[bold green]Mounting {image_path.name}..."):
             manager = ImageManager(image_path)
 
-            # Handle WIM/ESD index
+            # Pass handler-specific mount options
+            mount_kwargs = {}
             if image_path.suffix.lower() in [".wim", ".esd"]:
-                manager.handler.index = index
+                mount_kwargs["index"] = index
 
-            mount_path = manager.mount(mount_point)
+            mount_path = manager.mount(mount_point, **mount_kwargs)
 
         console.print(f"[bold green]✓[/bold green] Mounted at {mount_path}")
         console.print(
