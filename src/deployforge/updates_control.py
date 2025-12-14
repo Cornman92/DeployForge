@@ -43,6 +43,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, Dict, Any
 import shutil
+from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -95,17 +96,20 @@ class WindowsUpdateController:
         controller.unmount(save_changes=True)
     """
 
-    def __init__(self, image_path: Path):
+    def __init__(self, image_path: Path, index: int = 1):
         """
         Initialize Windows Update controller.
 
         Args:
             image_path: Path to Windows image (WIM/ESD/VHD/VHDX)
+            index: Image index for WIM/ESD images (default: 1)
         """
         self.image_path = image_path
+        self.index = index
         self.mount_point: Optional[Path] = None
         self.is_mounted = False
         self.registry_loaded = False
+        self._tweak_summary: Dict[str, Any] = {}
 
         logger.info(f"Initialized WindowsUpdateController for {image_path}")
 
@@ -140,7 +144,7 @@ class WindowsUpdateController:
                     "dism",
                     "/Mount-Wim",
                     f"/WimFile:{self.image_path}",
-                    "/Index:1",
+                    f"/Index:{self.index}",
                     f"/MountDir:{mount_point}",
                 ],
                 check=True,
@@ -216,6 +220,7 @@ class WindowsUpdateController:
             raise RuntimeError("Image must be mounted first")
 
         logger.info(f"Setting Windows Update policy to {policy.value}")
+        self._tweak_summary["update_policy"] = policy.value
 
         self._load_registry()
 
@@ -270,6 +275,7 @@ class WindowsUpdateController:
             raise ValueError("Deferral days must be between 0 and 365")
 
         logger.info(f"Deferring feature updates for {days} days")
+        self._tweak_summary["defer_feature_updates_days"] = days
 
         self._load_registry()
 
@@ -309,6 +315,7 @@ class WindowsUpdateController:
             raise ValueError("Quality update deferral must be between 0 and 30 days")
 
         logger.info(f"Deferring quality updates for {days} days")
+        self._tweak_summary["defer_quality_updates_days"] = days
 
         self._load_registry()
 
@@ -342,6 +349,7 @@ class WindowsUpdateController:
             raise RuntimeError("Image must be mounted first")
 
         logger.info("Disabling automatic driver updates")
+        self._tweak_summary["disable_driver_updates"] = True
 
         self._load_registry()
 
@@ -382,6 +390,7 @@ class WindowsUpdateController:
             raise RuntimeError("Image must be mounted first")
 
         logger.info(f"{'Enabling' if enabled else 'Disabling'} metered connection behavior")
+        self._tweak_summary["metered_connection"] = bool(enabled)
 
         self._load_registry()
 
@@ -422,6 +431,7 @@ class WindowsUpdateController:
             raise RuntimeError("Image must be mounted first")
 
         logger.warning("Disabling Windows Update service - updates will be completely blocked")
+        self._tweak_summary["disable_windows_update_service"] = True
 
         self._load_registry()
 
@@ -438,6 +448,58 @@ class WindowsUpdateController:
 
         except Exception as e:
             logger.error(f"Failed to disable Windows Update service: {e}")
+            raise
+
+    def disable_automatic_restart(self) -> None:
+        """
+        Disable automatic restart after updates when a user is logged on.
+        """
+        if not self.is_mounted:
+            raise RuntimeError("Image must be mounted first")
+
+        logger.info("Disabling automatic restart after Windows Updates")
+        self._tweak_summary["disable_automatic_restart"] = True
+
+        self._load_registry()
+        try:
+            au_key = "HKLM\\TEMP_SOFTWARE\\Policies\\Microsoft\\Windows\\WindowsUpdate\\AU"
+            self._set_registry_value(au_key, "NoAutoRebootWithLoggedOnUsers", 1, "REG_DWORD")
+            self._set_registry_value(au_key, "AlwaysAutoRebootAtScheduledTime", 0, "REG_DWORD")
+        except Exception as e:
+            logger.error(f"Failed to disable automatic restart: {e}")
+            raise
+
+    def pause_updates(self, weeks: int = 1) -> None:
+        """
+        Pause Windows Updates for a number of weeks (max 5).
+
+        Args:
+            weeks: Number of weeks to pause (0-5)
+        """
+        if not self.is_mounted:
+            raise RuntimeError("Image must be mounted first")
+
+        if not 0 <= weeks <= 5:
+            raise ValueError("Pause duration must be between 0 and 5 weeks")
+
+        logger.info(f"Pausing Windows Updates for {weeks} weeks")
+        self._tweak_summary["pause_updates_weeks"] = weeks
+
+        self._load_registry()
+        try:
+            # Use Windows Update UX settings keys commonly used by Windows 10/11.
+            ux_key = "HKLM\\TEMP_SOFTWARE\\Microsoft\\WindowsUpdate\\UX\\Settings"
+            start = datetime.now(timezone.utc)
+            expiry = start + timedelta(weeks=weeks)
+
+            # ISO format with 'Z' for UTC
+            start_str = start.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+            expiry_str = expiry.replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+            self._set_registry_value(ux_key, "PauseUpdatesStartTime", start_str, "REG_SZ")
+            self._set_registry_value(ux_key, "PauseUpdatesExpiryTime", expiry_str, "REG_SZ")
+        except Exception as e:
+            logger.error(f"Failed to pause updates: {e}")
             raise
 
     def _load_registry(self) -> None:
@@ -472,19 +534,16 @@ class WindowsUpdateController:
 
     def _unload_registry(self) -> None:
         """Unload registry hives"""
-        if not self.registry_loaded:
-            return
-
         try:
             # Unload hives
             subprocess.run(
                 ["reg", "unload", "HKLM\\TEMP_SOFTWARE"],
-                check=True,
+                check=False,
                 capture_output=True,
             )
             subprocess.run(
                 ["reg", "unload", "HKLM\\TEMP_SYSTEM"],
-                check=True,
+                check=False,
                 capture_output=True,
             )
 
@@ -526,6 +585,15 @@ class WindowsUpdateController:
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to set registry value {key}\\{name}: {e}")
             raise
+
+    def get_tweak_summary(self) -> Dict[str, Any]:
+        """
+        Return a summary of tweaks configured through this controller.
+
+        Returns:
+            Dictionary of tweak name -> configured value
+        """
+        return dict(self._tweak_summary)
 
     def get_configuration(self) -> Dict[str, Any]:
         """
