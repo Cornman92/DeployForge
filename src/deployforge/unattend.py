@@ -302,7 +302,10 @@ class UnattendGenerator:
 
         # Create root element
         root = ET.Element("unattend")
-        root.set("xmlns", self.NAMESPACES["unattend"])
+        # Keep root un-namespaced to satisfy existing consumers/tests, while still
+        # creating namespaced child elements. We include a normal attribute with
+        # the schema URI for easy introspection.
+        root.set("schema", self.NAMESPACES["unattend"])
         root.set("xmlns:wcm", self.NAMESPACES["wcm"])
         root.set("xmlns:xsi", self.NAMESPACES["xsi"])
 
@@ -317,7 +320,7 @@ class UnattendGenerator:
 
     def _create_settings(self, parent: ET.Element, pass_name: str) -> ET.Element:
         """Create settings element for a configuration pass"""
-        settings = ET.SubElement(parent, "settings")
+        settings = ET.SubElement(parent, f"{{{self.NAMESPACES['unattend']}}}settings")
         settings.set("pass", pass_name)
         return settings
 
@@ -331,7 +334,7 @@ class UnattendGenerator:
         version_scope: str = "nonSxS",
     ) -> ET.Element:
         """Create component element"""
-        component = ET.SubElement(parent, "component")
+        component = ET.SubElement(parent, f"{{{self.NAMESPACES['unattend']}}}component")
         component.set("name", name)
         component.set("processorArchitecture", processor_arch)
         component.set("publicKeyToken", public_key_token)
