@@ -2,7 +2,7 @@
 Application Injection for DeployForge
 
 This module provides functionality for injecting applications into Windows images
-before deployment. Supports MSI, EXE, APPX/MSIX, and Office 365.
+before deployment. Supports MSI, EXE, APPX/MSIX, Office 365, and WinGet.
 
 Features:
 - MSI application installation with transforms
@@ -10,6 +10,7 @@ Features:
 - APPX/MSIX provisioning
 - Office 365 Click-to-Run deployment
 - Microsoft Store app injection
+- WinGet package integration
 - Dependency resolution
 - License key injection
 - Post-install script execution
@@ -42,6 +43,7 @@ class InstallType(Enum):
     MSIX = "msix"
     OFFICE365 = "office365"
     SCRIPT = "script"
+    WINGET = "winget"
 
 
 class InstallContext(Enum):
@@ -57,7 +59,7 @@ class AppPackage:
     """Represents an application package"""
 
     name: str
-    installer: Path
+    installer: Path  # For WinGet, this serves as the Package ID (as a Path object or string)
     install_type: InstallType
     arguments: str = ""
     install_context: InstallContext = InstallContext.MACHINE
@@ -246,6 +248,8 @@ class ApplicationInjector:
             raise ValueError("Use add_office365() method for Office 365")
         elif app.install_type == InstallType.SCRIPT:
             self._add_script(app)
+        elif app.install_type == InstallType.WINGET:
+            self._add_winget_application(app)
 
         self.applications.append(app)
         logger.info(f"Application {app.name} added successfully")
@@ -356,6 +360,29 @@ if %errorlevel% equ 0 (
 
         logger.info(f"Script {app.name} added")
 
+    def _add_winget_application(self, app: AppPackage):
+        """Add WinGet application installation script"""
+        package_id = str(app.installer)
+        
+        scripts_dir = self.mount_point / "Windows" / "Setup" / "Scripts"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        
+        script_content = f"""@echo off
+REM Install {app.name} via WinGet
+echo Installing {app.name} ({package_id})...
+winget install --id {package_id} --silent --accept-package-agreements --accept-source-agreements {app.arguments}
+if %errorlevel% equ 0 (
+    echo {app.name} installed successfully
+) else (
+    echo {app.name} installation failed with error %errorlevel%
+)
+"""
+        script_path = scripts_dir / f"install_{app.name.replace(' ', '_')}.cmd"
+        script_path.write_text(script_content, encoding="utf-8")
+        
+        self._add_to_autologon_scripts(app.name, str(script_path))
+        logger.info(f"WinGet application {app.name} prepared")
+
     def _add_to_autologon_scripts(self, name: str, script_path: str):
         """Add script to run on first logon"""
         # Create RunOnce registry entry
@@ -433,10 +460,15 @@ if %errorlevel% equ 0 (
         """
         logger.info(f"Adding Store app: {app_name} ({store_id})")
 
-        # This would require downloading from Store
-        # For now, log that manual download is needed
-        logger.warning(f"Store app {app_name} requires manual download")
-        logger.info(f"Download {store_id} and use add_application() with APPX type")
+        # Use WinGet for Store apps if possible
+        logger.info(f"Using WinGet to install Store app {app_name} ({store_id})")
+        app = AppPackage(
+            name=app_name,
+            installer=Path(store_id),
+            install_type=InstallType.WINGET,
+            arguments="--source msstore"
+        )
+        self.add_application(app)
 
     def install_dependencies(self, dependency: str):
         """
@@ -448,17 +480,22 @@ if %errorlevel% equ 0 (
         logger.info(f"Installing dependency: {dependency}")
 
         dependency_map = {
-            "vcredist2015": "Visual C++ 2015-2022 Redistributable",
-            "vcredist2013": "Visual C++ 2013 Redistributable",
-            "dotnet48": ".NET Framework 4.8",
-            "dotnet6": ".NET 6 Runtime",
-            "directx": "DirectX End-User Runtime",
+            "vcredist2015": ("Visual C++ 2015-2022 Redistributable", "Microsoft.VCRedist.2015+.x64"),
+            "vcredist2013": ("Visual C++ 2013 Redistributable", "Microsoft.VCRedist.2013.x64"),
+            "dotnet48": (".NET Framework 4.8", "Microsoft.DotNet.Framework.DeveloperPack_4"),
+            "dotnet6": (".NET 6 Runtime", "Microsoft.DotNet.Runtime.6"),
+            "directx": ("DirectX End-User Runtime", "Microsoft.DirectX"),
         }
 
         if dependency in dependency_map:
-            logger.info(f"Dependency {dependency_map[dependency]} should be installed")
-            logger.warning("Automatic dependency installation not yet implemented")
-            logger.info("Please add dependency installer manually using add_application()")
+            name, pkg_id = dependency_map[dependency]
+            logger.info(f"Adding WinGet installer for {name}")
+            app = AppPackage(
+                name=name,
+                installer=Path(pkg_id),
+                install_type=InstallType.WINGET
+            )
+            self.add_application(app)
         else:
             logger.warning(f"Unknown dependency: {dependency}")
 
@@ -495,35 +532,30 @@ def create_standard_app_bundle(bundle_name: str = "enterprise") -> List[AppPacka
         "enterprise": [
             AppPackage(
                 name="7-Zip",
-                installer=Path("apps/7z-x64.exe"),
-                install_type=InstallType.EXE,
-                arguments="/S",
+                installer=Path("7zip.7zip"),
+                install_type=InstallType.WINGET,
             ),
             AppPackage(
                 name="Adobe Acrobat Reader",
-                installer=Path("apps/AcroRdrDC.msi"),
-                install_type=InstallType.MSI,
-                arguments="/quiet /norestart",
+                installer=Path("Adobe.Acrobat.Reader.64-bit"),
+                install_type=InstallType.WINGET,
             ),
             AppPackage(
                 name="Google Chrome",
-                installer=Path("apps/GoogleChromeStandaloneEnterprise64.msi"),
-                install_type=InstallType.MSI,
-                arguments="/quiet /norestart",
+                installer=Path("Google.Chrome"),
+                install_type=InstallType.WINGET,
             ),
         ],
         "developer": [
             AppPackage(
                 name="Visual Studio Code",
-                installer=Path("apps/VSCodeSetup-x64.exe"),
-                install_type=InstallType.EXE,
-                arguments="/SILENT /NORESTART /MERGETASKS=!runcode",
+                installer=Path("Microsoft.VisualStudioCode"),
+                install_type=InstallType.WINGET,
             ),
             AppPackage(
                 name="Git",
-                installer=Path("apps/Git-x64.exe"),
-                install_type=InstallType.EXE,
-                arguments="/SILENT /NORESTART",
+                installer=Path("Git.Git"),
+                install_type=InstallType.WINGET,
             ),
         ],
         "office": [

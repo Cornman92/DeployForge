@@ -318,6 +318,8 @@ class UICustomizer:
         self._apply_explorer_settings()
         self._apply_theme_settings()
         self._apply_performance_settings()
+        self._apply_desktop_settings()
+        self._apply_advanced_settings()
 
         logger.info(f"Applied UI profile: {profile.value}")
 
@@ -356,6 +358,19 @@ class UICustomizer:
         """Apply performance-related visual settings"""
         if self.config.visual_effects_best_performance:
             self.optimize_visual_effects()
+
+    def _apply_desktop_settings(self):
+        """Apply desktop icon settings"""
+        self.configure_desktop_icons(
+            show_this_pc=self.config.show_this_pc,
+            show_recycle_bin=self.config.show_recycle_bin,
+            show_user_files=self.config.show_user_files
+        )
+
+    def _apply_advanced_settings(self):
+        """Apply advanced UI settings"""
+        if self.config.disable_lockscreen_tips or self.config.disable_windows_spotlight:
+            self.disable_lockscreen_features()
 
     def restore_windows10_context_menu(self):
         """Restore Windows 10 style context menu"""
@@ -855,6 +870,44 @@ class UICustomizer:
             raise RuntimeError("Image must be mounted first")
 
         logger.info(f"Desktop icons: this_pc={show_this_pc}, recycle_bin={show_recycle_bin}")
+        
+        hive_file = self.mount_point / "Users" / "Default" / "NTUSER.DAT"
+        hive_key = "HKLM\\TEMP_USER"
+        
+        try:
+            subprocess.run(
+                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
+            )
+            
+            # This PC {20D04FE0-3AEA-1069-A2D8-08002B30309D}
+            this_pc_val = "0" if show_this_pc else "1" # 0 = Show, 1 = Hide
+            subprocess.run([
+                "reg", "add",
+                f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+                "/v", "{20D04FE0-3AEA-1069-A2D8-08002B30309D}",
+                "/t", "REG_DWORD", "/d", this_pc_val, "/f"
+            ], check=True, capture_output=True)
+            
+            # Recycle Bin {645FF040-5081-101B-9F08-00AA002F954E}
+            recycle_val = "0" if show_recycle_bin else "1"
+            subprocess.run([
+                "reg", "add",
+                f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+                "/v", "{645FF040-5081-101B-9F08-00AA002F954E}",
+                "/t", "REG_DWORD", "/d", recycle_val, "/f"
+            ], check=True, capture_output=True)
+            
+            # User Files {59031a47-3f72-44a7-89c5-5595fe6b30ee}
+            user_val = "0" if show_user_files else "1"
+            subprocess.run([
+                "reg", "add",
+                f"{hive_key}\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\HideDesktopIcons\\NewStartPanel",
+                "/v", "{59031a47-3f72-44a7-89c5-5595fe6b30ee}",
+                "/t", "REG_DWORD", "/d", user_val, "/f"
+            ], check=True, capture_output=True)
+            
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
 
 def customize_ui(

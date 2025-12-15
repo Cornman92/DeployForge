@@ -127,6 +127,18 @@ class PrivacyManager:
         "cs1.wpc.v0cdn.net",
         "a-0001.a-msedge.net",
         "sls.update.microsoft.com.akadns.net",
+        "diagnostics.support.microsoft.com",
+        "corp.sts.microsoft.com",
+        "statsfe1.ws.microsoft.com",
+        "pre.footprintpredict.com",
+        "i1.services.visualstudio.com",
+        "sam.msn.com",
+        "telemetry.appex.bing.net",
+        "settings-win.data.microsoft.com",
+        "onesettings-win.data.microsoft.com",
+        "watson.ppe.telemetry.microsoft.com",
+        "survey.watson.microsoft.com",
+        "watson.live.com",
     ]
 
     def __init__(self, image_path: Path, index: int = 1):
@@ -222,6 +234,8 @@ class PrivacyManager:
                 "disable_advertising_id": True,
                 "disable_activity_history": True,
                 "block_telemetry_ips": True,
+                "disable_suggestions": True,
+                "disable_feedback": True,
             },
             PrivacyLevel.AGGRESSIVE: {
                 "disable_telemetry": True,
@@ -233,6 +247,8 @@ class PrivacyManager:
                 "disable_suggestions": True,
                 "block_telemetry_ips": True,
                 "disable_cloud_sync": True,
+                "disable_feedback": True,
+                "disable_tailored_experiences": True,
             },
             PrivacyLevel.PARANOID: {
                 "disable_telemetry": True,
@@ -246,6 +262,10 @@ class PrivacyManager:
                 "block_telemetry_ips": True,
                 "disable_cloud_sync": True,
                 "disable_scheduled_tasks": True,
+                "disable_feedback": True,
+                "disable_tailored_experiences": True,
+                "disable_wifi_sense": True,
+                "harden_services": True,
             },
         }
 
@@ -254,78 +274,174 @@ class PrivacyManager:
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
 
-    def disable_telemetry(self):
-        """Disable Windows telemetry"""
-        if not self._mounted:
-            raise RuntimeError("Image must be mounted")
-
-        logger.info("Disabling telemetry")
-
-        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
-        hive_key = "HKLM\\TEMP_SOFTWARE"
-
+    def _reg_add(self, hive_key: str, key_path: str, value_name: str, value_type: str, value_data: str):
+        """Helper to add registry key"""
         try:
-            subprocess.run(
-                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
-            )
-
-            # Disable telemetry
             subprocess.run(
                 [
                     "reg",
                     "add",
-                    f"{hive_key}\\Policies\\Microsoft\\Windows\\DataCollection",
+                    f"{hive_key}\\{key_path}",
                     "/v",
-                    "AllowTelemetry",
+                    value_name,
                     "/t",
-                    "REG_DWORD",
+                    value_type,
                     "/d",
-                    "0",
+                    value_data,
                     "/f",
                 ],
                 check=True,
                 capture_output=True,
             )
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to add registry key {key_path}\\{value_name}: {e.stderr.decode()}")
 
-            logger.info("Telemetry disabled")
-
+    def disable_telemetry(self):
+        """Disable Windows telemetry"""
+        logger.info("Disabling telemetry")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\DataCollection", "AllowTelemetry", "REG_DWORD", "0")
         finally:
             subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
     def disable_cortana(self):
         """Disable Cortana"""
-        if not self._mounted:
-            raise RuntimeError("Image must be mounted")
-
         logger.info("Disabling Cortana")
-
         hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
         hive_key = "HKLM\\TEMP_SOFTWARE"
-
+        
         try:
-            subprocess.run(
-                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
-            )
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\Windows Search", "AllowCortana", "REG_DWORD", "0")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
-            subprocess.run(
-                [
-                    "reg",
-                    "add",
-                    f"{hive_key}\\Policies\\Microsoft\\Windows\\Windows Search",
-                    "/v",
-                    "AllowCortana",
-                    "/t",
-                    "REG_DWORD",
-                    "/d",
-                    "0",
-                    "/f",
-                ],
-                check=True,
-                capture_output=True,
-            )
+    def disable_web_search(self):
+        """Disable Bing Search in Start Menu"""
+        logger.info("Disabling Web Search")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\Windows Search", "DisableWebSearch", "REG_DWORD", "1")
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\Windows Search", "ConnectedSearchUseWeb", "REG_DWORD", "0")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
-            logger.info("Cortana disabled")
+    def disable_activity_history(self):
+        """Disable Activity History and Timeline"""
+        logger.info("Disabling Activity History")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\System", "PublishUserActivities", "REG_DWORD", "0")
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\System", "UploadUserActivities", "REG_DWORD", "0")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
+    def disable_location_services(self):
+        """Disable Location Services"""
+        logger.info("Disabling Location Services")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Microsoft\\Windows\\CurrentVersion\\CapabilityAccessManager\\ConsentStore\\location", "Value", "REG_SZ", "Deny")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_feedback(self):
+        """Disable Feedback Notifications"""
+        logger.info("Disabling Feedback")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\DataCollection", "DoNotShowFeedbackNotifications", "REG_DWORD", "1")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_tailored_experiences(self):
+        """Disable Tailored Experiences"""
+        logger.info("Disabling Tailored Experiences")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\CloudContent", "DisableTailoredExperiencesWithDiagnosticData", "REG_DWORD", "1")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_suggestions(self):
+        """Disable Windows Suggestions (Consumer Features)"""
+        logger.info("Disabling Windows Suggestions")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\CloudContent", "DisableWindowsConsumerFeatures", "REG_DWORD", "1")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_cloud_sync(self):
+        """Disable Cloud Sync (Settings Sync)"""
+        logger.info("Disabling Cloud Sync")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\SettingSync", "DisableSettingSync", "REG_DWORD", "2")
+            self._reg_add(hive_key, "Policies\\Microsoft\\Windows\\SettingSync", "DisableSettingSyncUserOverride", "REG_DWORD", "1")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_wifi_sense(self):
+        """Disable WiFi Sense"""
+        logger.info("Disabling WiFi Sense")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Microsoft\\WcmSvc\\wifinetworkmanager", "WifiSenseCredShared", "REG_DWORD", "0")
+            self._reg_add(hive_key, "Microsoft\\WcmSvc\\wifinetworkmanager", "WifiSenseOpen", "REG_DWORD", "0")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_advertising_id(self):
+        """Disable advertising ID"""
+        logger.info("Disabling Advertising ID")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
+        hive_key = "HKLM\\TEMP_SOFTWARE"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "Enabled", "REG_DWORD", "0")
+        finally:
+            subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_windows_search(self):
+        """Disable Windows Search Service"""
+        logger.info("Disabling Windows Search Service")
+        # This requires disabling the service via registry
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SYSTEM"
+        hive_key = "HKLM\\TEMP_SYSTEM"
+        
+        try:
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            self._reg_add(hive_key, "ControlSet001\\Services\\WSearch", "Start", "REG_DWORD", "4") # 4 = Disabled
         finally:
             subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
 
@@ -337,48 +453,71 @@ class PrivacyManager:
         logger.info("Blocking telemetry domains")
 
         hosts_file = self.mount_point / "Windows" / "System32" / "drivers" / "etc" / "hosts"
+        
+        # Ensure parent dir exists
+        hosts_file.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(hosts_file, "a") as f:
-            f.write("\n# DeployForge - Telemetry blocking\n")
-            for domain in self.TELEMETRY_DOMAINS:
-                f.write(f"0.0.0.0 {domain}\n")
+        try:
+            current_content = ""
+            if hosts_file.exists():
+                current_content = hosts_file.read_text()
+
+            with open(hosts_file, "a") as f:
+                if "# DeployForge - Telemetry blocking" not in current_content:
+                    f.write("\n# DeployForge - Telemetry blocking\n")
+                    for domain in self.TELEMETRY_DOMAINS:
+                        f.write(f"0.0.0.0 {domain}\n")
+        except Exception as e:
+            logger.error(f"Failed to modify hosts file: {e}")
 
         logger.info(f"Blocked {len(self.TELEMETRY_DOMAINS)} telemetry domains")
 
-    def disable_advertising_id(self):
-        """Disable advertising ID"""
-        if not self._mounted:
-            raise RuntimeError("Image must be mounted")
-
-        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SOFTWARE"
-        hive_key = "HKLM\\TEMP_SOFTWARE"
-
+    def harden_services(self):
+        """Disable telemetry services"""
+        logger.info("Hardening services")
+        hive_file = self.mount_point / "Windows" / "System32" / "config" / "SYSTEM"
+        hive_key = "HKLM\\TEMP_SYSTEM"
+        
         try:
-            subprocess.run(
-                ["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True
-            )
-
-            subprocess.run(
-                [
-                    "reg",
-                    "add",
-                    f"{hive_key}\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo",
-                    "/v",
-                    "Enabled",
-                    "/t",
-                    "REG_DWORD",
-                    "/d",
-                    "0",
-                    "/f",
-                ],
-                check=True,
-                capture_output=True,
-            )
-
-            logger.info("Advertising ID disabled")
-
+            subprocess.run(["reg", "load", hive_key, str(hive_file)], check=True, capture_output=True)
+            # DiagTrack (Connected User Experiences and Telemetry)
+            self._reg_add(hive_key, "ControlSet001\\Services\\DiagTrack", "Start", "REG_DWORD", "4")
+            # dmwappushservice (WAP Push Message Routing Service)
+            self._reg_add(hive_key, "ControlSet001\\Services\\dmwappushservice", "Start", "REG_DWORD", "4")
         finally:
             subprocess.run(["reg", "unload", hive_key], check=True, capture_output=True)
+
+    def disable_scheduled_tasks(self):
+        """Disable telemetry scheduled tasks"""
+        logger.info("Disabling telemetry scheduled tasks")
+        # This requires mounting the SOFTWARE hive and modifying the Tree key for Task Scheduler
+        # Or using a script that runs on first boot. Using script approach is safer for tasks.
+        
+        scripts_dir = self.mount_point / "Windows" / "Setup" / "Scripts"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        
+        script = """@echo off
+REM Disable Telemetry Tasks
+schtasks /Change /TN "Microsoft\\Windows\\Customer Experience Improvement Program\\Consolidator" /Disable
+schtasks /Change /TN "Microsoft\\Windows\\Customer Experience Improvement Program\\UsbCeip" /Disable
+schtasks /Change /TN "Microsoft\\Windows\\Application Experience\\Microsoft Compatibility Appraiser" /Disable
+schtasks /Change /TN "Microsoft\\Windows\\Application Experience\\ProgramDataUpdater" /Disable
+schtasks /Change /TN "Microsoft\\Windows\\Autochk\\Proxy" /Disable
+schtasks /Change /TN "Microsoft\\Windows\\DiskDiagnostic\\Microsoft-Windows-DiskDiagnosticDataCollector" /Disable
+"""
+        script_path = scripts_dir / "disable_tasks.cmd"
+        with open(script_path, "w") as f:
+            f.write(script)
+            
+        # Add to SetupComplete.cmd
+        setupcomplete = scripts_dir / "SetupComplete.cmd"
+        content = ""
+        if setupcomplete.exists():
+            content = setupcomplete.read_text()
+        
+        if "disable_tasks.cmd" not in content:
+            with open(setupcomplete, "a") as f:
+                f.write(f'\ncall "{script_path}"\n')
 
     def harden_privacy_settings(self):
         """Apply all configured privacy settings"""
@@ -398,6 +537,39 @@ class PrivacyManager:
 
         if self.config.block_telemetry_ips:
             self.block_telemetry_domains()
+
+        if self.config.disable_web_search:
+            self.disable_web_search()
+
+        if self.config.disable_activity_history:
+            self.disable_activity_history()
+
+        if self.config.disable_location_services:
+            self.disable_location_services()
+
+        if self.config.disable_feedback:
+            self.disable_feedback()
+
+        if self.config.disable_tailored_experiences:
+            self.disable_tailored_experiences()
+
+        if self.config.disable_suggestions:
+            self.disable_suggestions()
+
+        if self.config.disable_cloud_sync:
+            self.disable_cloud_sync()
+
+        if self.config.disable_wifi_sense:
+            self.disable_wifi_sense()
+
+        if self.config.disable_windows_search:
+            self.disable_windows_search()
+            
+        if self.config.harden_services:
+            self.harden_services()
+
+        if self.config.disable_scheduled_tasks:
+            self.disable_scheduled_tasks()
 
         logger.info("Privacy hardening complete")
 
