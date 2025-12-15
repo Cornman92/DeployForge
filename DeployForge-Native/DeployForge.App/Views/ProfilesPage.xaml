@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DeployForge.App.Views.ProfilesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DeployForge.App.Views">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="320"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        
+        <!-- Profile List -->
+        <Border Background="{ThemeResource LayerFillColorDefaultBrush}"
+                BorderThickness="0,0,1,0" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <StackPanel Padding="16">
+                    <TextBlock Text="Profiles" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                </StackPanel>
+                
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <StackPanel Spacing="8" Padding="16,0">
+                        <!-- Built-in Profiles -->
+                        <TextBlock Text="Built-in" Style="{StaticResource CaptionTextBlockStyle}" 
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,0,0,4"/>
+                        
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.BuiltInProfiles}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource NavButtonStyle}" HorizontalAlignment="Stretch"
+                                            CommandParameter="{Binding}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <FontIcon Glyph="{Binding IconGlyph}" FontSize="20" Margin="0,0,12,0"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                        
+                        <!-- Custom Profiles -->
+                        <TextBlock Text="Custom" Style="{StaticResource CaptionTextBlockStyle}" 
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,16,0,4"/>
+                        
+                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.CustomProfiles}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource NavButtonStyle}" HorizontalAlignment="Stretch"
+                                            CommandParameter="{Binding}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <FontIcon Glyph="{Binding IconGlyph}" FontSize="20" Margin="0,0,12,0"/>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                                <TextBlock Text="{Binding Description}" Style="{StaticResource CaptionTextBlockStyle}"
+                                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           TextTrimming="CharacterEllipsis"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </StackPanel>
+                </ScrollViewer>
+                
+                <StackPanel Grid.Row="2" Padding="16" Spacing="8">
+                    <Button Content="Create New Profile" HorizontalAlignment="Stretch"
+                            Style="{StaticResource AccentButtonStyle}"
+                            Command="{x:Bind ViewModel.CreateNewProfileCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Profile Details -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" Padding="24">
+            <StackPanel Spacing="24" MaxWidth="800">
+                
+                <!-- Profile Header -->
+                <Grid Visibility="{x:Bind ViewModel.SelectedProfile, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{x:Bind ViewModel.SelectedProfile.Name, Mode=OneWay}" 
+                                   Style="{StaticResource TitleTextBlockStyle}"/>
+                        <TextBlock Text="{x:Bind ViewModel.SelectedProfile.Description, Mode=OneWay}"
+                                   Style="{StaticResource BodyTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="Use Profile" Style="{StaticResource AccentButtonStyle}"
+                                Command="{x:Bind ViewModel.UseProfileCommand}"/>
+                        <Button Content="Duplicate" Command="{x:Bind ViewModel.DuplicateProfileCommand}"/>
+                        <Button Content="Delete" Command="{x:Bind ViewModel.DeleteProfileCommand}"
+                                Visibility="{x:Bind ViewModel.SelectedProfile.IsBuiltIn, Mode=OneWay, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Grid>
+                
+                <!-- Features Summary -->
+                <Border Style="{StaticResource CardStyle}"
+                        Visibility="{x:Bind ViewModel.SelectedProfile, Mode=OneWay, Converter={StaticResource NullToVisibilityConverter}}">
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Features" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            
+                            <CheckBox Content="Remove Bloatware" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.RemoveBloatware, Mode=OneWay}"/>
+                            <CheckBox Grid.Column="1" Content="Disable Telemetry" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.DisableTelemetry, Mode=OneWay}"/>
+                            
+                            <CheckBox Grid.Row="1" Content="Disable Cortana" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.DisableCortana, Mode=OneWay}"/>
+                            <CheckBox Grid.Row="1" Grid.Column="1" Content="Enable Game Mode" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.EnableGameMode, Mode=OneWay}"/>
+                            
+                            <CheckBox Grid.Row="2" Content="Developer Mode" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.EnableDeveloperMode, Mode=OneWay}"/>
+                            <CheckBox Grid.Row="2" Grid.Column="1" Content="Install WSL2" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.InstallWSL2, Mode=OneWay}"/>
+                            
+                            <CheckBox Grid.Row="3" Content="Optimize Services" IsEnabled="False"
+                                      IsChecked="{x:Bind ViewModel.SelectedProfile.Features.OptimizeServices, Mode=OneWay}"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Empty State -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16"
+                            Visibility="{x:Bind ViewModel.SelectedProfile, Mode=OneWay, Converter={StaticResource NullToInverseVisibilityConverter}}">
+                    <FontIcon Glyph="&#xE748;" FontSize="64" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <TextBlock Text="Select a profile to view details" 
+                               Style="{StaticResource BodyTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>
