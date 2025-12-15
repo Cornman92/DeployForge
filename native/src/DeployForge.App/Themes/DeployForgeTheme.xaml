@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- DeployForge Brand Colors -->
+    <Color x:Key="DeployForgePrimaryColor">#0078D4</Color>
+    <Color x:Key="DeployForgeSecondaryColor">#106EBE</Color>
+    <Color x:Key="DeployForgeAccentLightColor">#5DADE2</Color>
+    <Color x:Key="DeployForgeSuccessColor">#2ECC71</Color>
+    <Color x:Key="DeployForgeWarningColor">#F39C12</Color>
+    <Color x:Key="DeployForgeErrorColor">#E74C3C</Color>
+    
+    <!-- Brushes -->
+    <SolidColorBrush x:Key="DeployForgePrimaryBrush" Color="{StaticResource DeployForgePrimaryColor}"/>
+    <SolidColorBrush x:Key="DeployForgeSecondaryBrush" Color="{StaticResource DeployForgeSecondaryColor}"/>
+    <SolidColorBrush x:Key="DeployForgeAccentLightBrush" Color="{StaticResource DeployForgeAccentLightColor}"/>
+    <SolidColorBrush x:Key="DeployForgeSuccessBrush" Color="{StaticResource DeployForgeSuccessColor}"/>
+    <SolidColorBrush x:Key="DeployForgeWarningBrush" Color="{StaticResource DeployForgeWarningColor}"/>
+    <SolidColorBrush x:Key="DeployForgeErrorBrush" Color="{StaticResource DeployForgeErrorColor}"/>
+    
+    <!-- Page Header Style -->
+    <Style x:Key="DeployForgePageHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="32"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Margin" Value="0,0,0,24"/>
+    </Style>
+    
+    <!-- Section Header Style -->
+    <Style x:Key="DeployForgeSectionHeaderStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Margin" Value="0,24,0,12"/>
+    </Style>
+    
+    <!-- Subtitle Style -->
+    <Style x:Key="DeployForgeSubtitleStyle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Opacity" Value="0.7"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    
+    <!-- Card Style -->
+    <Style x:Key="DeployForgeCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+    
+    <!-- Feature Card Style -->
+    <Style x:Key="DeployForgeFeatureCardStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Margin" Value="8"/>
+    </Style>
+    
+    <!-- Profile Card Button Style -->
+    <Style x:Key="ProfileCardButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="MinWidth" Value="280"/>
+        <Setter Property="MinHeight" Value="140"/>
+    </Style>
+    
+    <!-- Primary Button Style -->
+    <Style x:Key="DeployForgePrimaryButtonStyle" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource DeployForgePrimaryBrush}"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="Padding" Value="16,10"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    
+    <!-- Drop Zone Style -->
+    <Style x:Key="DropZoneStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorSecondaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}"/>
+        <Setter Property="BorderThickness" Value="2"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="48"/>
+        <Setter Property="MinHeight" Value="200"/>
+    </Style>
+    
+    <!-- Drop Zone Active Style -->
+    <Style x:Key="DropZoneActiveStyle" TargetType="Border">
+        <Setter Property="Background" Value="{ThemeResource AccentFillColorTertiaryBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource DeployForgePrimaryBrush}"/>
+        <Setter Property="BorderThickness" Value="3"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="48"/>
+        <Setter Property="MinHeight" Value="200"/>
+    </Style>
+    
+    <!-- Icon Style -->
+    <Style x:Key="FeatureIconStyle" TargetType="FontIcon">
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="Foreground" Value="{StaticResource DeployForgePrimaryBrush}"/>
+    </Style>
+    
+    <!-- Status Indicator Styles -->
+    <Style x:Key="SuccessIndicatorStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Fill" Value="{StaticResource DeployForgeSuccessBrush}"/>
+    </Style>
+    
+    <Style x:Key="WarningIndicatorStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Fill" Value="{StaticResource DeployForgeWarningBrush}"/>
+    </Style>
+    
+    <Style x:Key="ErrorIndicatorStyle" TargetType="Ellipse">
+        <Setter Property="Width" Value="12"/>
+        <Setter Property="Height" Value="12"/>
+        <Setter Property="Fill" Value="{StaticResource DeployForgeErrorBrush}"/>
+    </Style>
+    
+    <!-- Log Entry Styles -->
+    <Style x:Key="LogEntryStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Cascadia Code, Consolas, Courier New"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Padding" Value="4,2"/>
+    </Style>
+    
+    <!-- Expander Style -->
+    <Style x:Key="FeatureExpanderStyle" TargetType="Expander">
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Margin" Value="0,8"/>
+    </Style>
+    
+</ResourceDictionary>

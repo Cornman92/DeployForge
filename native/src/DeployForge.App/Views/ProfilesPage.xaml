@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DeployForge.App.Views.ProfilesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DeployForge.App.Views"
+    xmlns:vm="using:DeployForge.App.ViewModels"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <ScrollViewer Padding="40">
+        <StackPanel MaxWidth="1200">
+            
+            <!-- Header -->
+            <Grid Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <StackPanel Grid.Column="0">
+                    <TextBlock 
+                        Text="Profiles" 
+                        Style="{StaticResource DeployForgePageHeaderStyle}"
+                        Margin="0"/>
+                    <TextBlock 
+                        Text="Pre-configured build profiles for different use cases"
+                        Style="{StaticResource DeployForgeSubtitleStyle}"/>
+                </StackPanel>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button 
+                        Content="Import"
+                        Command="{x:Bind ViewModel.ImportProfileCommand}"
+                        Margin="0,0,8,0"/>
+                    <Button 
+                        Content="Create New"
+                        Style="{StaticResource DeployForgePrimaryButtonStyle}"
+                        Command="{x:Bind ViewModel.CreateNewProfileCommand}"/>
+                </StackPanel>
+            </Grid>
+            
+            <!-- Built-in Profiles -->
+            <TextBlock 
+                Text="Built-in Profiles" 
+                Style="{StaticResource DeployForgeSectionHeaderStyle}"/>
+            
+            <GridView 
+                ItemsSource="{x:Bind ViewModel.BuiltInProfiles, Mode=OneWay}"
+                SelectionMode="None"
+                IsItemClickEnabled="True"
+                ItemClick="ProfileCard_Click">
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProfileCard">
+                        <Border 
+                            Style="{StaticResource DeployForgeCardStyle}"
+                            Width="280"
+                            MinHeight="160"
+                            Margin="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Header -->
+                                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                                    <TextBlock 
+                                        Text="{x:Bind Icon}"
+                                        FontSize="28"
+                                        Margin="0,0,12,0"/>
+                                    <StackPanel>
+                                        <TextBlock 
+                                            Text="{x:Bind Name}"
+                                            FontWeight="SemiBold"
+                                            FontSize="16"/>
+                                        <TextBlock 
+                                            Text="{x:Bind Description}"
+                                            Opacity="0.6"
+                                            TextWrapping="Wrap"
+                                            FontSize="12"
+                                            MaxLines="2"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                
+                                <!-- Features -->
+                                <TextBlock 
+                                    Grid.Row="1"
+                                    Text="{x:Bind FeaturesSummary}"
+                                    Opacity="0.5"
+                                    FontSize="11"
+                                    TextWrapping="Wrap"
+                                    Margin="0,12,0,0"/>
+                                
+                                <!-- Apply Button -->
+                                <Button 
+                                    Grid.Row="2"
+                                    Content="Apply Profile"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,12,0,0"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+            
+            <!-- Custom Profiles -->
+            <TextBlock 
+                Text="Custom Profiles" 
+                Style="{StaticResource DeployForgeSectionHeaderStyle}"
+                Visibility="{x:Bind HasCustomProfiles(ViewModel.CustomProfiles.Count), Mode=OneWay}"/>
+            
+            <GridView 
+                ItemsSource="{x:Bind ViewModel.CustomProfiles, Mode=OneWay}"
+                SelectionMode="None"
+                IsItemClickEnabled="True"
+                ItemClick="ProfileCard_Click"
+                Visibility="{x:Bind HasCustomProfiles(ViewModel.CustomProfiles.Count), Mode=OneWay}">
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProfileCard">
+                        <Border 
+                            Style="{StaticResource DeployForgeCardStyle}"
+                            Width="280"
+                            MinHeight="160"
+                            Margin="8">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                
+                                <!-- Header with context menu -->
+                                <Grid Grid.Row="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock 
+                                            Text="{x:Bind Icon}"
+                                            FontSize="28"
+                                            Margin="0,0,12,0"/>
+                                        <StackPanel>
+                                            <TextBlock 
+                                                Text="{x:Bind Name}"
+                                                FontWeight="SemiBold"
+                                                FontSize="16"/>
+                                            <TextBlock 
+                                                Text="{x:Bind Description}"
+                                                Opacity="0.6"
+                                                TextWrapping="Wrap"
+                                                FontSize="12"
+                                                MaxLines="2"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                    
+                                    <Button 
+                                        Grid.Column="1"
+                                        Style="{StaticResource IconButtonStyle}"
+                                        VerticalAlignment="Top">
+                                        <FontIcon Glyph="&#xE712;" FontSize="16"/>
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem 
+                                                    Text="Edit"
+                                                    Icon="Edit"
+                                                    Click="EditProfile_Click"/>
+                                                <MenuFlyoutItem 
+                                                    Text="Duplicate"
+                                                    Icon="Copy"
+                                                    Click="DuplicateProfile_Click"/>
+                                                <MenuFlyoutItem 
+                                                    Text="Export"
+                                                    Icon="Download"
+                                                    Click="ExportProfile_Click"/>
+                                                <MenuFlyoutSeparator/>
+                                                <MenuFlyoutItem 
+                                                    Text="Delete"
+                                                    Icon="Delete"
+                                                    Click="DeleteProfile_Click"/>
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+                                </Grid>
+                                
+                                <!-- Features -->
+                                <TextBlock 
+                                    Grid.Row="1"
+                                    Text="{x:Bind FeaturesSummary}"
+                                    Opacity="0.5"
+                                    FontSize="11"
+                                    TextWrapping="Wrap"
+                                    Margin="0,12,0,0"/>
+                                
+                                <!-- Apply Button -->
+                                <Button 
+                                    Grid.Row="2"
+                                    Content="Apply Profile"
+                                    HorizontalAlignment="Stretch"
+                                    Margin="0,12,0,0"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
+            
+            <!-- Empty State for Custom Profiles -->
+            <Border 
+                Style="{StaticResource DeployForgeCardStyle}"
+                Visibility="{x:Bind NoCustomProfiles(ViewModel.CustomProfiles.Count), Mode=OneWay}"
+                HorizontalAlignment="Stretch"
+                Margin="0,8,0,0">
+                <StackPanel 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Padding="40">
+                    <FontIcon 
+                        Glyph="&#xE8F1;" 
+                        FontSize="48"
+                        Opacity="0.3"
+                        HorizontalAlignment="Center"/>
+                    <TextBlock 
+                        Text="No custom profiles yet"
+                        HorizontalAlignment="Center"
+                        Opacity="0.5"
+                        Margin="0,16,0,0"/>
+                    <TextBlock 
+                        Text="Create a new profile or import an existing one"
+                        HorizontalAlignment="Center"
+                        Opacity="0.3"
+                        FontSize="12"/>
+                </StackPanel>
+            </Border>
+            
+        </StackPanel>
+    </ScrollViewer>
+    
+    <!-- Edit Profile Dialog -->
+    <ContentDialog 
+        x:Name="EditProfileDialog"
+        Title="Edit Profile"
+        PrimaryButtonText="Save"
+        CloseButtonText="Cancel"
+        PrimaryButtonClick="EditProfileDialog_Save">
+        <StackPanel MinWidth="400">
+            <TextBox 
+                x:Name="ProfileNameTextBox"
+                Header="Profile Name"
+                Text="{x:Bind ViewModel.EditProfileName, Mode=TwoWay}"
+                Margin="0,0,0,16"/>
+            <TextBox 
+                x:Name="ProfileDescriptionTextBox"
+                Header="Description"
+                Text="{x:Bind ViewModel.EditProfileDescription, Mode=TwoWay}"
+                TextWrapping="Wrap"
+                AcceptsReturn="True"
+                Height="100"/>
+        </StackPanel>
+    </ContentDialog>
+</Page>
