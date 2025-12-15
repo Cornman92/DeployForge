@@ -168,14 +168,16 @@ class ServiceManager:
         manager.unmount(save_changes=True)
     """
 
-    def __init__(self, image_path: Path):
+    def __init__(self, image_path: Path, index: int = 1):
         """
         Initialize service manager.
 
         Args:
             image_path: Path to Windows image (WIM/ESD/VHD/VHDX)
+            index: Image index for WIM/ESD images (default: 1)
         """
         self.image_path = image_path
+        self.index = index
         self.mount_point: Optional[Path] = None
         self.is_mounted = False
         self.registry_loaded = False
@@ -210,7 +212,7 @@ class ServiceManager:
                     "dism",
                     "/Mount-Wim",
                     f"/WimFile:{self.image_path}",
-                    "/Index:1",
+                    f"/Index:{self.index}",
                     f"/MountDir:{mount_point}",
                 ],
                 check=True,
@@ -430,13 +432,10 @@ class ServiceManager:
 
     def _unload_registry(self) -> None:
         """Unload SYSTEM registry hive"""
-        if not self.registry_loaded:
-            return
-
         try:
             subprocess.run(
                 ["reg", "unload", "HKLM\\TEMP_SYSTEM"],
-                check=True,
+                check=False,
                 capture_output=True,
             )
 
@@ -446,6 +445,24 @@ class ServiceManager:
         except subprocess.CalledProcessError as e:
             logger.warning(f"Failed to unload registry cleanly: {e}")
 
+    def get_common_services(self) -> List[str]:
+        """Compatibility alias for `list_common_services()`."""
+        return self.list_common_services()
+
+    def get_preset_description(self, preset: ServicePreset) -> str:
+        """Get a human-readable description for a preset."""
+        descriptions = {
+            ServicePreset.GAMING: "Optimize for gaming by disabling background services.",
+            ServicePreset.PERFORMANCE: "Maximize performance by disabling non-essential services.",
+            ServicePreset.PRIVACY: "Improve privacy by disabling telemetry and data collection services.",
+            ServicePreset.ENTERPRISE: "Enterprise-oriented configuration (security services enabled).",
+            ServicePreset.MINIMAL: "Minimal service set for lightweight/embedded deployments.",
+        }
+        return descriptions.get(preset, f"Preset '{preset.value}'")
+
+    def list_presets(self) -> List[ServicePreset]:
+        """List all available service presets."""
+        return list(SERVICE_PRESETS.keys())
     def _set_service_startup_internal(
         self, service_name: str, startup_type: ServiceStartup
     ) -> None:

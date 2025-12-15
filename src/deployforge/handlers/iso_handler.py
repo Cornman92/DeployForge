@@ -26,15 +26,18 @@ class ISOHandler(BaseImageHandler):
 
     def __init__(self, image_path: Path):
         """Initialize the ISO handler."""
+        # Validate file existence first so missing images raise ImageNotFoundError
+        # even if optional ISO dependencies aren't installed.
+        super().__init__(image_path)
+
         if not PYCDLIB_AVAILABLE:
             raise ImportError(
-                "pycdlib is required for ISO handling. " "Install it with: pip install pycdlib"
+                "pycdlib is required for ISO handling. Install it with: pip install pycdlib"
             )
-        super().__init__(image_path)
         self.iso = None
         self._temp_dir = None
 
-    def mount(self, mount_point: Optional[Path] = None) -> Path:
+    def mount(self, mount_point: Optional[Path] = None, **kwargs: Any) -> Path:
         """
         Mount the ISO image.
 

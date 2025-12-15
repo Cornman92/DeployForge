@@ -131,6 +131,18 @@ GAMING_APPS: Dict[str, ApplicationDefinition] = {
         silent_args="/quiet /norestart",
         requires_admin=True,
     ),
+    # Alias (hyphenated) for compatibility with docs/groups/tests
+    "epic-games": ApplicationDefinition(
+        id="epic-games",
+        name="Epic Games Launcher",
+        description="Epic Games Store and launcher",
+        category="Gaming",
+        winget_id="EpicGames.EpicGamesLauncher",
+        chocolatey_id="epicgameslauncher",
+        download_url="https://launcher-public-service-prod06.ol.epicgames.com/launcher/api/installer/download/EpicGamesLauncherInstaller.msi",
+        silent_args="/quiet /norestart",
+        requires_admin=True,
+    ),
     "gog_galaxy": ApplicationDefinition(
         id="gog_galaxy",
         name="GOG Galaxy",

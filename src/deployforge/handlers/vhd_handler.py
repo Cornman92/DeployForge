@@ -53,7 +53,9 @@ class VHDHandler(BaseImageHandler):
         except (FileNotFoundError, subprocess.TimeoutExpired):
             return False
 
-    def mount(self, mount_point: Optional[Path] = None, partition: int = 1) -> Path:
+    def mount(
+        self, mount_point: Optional[Path] = None, *, partition: int = 1, **_kwargs: Any
+    ) -> Path:
         """
         Mount the VHD/VHDX.
 
