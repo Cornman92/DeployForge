@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="DeployForge.App.Views.WelcomePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:DeployForge.App.Views">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="24" Padding="0,0,0,24">
+            
+            <!-- Hero Section -->
+            <Border Style="{StaticResource CardStyle}" Padding="32">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Spacing="16">
+                        <TextBlock Text="Welcome to DeployForge" Style="{StaticResource TitleLargeTextBlockStyle}"/>
+                        <TextBlock Text="Create customized Windows deployment images with ease. Remove bloatware, optimize performance, and configure privacy settings - all in one place."
+                                   Style="{StaticResource BodyTextBlockStyle}"
+                                   TextWrapping="Wrap" MaxWidth="500"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        
+                        <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,8,0,0">
+                            <Button Style="{StaticResource AccentButtonStyle}" 
+                                    Command="{x:Bind ViewModel.BrowseImageCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE8E5;" FontSize="16"/>
+                                    <TextBlock Text="Open Image"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.NavigateToProfilesCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon Glyph="&#xE748;" FontSize="16"/>
+                                    <TextBlock Text="View Profiles"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <FontIcon Grid.Column="1" Glyph="&#xE950;" FontSize="120" 
+                              Foreground="{ThemeResource AccentFillColorDefaultBrush}" Opacity="0.2"/>
+                </Grid>
+            </Border>
+
+            <!-- Quick Start with Image -->
+            <Border Style="{StaticResource CardStyle}" 
+                    Visibility="{x:Bind ViewModel.HasSelectedImage, Mode=OneWay, Converter={StaticResource BoolToVisibilityConverter}}">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Selected Image" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                    
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <FontIcon Glyph="&#xE8B7;" FontSize="48" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                        
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="{x:Bind ViewModel.SelectedImageInfo.Name, Mode=OneWay}"
+                                       Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <Run Text="{x:Bind ViewModel.SelectedImageInfo.Format, Mode=OneWay}"/>
+                                <Run Text=" • "/>
+                                <Run Text="{x:Bind ViewModel.SelectedImageInfo.Size, Mode=OneWay, Converter={StaticResource FileSizeConverter}}"/>
+                            </TextBlock>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+                            <Button Command="{x:Bind ViewModel.NavigateToBuildCommand}">
+                                <TextBlock Text="Customize"/>
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.NavigateToAnalyzeCommand}">
+                                <TextBlock Text="Analyze"/>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Quick Profiles -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Quick Start Profiles" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                
+                <ItemsRepeater ItemsSource="{x:Bind ViewModel.QuickProfiles}">
+                    <ItemsRepeater.Layout>
+                        <UniformGridLayout MinItemWidth="280" MinItemHeight="120" 
+                                          MinRowSpacing="12" MinColumnSpacing="12"/>
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource CardStyle}" Padding="16">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <FontIcon Glyph="{Binding IconGlyph}" FontSize="24" 
+                                                  Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                                        <TextBlock Text="{Binding Name}" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                                    </StackPanel>
+                                    
+                                    <TextBlock Grid.Row="1" Text="{Binding Description}" 
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               TextWrapping="Wrap" MaxLines="2"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               Margin="0,8"/>
+                                    
+                                    <Button Grid.Row="2" Content="Use Profile" HorizontalAlignment="Right"
+                                            CommandParameter="{Binding}"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+
+            <!-- Features Overview -->
+            <StackPanel Spacing="12">
+                <TextBlock Text="Features" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Border Style="{StaticResource CardStyle}" Margin="0,0,6,0">
+                        <StackPanel Spacing="8">
+                            <FontIcon Glyph="&#xE74D;" FontSize="32" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                            <TextBlock Text="Debloat" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="Remove unwanted apps, disable telemetry, and clean up Windows."
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Grid.Column="1" Style="{StaticResource CardStyle}" Margin="6,0">
+                        <StackPanel Spacing="8">
+                            <FontIcon Glyph="&#xE7FC;" FontSize="32" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                            <TextBlock Text="Gaming" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="Optimize for gaming with reduced latency and maximum FPS."
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                    
+                    <Border Grid.Column="2" Style="{StaticResource CardStyle}" Margin="6,0,0,0">
+                        <StackPanel Spacing="8">
+                            <FontIcon Glyph="&#xE72E;" FontSize="32" Foreground="{ThemeResource AccentFillColorDefaultBrush}"/>
+                            <TextBlock Text="Privacy" Style="{StaticResource BodyStrongTextBlockStyle}"/>
+                            <TextBlock Text="Harden privacy settings and block telemetry domains."
+                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>
