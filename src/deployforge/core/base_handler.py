@@ -32,12 +32,13 @@ class BaseImageHandler(ABC):
             raise ImageNotFoundError(f"Image file not found: {self.image_path}")
 
     @abstractmethod
-    def mount(self, mount_point: Optional[Path] = None) -> Path:
+    def mount(self, mount_point: Optional[Path] = None, **kwargs: Any) -> Path:
         """
         Mount the image.
 
         Args:
             mount_point: Optional custom mount point
+            **kwargs: Handler-specific mount options (e.g., index, partition)
 
         Returns:
             Path to the mount point

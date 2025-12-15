@@ -94,6 +94,8 @@ class InstallStatus(Enum):
     PENDING = "pending"
     DOWNLOADING = "downloading"
     INSTALLING = "installing"
+    # Backwards-compatible alias used by tests / older callers
+    IN_PROGRESS = "installing"
     CONFIGURING = "configuring"
     COMPLETE = "complete"
     FAILED = "failed"
@@ -222,6 +224,15 @@ class InstallResult:
     error_message: Optional[str] = None
     duration_seconds: float = 0.0
     attempts: int = 1
+
+    @property
+    def error(self) -> Optional[str]:
+        """Compatibility alias for `error_message` expected by some callers/tests."""
+        return self.error_message
+
+    @error.setter
+    def error(self, value: Optional[str]) -> None:
+        self.error_message = value
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -428,6 +439,7 @@ class ApplicationInstaller:
     def __init__(
         self,
         image_path: Path,
+        index: int = 1,
         offline_cache: Optional[Path] = None,
         retry_config: Optional[RetryConfig] = None,
     ):
@@ -436,10 +448,12 @@ class ApplicationInstaller:
 
         Args:
             image_path: Path to Windows image file (WIM/ESD/VHD/VHDX)
+            index: Image index for WIM/ESD images (default: 1)
             offline_cache: Optional path to cache downloaded installers
             retry_config: Optional retry configuration (uses defaults if not provided)
         """
         self.image_path = image_path
+        self.index = index
         self.mount_point: Optional[Path] = None
         self.is_mounted = False
         self.offline_cache = offline_cache
@@ -688,7 +702,7 @@ class ApplicationInstaller:
                         "dism",
                         "/Mount-Wim",
                         f"/WimFile:{self.image_path}",
-                        "/Index:1",
+                        f"/Index:{self.index}",
                         f"/MountDir:{mount_point}",
                     ],
                     check=True,
@@ -974,7 +988,7 @@ class ApplicationInstaller:
                 continue
 
         # All methods failed
-        error_msg = last_error or "No installation methods available"
+        error_msg = last_error or "All installation methods failed"
         logger.error(f"Failed to install {app.name}: {error_msg}")
 
         if progress_callback:
@@ -1089,11 +1103,6 @@ class ApplicationInstaller:
         if not app.winget_id:
             return False
 
-        # Check if WinGet is available
-        if not self._is_winget_available():
-            logger.warning("WinGet not available on this system")
-            return False
-
         logger.info(f"Installing {app.name} via WinGet (ID: {app.winget_id})")
 
         try:
@@ -1118,6 +1127,9 @@ class ApplicationInstaller:
                 logger.error(f"WinGet install failed: {result.stderr}")
                 return False
 
+        except FileNotFoundError:
+            logger.warning("WinGet executable not found")
+            return False
         except subprocess.TimeoutExpired:
             logger.error(f"WinGet install timed out for {app.name}")
             return False
