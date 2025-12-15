@@ -1,0 +1,39 @@
+<Window
+    x:Class="DeployForge.GUI.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="DeployForge" Style="{StaticResource TitleTextBlockStyle}" Margin="0,0,0,20"/>
+
+        <StackPanel Grid.Row="1" Spacing="10">
+            <TextBox Header="Image Path" Text="{x:Bind ViewModel.ImagePath, Mode=TwoWay}" PlaceholderText="C:\Images\install.wim"/>
+            
+            <CheckBox Content="Gaming Optimizations" IsChecked="{x:Bind ViewModel.EnableGaming, Mode=TwoWay}"/>
+            <CheckBox Content="Privacy Hardening" IsChecked="{x:Bind ViewModel.EnablePrivacy, Mode=TwoWay}"/>
+            <CheckBox Content="Developer Environment" IsChecked="{x:Bind ViewModel.EnableDevEnv, Mode=TwoWay}"/>
+            
+            <Button Content="Build Image" Command="{x:Bind ViewModel.BuildImageCommand}" 
+                    IsEnabled="{x:Bind ViewModel.IsBusy, Converter={StaticResource BoolNegationConverter}, Mode=OneWay}"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="2" Margin="0,20">
+            <ItemsControl ItemsSource="{x:Bind ViewModel.Logs, Mode=OneWay}"/>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="3" Spacing="5">
+            <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"/>
+            <ProgressBar Value="{x:Bind ViewModel.Progress, Mode=OneWay}"/>
+        </StackPanel>
+    </Grid>
+</Window>
