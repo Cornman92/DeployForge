@@ -126,3 +126,4 @@ site/
 .env.local
 *.local
 config.local.*
+core
