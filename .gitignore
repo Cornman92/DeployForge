@@ -65,6 +65,7 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+core
 
 # Logs
 *.log
